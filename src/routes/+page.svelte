@@ -156,57 +156,58 @@
 {#if !$isUnlocked}
   <UnlockScreen />
 {:else}
-  <div class="app">
-    <header class="header">
-      <div class="header-content">
-        <h1 class="app-title">🔒 PocketVault</h1>
-        <div class="header-actions">
-          <button class="icon-btn" on:click={toggleTheme} title="Toggle theme">
+  <div style="min-height: 100vh;">
+    <header class="glass-header">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h1 style="margin: 0; font-size: 1.25rem; font-weight: 600;" class="text-glass">🔒 PocketVault</h1>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="glass-btn haptic-light" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={toggleTheme} title="Toggle theme">
             {$darkMode ? '☀️' : '🌙'}
           </button>
           {#if $biometricEnabled}
-            <button class="icon-btn biometric-enabled" on:click={toggleBiometric} title="Biometric enabled">
+            <button class="glass-btn-primary" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={toggleBiometric} title="Biometric enabled">
               {BiometricAuth.getBiometricType() === 'FaceID' ? '👤' : '👆'}
             </button>
           {/if}
-          <button class="icon-btn" on:click={exportVault} title="Export vault">
+          <button class="glass-btn haptic-light" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={exportVault} title="Export vault">
             📤
           </button>
-          <button class="icon-btn" on:click={importVault} title="Import vault">
+          <button class="glass-btn haptic-light" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={importVault} title="Import vault">
             📥
           </button>
-          <button class="icon-btn" on:click={lock} title="Lock vault">
+          <button class="glass-btn haptic-medium" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={lock} title="Lock vault">
             🔒
           </button>
         </div>
       </div>
       
-      <div class="search-bar">
+      <div>
         <input
           type="text"
           placeholder="Search passwords..."
           bind:value={$searchQuery}
-          class="search-input"
+          class="glass-input"
+          style="width: 100%; padding: 0.75rem;"
         />
       </div>
     </header>
     
-    <main class="main">
-      <div class="container">
+    <main style="padding: 1rem; padding-bottom: 5rem;">
+      <div style="max-width: 600px; margin: 0 auto;">
         {#if filteredItems.length === 0}
-          <div class="empty-state">
+          <div style="text-align: center; padding: 3rem 1rem;" class="text-glass-secondary">
             {#if $vaultItems.length === 0}
-              <div class="empty-icon">🔐</div>
-              <h2>Your vault is empty</h2>
-              <p>Add your first password to get started</p>
+              <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+              <h2 style="margin: 0 0 0.5rem 0;" class="text-glass">Your vault is empty</h2>
+              <p style="margin: 0;">Add your first password to get started</p>
             {:else}
-              <div class="empty-icon">🔍</div>
-              <h2>No matches found</h2>
-              <p>Try a different search term</p>
+              <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+              <h2 style="margin: 0 0 0.5rem 0;" class="text-glass">No matches found</h2>
+              <p style="margin: 0;">Try a different search term</p>
             {/if}
           </div>
         {:else}
-          <div class="items-list">
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
             {#each filteredItems as item (item.id)}
               <VaultItemComponent {item} onDelete={deleteItem} />
             {/each}
@@ -215,8 +216,8 @@
       </div>
     </main>
     
-    <div class="fab">
-      <button class="fab-btn" on:click={addNew} title="Add password">
+    <div style="position: fixed; bottom: 2rem; right: 2rem; z-index: 100;">
+      <button class="glass-fab haptic-heavy" on:click={addNew} title="Add password">
         +
       </button>
     </div>
@@ -233,165 +234,3 @@
   </div>
 {/if}
 
-<style>
-  .app {
-    min-height: 100vh;
-    background: var(--bg-primary);
-  }
-  
-  .header {
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  
-  .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  
-  .app-title {
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-  
-  .header-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  .icon-btn {
-    background: var(--bg-tertiary);
-    border: none;
-    border-radius: 0.5rem;
-    padding: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-  
-  .icon-btn:hover {
-    background: var(--bg-hover);
-  }
-  
-  .biometric-enabled {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-  }
-  
-  .biometric-enabled:hover {
-    opacity: 0.9;
-  }
-  
-  .search-input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid var(--border);
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    transition: border-color 0.2s;
-  }
-  
-  .search-input:focus {
-    outline: none;
-    border-color: var(--primary);
-  }
-  
-  .main {
-    padding: 1rem;
-    padding-bottom: 5rem;
-  }
-  
-  .container {
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-secondary);
-  }
-  
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-  
-  .empty-state h2 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-primary);
-  }
-  
-  .empty-state p {
-    margin: 0;
-  }
-  
-  .items-list {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .fab {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 100;
-  }
-  
-  .fab-btn {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    border: none;
-    font-size: 1.5rem;
-    font-weight: 300;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .fab-btn:hover {
-    background: var(--primary-dark);
-    transform: scale(1.05);
-  }
-  
-  .fab-btn:active {
-    transform: scale(0.95);
-  }
-  
-  @media (max-width: 768px) {
-    .header {
-      padding: 0.75rem;
-    }
-    
-    .main {
-      padding: 0.75rem;
-      padding-bottom: 5rem;
-    }
-    
-    .fab {
-      bottom: 1.5rem;
-      right: 1.5rem;
-    }
-  }
-</style>

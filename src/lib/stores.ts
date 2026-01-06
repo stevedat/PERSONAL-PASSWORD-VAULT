@@ -10,6 +10,13 @@ export const editingItem = writable<VaultItem | null>(null);
 export const biometricEnabled = writable(false);
 export const appState = writable('active'); // 'active', 'background', 'locked'
 
+// Helper to get current state
+function getCurrentAppState() {
+  let currentState;
+  appState.subscribe(state => currentState = state)();
+  return currentState;
+}
+
 // Auto-lock configuration
 const LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const BACKGROUND_LOCK_DELAY = 10 * 1000; // 10 seconds after going to background
@@ -49,25 +56,42 @@ export function lock(reason = 'manual') {
 }
 
 // Enhanced background detection for iOS PWA
+let visibilityTimeout;
+
 export function initializeAppStateMonitoring() {
   if (typeof document === 'undefined') return;
 
-  // Standard visibility API
-  document.addEventListener('visibilitychange', handleVisibilityChange);
+  // Standard visibility API with debounce
+  document.addEventListener('visibilitychange', debounceVisibilityChange);
   
   // iOS PWA specific events
   window.addEventListener('pagehide', handlePageHide);
   window.addEventListener('pageshow', handlePageShow);
   
-  // Focus/blur events for additional coverage
-  window.addEventListener('blur', handleWindowBlur);
-  window.addEventListener('focus', handleWindowFocus);
+  // Focus/blur events for additional coverage with debounce
+  window.addEventListener('blur', debounceWindowBlur);
+  window.addEventListener('focus', debounceWindowFocus);
   
   // iOS specific app state events
   if ('standalone' in window.navigator && window.navigator.standalone) {
     // Running as PWA on iOS
-    document.addEventListener('webkitvisibilitychange', handleVisibilityChange);
+    document.addEventListener('webkitvisibilitychange', debounceVisibilityChange);
   }
+}
+
+function debounceVisibilityChange() {
+  clearTimeout(visibilityTimeout);
+  visibilityTimeout = setTimeout(handleVisibilityChange, 100);
+}
+
+function debounceWindowBlur() {
+  clearTimeout(visibilityTimeout);
+  visibilityTimeout = setTimeout(handleWindowBlur, 100);
+}
+
+function debounceWindowFocus() {
+  clearTimeout(visibilityTimeout);
+  visibilityTimeout = setTimeout(handleWindowFocus, 100);
 }
 
 function handleVisibilityChange() {
@@ -92,7 +116,11 @@ function handlePageShow(event) {
 }
 
 function handleWindowBlur() {
-  handleAppBackground();
+  // Only trigger if not already in background state
+  const currentState = getCurrentAppState();
+  if (currentState !== 'background') {
+    handleAppBackground();
+  }
 }
 
 function handleWindowFocus() {
@@ -100,23 +128,34 @@ function handleWindowFocus() {
 }
 
 function handleAppBackground() {
+  const currentState = getCurrentAppState();
+  if (currentState === 'background') return; // Already in background
+  
+  // Add debounce to prevent rapid state changes
+  clearTimeout(backgroundTimer);
+  
   console.log('App backgrounded');
   appState.set('background');
   
   // Start background lock timer
-  clearTimeout(backgroundTimer);
   backgroundTimer = setTimeout(() => {
-    lock('background');
+    const stillInBackground = getCurrentAppState() === 'background';
+    if (stillInBackground) {
+      lock('background');
+    }
   }, BACKGROUND_LOCK_DELAY);
 }
 
 function handleAppForeground() {
+  const currentState = getCurrentAppState();
+  if (currentState === 'active') return; // Already active
+  
   console.log('App foregrounded');
   clearTimeout(backgroundTimer);
   
   const timeInBackground = Date.now() - lastActivity;
   
-  if (timeInBackground > BACKGROUND_LOCK_DELAY) {
+  if (timeInBackground > BACKGROUND_LOCK_DELAY && currentState === 'background') {
     // App was in background too long, lock it
     lock('background_timeout');
   } else {
@@ -165,16 +204,17 @@ function throttle(func, limit) {
 export function cleanup() {
   clearTimeout(lockTimer);
   clearTimeout(backgroundTimer);
+  clearTimeout(visibilityTimeout);
   
   if (typeof document !== 'undefined') {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-    document.removeEventListener('webkitvisibilitychange', handleVisibilityChange);
+    document.removeEventListener('visibilitychange', debounceVisibilityChange);
+    document.removeEventListener('webkitvisibilitychange', debounceVisibilityChange);
   }
   
   if (typeof window !== 'undefined') {
     window.removeEventListener('pagehide', handlePageHide);
     window.removeEventListener('pageshow', handlePageShow);
-    window.removeEventListener('blur', handleWindowBlur);
-    window.removeEventListener('focus', handleWindowFocus);
+    window.removeEventListener('blur', debounceWindowBlur);
+    window.removeEventListener('focus', debounceWindowFocus);
   }
 }

@@ -32,7 +32,22 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  // Skip non-GET requests and extension requests
+  if (event.request.method !== 'GET' || 
+      event.request.url.startsWith('chrome-extension://') ||
+      event.request.url.startsWith('moz-extension://') ||
+      event.request.url.startsWith('safari-web-extension://') ||
+      event.request.url.startsWith('extension://')) {
+    return;
+  }
+  
+  // Skip requests that are not from our origin
+  const url = new URL(event.request.url);
+  const isOurOrigin = url.origin === self.location.origin;
+  
+  if (!isOurOrigin) {
+    return;
+  }
   
   event.respondWith(
     caches.match(event.request).then((response) => {
@@ -41,16 +56,25 @@ self.addEventListener('fetch', (event) => {
       }
       
       return fetch(event.request).then((response) => {
+        // Only cache successful responses from same origin
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
         
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+          cache.put(event.request, responseToCache).catch(err => {
+            // Silently ignore cache errors for unsupported schemes
+            if (!err.message.includes('chrome-extension')) {
+              console.debug('Cache put failed:', err.message);
+            }
+          });
         });
         
         return response;
+      }).catch(() => {
+        // Return offline fallback if available
+        return caches.match('/') || new Response('Offline', { status: 503 });
       });
     })
   );
