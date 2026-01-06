@@ -46,8 +46,11 @@ export function lock(reason = 'manual') {
   clearTimeout(lockTimer);
   clearTimeout(backgroundTimer);
   
-  // Clear sensitive data from memory
+  // Clear sensitive data from memory and session
   if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('pv_master_key');
+    sessionStorage.removeItem('pv_temp_password');
+    
     // Force garbage collection if available
     if (window.gc) {
       window.gc();

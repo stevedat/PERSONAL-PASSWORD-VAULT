@@ -14,6 +14,8 @@
   
   let filteredItems = [];
   let fileInput;
+  let successMessage = '';
+  let successTimeout;
   
   $: filteredItems = $vaultItems.filter(item => 
     !$searchQuery || 
@@ -33,50 +35,138 @@
       updatedItems = [...currentItems, item];
     }
     
-    // Get master password from session (in real app, you'd handle this more securely)
-    const masterPassword = prompt('Enter master password to save changes:');
-    if (!masterPassword) return;
-    
-    try {
-      await StorageEngine.saveVault(updatedItems, masterPassword);
-      vaultItems.set(updatedItems);
-      resetAutoLock();
-    } catch (error) {
-      alert('Failed to save: Invalid master password');
+    // Use cached master password from session
+    const masterPassword = sessionStorage.getItem('pv_master_key');
+    if (!masterPassword) {
+      const inputPassword = prompt('Enter master password to save changes:');
+      if (!inputPassword) return;
+      
+      try {
+        // Test password by trying to decrypt current vault
+        await StorageEngine.loadVault(inputPassword);
+        sessionStorage.setItem('pv_master_key', inputPassword);
+        await StorageEngine.saveVault(updatedItems, inputPassword);
+      } catch (error) {
+        alert('Failed to save: Invalid master password');
+        return;
+      }
+    } else {
+      try {
+        await StorageEngine.saveVault(updatedItems, masterPassword);
+      } catch (error) {
+        // Master password might have changed, ask for new one
+        sessionStorage.removeItem('pv_master_key');
+        const inputPassword = prompt('Master password expired. Enter password to save:');
+        if (!inputPassword) return;
+        
+        try {
+          await StorageEngine.saveVault(updatedItems, inputPassword);
+          sessionStorage.setItem('pv_master_key', inputPassword);
+        } catch (error) {
+          alert('Failed to save: Invalid master password');
+          return;
+        }
+      }
     }
+    
+    vaultItems.set(updatedItems);
+    resetAutoLock();
+    
+    // Show success feedback
+    showSuccessMessage('Password saved successfully');
   }
   
   async function deleteItem(id) {
     if (!confirm('Are you sure you want to delete this item?')) return;
     
-    const masterPassword = prompt('Enter master password to confirm deletion:');
-    if (!masterPassword) return;
-    
-    try {
-      const updatedItems = $vaultItems.filter(item => item.id !== id);
-      await StorageEngine.saveVault(updatedItems, masterPassword);
-      vaultItems.set(updatedItems);
-      resetAutoLock();
-    } catch (error) {
-      alert('Failed to delete: Invalid master password');
+    // Use cached master password from session
+    const masterPassword = sessionStorage.getItem('pv_master_key');
+    if (!masterPassword) {
+      const inputPassword = prompt('Enter master password to confirm deletion:');
+      if (!inputPassword) return;
+      
+      try {
+        // Test password by trying to decrypt current vault
+        await StorageEngine.loadVault(inputPassword);
+        sessionStorage.setItem('pv_master_key', inputPassword);
+        const updatedItems = $vaultItems.filter(item => item.id !== id);
+        await StorageEngine.saveVault(updatedItems, inputPassword);
+      } catch (error) {
+        alert('Failed to delete: Invalid master password');
+        return;
+      }
+    } else {
+      try {
+        const updatedItems = $vaultItems.filter(item => item.id !== id);
+        await StorageEngine.saveVault(updatedItems, masterPassword);
+      } catch (error) {
+        // Master password might have changed, ask for new one
+        sessionStorage.removeItem('pv_master_key');
+        const inputPassword = prompt('Master password expired. Enter password to delete:');
+        if (!inputPassword) return;
+        
+        try {
+          const updatedItems = $vaultItems.filter(item => item.id !== id);
+          await StorageEngine.saveVault(updatedItems, inputPassword);
+          sessionStorage.setItem('pv_master_key', inputPassword);
+        } catch (error) {
+          alert('Failed to delete: Invalid master password');
+          return;
+        }
+      }
     }
+    
+    const updatedItems = $vaultItems.filter(item => item.id !== id);
+    vaultItems.set(updatedItems);
+    resetAutoLock();
+    
+    // Show success feedback
+    showSuccessMessage('Password deleted successfully');
   }
   
   async function exportVault() {
-    const masterPassword = prompt('Enter master password to export vault:');
-    if (!masterPassword) return;
-    
-    try {
-      const blob = await StorageEngine.exportVault(masterPassword);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `pocketvault-backup-${new Date().toISOString().split('T')[0]}.vault`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      alert('Export failed: Invalid master password');
+    const masterPassword = sessionStorage.getItem('pv_master_key');
+    if (!masterPassword) {
+      const inputPassword = prompt('Enter master password to export vault:');
+      if (!inputPassword) return;
+      
+      try {
+        // Test password first
+        await StorageEngine.loadVault(inputPassword);
+        sessionStorage.setItem('pv_master_key', inputPassword);
+        const blob = await StorageEngine.exportVault(inputPassword);
+        downloadVaultFile(blob);
+      } catch (error) {
+        alert('Export failed: Invalid master password');
+      }
+    } else {
+      try {
+        const blob = await StorageEngine.exportVault(masterPassword);
+        downloadVaultFile(blob);
+      } catch (error) {
+        sessionStorage.removeItem('pv_master_key');
+        const inputPassword = prompt('Master password expired. Enter password to export:');
+        if (!inputPassword) return;
+        
+        try {
+          const blob = await StorageEngine.exportVault(inputPassword);
+          sessionStorage.setItem('pv_master_key', inputPassword);
+          downloadVaultFile(blob);
+        } catch (error) {
+          alert('Export failed: Invalid master password');
+        }
+      }
     }
+  }
+  
+  function downloadVaultFile(blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pocketvault-backup-${new Date().toISOString().split('T')[0]}.vault`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showSuccessMessage('Vault exported successfully');
   }
   
   async function importVault() {
@@ -96,28 +186,67 @@
       // Merge with existing items
       const existingItems = $vaultItems;
       const mergedItems = [...existingItems];
+      let newItemsCount = 0;
+      let updatedItemsCount = 0;
       
       for (const item of importedItems) {
         const existingIndex = mergedItems.findIndex(i => i.id === item.id);
         if (existingIndex >= 0) {
           mergedItems[existingIndex] = item;
+          updatedItemsCount++;
         } else {
           mergedItems.push(item);
+          newItemsCount++;
         }
       }
       
-      const savePassword = prompt('Enter master password to save merged vault:');
-      if (!savePassword) return;
+      // Use cached master password for saving
+      const currentMasterPassword = sessionStorage.getItem('pv_master_key');
+      if (!currentMasterPassword) {
+        const savePassword = prompt('Enter master password to save merged vault:');
+        if (!savePassword) return;
+        
+        try {
+          await StorageEngine.saveVault(mergedItems, savePassword);
+          sessionStorage.setItem('pv_master_key', savePassword);
+        } catch (error) {
+          alert('Failed to save merged vault: Invalid master password');
+          return;
+        }
+      } else {
+        try {
+          await StorageEngine.saveVault(mergedItems, currentMasterPassword);
+        } catch (error) {
+          sessionStorage.removeItem('pv_master_key');
+          const savePassword = prompt('Master password expired. Enter password to save:');
+          if (!savePassword) return;
+          
+          try {
+            await StorageEngine.saveVault(mergedItems, savePassword);
+            sessionStorage.setItem('pv_master_key', savePassword);
+          } catch (error) {
+            alert('Failed to save merged vault: Invalid master password');
+            return;
+          }
+        }
+      }
       
-      await StorageEngine.saveVault(mergedItems, savePassword);
       vaultItems.set(mergedItems);
-      alert(`Imported ${importedItems.length} items successfully`);
+      showSuccessMessage(`Import successful: ${newItemsCount} new, ${updatedItemsCount} updated`);
     } catch (error) {
       alert('Import failed: Invalid file or password');
     }
     
     // Reset file input
     fileInput.value = '';
+  }
+  
+  function showSuccessMessage(message) {
+    successMessage = message;
+    clearTimeout(successTimeout);
+    successTimeout = setTimeout(() => {
+      successMessage = '';
+    }, 3000);
   }
   
   function addNew() {
@@ -158,6 +287,12 @@
 {:else}
   <div style="min-height: 100vh;">
     <header class="glass-header">
+      {#if successMessage}
+        <div class="glass animate-fade-in" style="background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; padding: 0.75rem; border-radius: 18px; font-size: 0.875rem; text-align: center; margin-bottom: 1rem;">
+          {successMessage}
+        </div>
+      {/if}
+      
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h1 style="margin: 0; font-size: 1.25rem; font-weight: 600;" class="text-glass">🔒 PocketVault</h1>
         <div style="display: flex; gap: 0.5rem;">

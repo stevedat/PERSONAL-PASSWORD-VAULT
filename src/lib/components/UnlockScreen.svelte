@@ -32,6 +32,10 @@
     
     try {
       const items = await StorageEngine.loadVault(masterPassword);
+      
+      // Store master password in session for seamless operations
+      sessionStorage.setItem('pv_master_key', masterPassword);
+      
       vaultItems.set(items);
       isUnlocked.set(true);
       startAutoLock();
@@ -120,6 +124,10 @@
     
     try {
       await StorageEngine.saveVault([], masterPassword);
+      
+      // Store master password in session for seamless operations
+      sessionStorage.setItem('pv_master_key', masterPassword);
+      
       vaultItems.set([]);
       isUnlocked.set(true);
       startAutoLock();

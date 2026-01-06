@@ -5,19 +5,33 @@
   export let onDelete;
   
   let showPassword = false;
+  let copyFeedback = {};
   
-  async function copyToClipboard(text) {
+  async function copyToClipboard(text, field) {
     try {
       await navigator.clipboard.writeText(text);
-      // Simple feedback - could be enhanced with toast notifications
-      const button = event && event.target;
-      const originalText = button.textContent;
-      button.textContent = 'Copied!';
+      
+      // Show feedback for this specific field
+      copyFeedback[field] = true;
       setTimeout(() => {
-        button.textContent = originalText;
-      }, 1000);
+        copyFeedback[field] = false;
+        copyFeedback = { ...copyFeedback }; // Trigger reactivity
+      }, 1500);
     } catch (err) {
       console.error('Failed to copy:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      copyFeedback[field] = true;
+      setTimeout(() => {
+        copyFeedback[field] = false;
+        copyFeedback = { ...copyFeedback };
+      }, 1500);
     }
   }
   
@@ -54,9 +68,9 @@
         <span class="text-glass dark:text-glass-dark font-mono text-sm flex-1 truncate">{item.username}</span>
         <button 
           class="glass-btn-primary px-3 py-1 text-xs haptic-medium ml-2" 
-          on:click={() => copyToClipboard(item.username)}
+          on:click={() => copyToClipboard(item.username, 'username')}
         >
-          Copy
+          {copyFeedback.username ? '✓ Copied!' : 'Copy'}
         </button>
       </div>
     </div>
@@ -77,9 +91,9 @@
           </button>
           <button 
             class="glass-btn-primary px-3 py-1 text-xs haptic-medium" 
-            on:click={() => copyToClipboard(item.password)}
+            on:click={() => copyToClipboard(item.password, 'password')}
           >
-            Copy
+            {copyFeedback.password ? '✓ Copied!' : 'Copy'}
           </button>
         </div>
       </div>
