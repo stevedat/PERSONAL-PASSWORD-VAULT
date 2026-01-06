@@ -5,11 +5,12 @@
 
 export class BiometricAuth {
   static isSupported() {
+    if (typeof window === 'undefined') return false;
     return 'credentials' in navigator && 'create' in navigator.credentials;
   }
 
   static async isAvailable() {
-    if (!this.isSupported()) return false;
+    if (typeof window === 'undefined' || !this.isSupported()) return false;
     
     try {
       // Check if WebAuthn is available
@@ -22,7 +23,7 @@ export class BiometricAuth {
   }
 
   static async register(username = 'pocketvault-user') {
-    if (!await this.isAvailable()) {
+    if (typeof window === 'undefined' || !await this.isAvailable()) {
       throw new Error('Biometric authentication not available');
     }
 
@@ -74,6 +75,10 @@ export class BiometricAuth {
   }
 
   static async authenticate() {
+    if (typeof window === 'undefined') {
+      throw new Error('Biometric authentication not available on server');
+    }
+    
     const credentialId = localStorage.getItem('pv_biometric_id');
     if (!credentialId || !await this.isAvailable()) {
       throw new Error('Biometric authentication not set up');
@@ -110,15 +115,18 @@ export class BiometricAuth {
   }
 
   static isEnabled() {
+    if (typeof window === 'undefined') return false;
     return localStorage.getItem('pv_biometric_enabled') === 'true';
   }
 
   static disable() {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem('pv_biometric_id');
     localStorage.removeItem('pv_biometric_enabled');
   }
 
   static getBiometricType() {
+    if (typeof window === 'undefined') return 'Biometric';
     // Detect device type for UI display
     const userAgent = navigator.userAgent;
     if (/iPhone|iPad|iPod/.test(userAgent)) {

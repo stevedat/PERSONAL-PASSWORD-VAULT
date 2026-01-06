@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { StorageEngine } from '../storage';
   import { isUnlocked, vaultItems, startAutoLock, biometricEnabled } from '../stores';
   import { BiometricAuth } from '../biometric';
@@ -12,6 +13,8 @@
   let biometricType = 'Biometric';
   
   async function checkForVault() {
+    if (typeof window === 'undefined') return;
+    
     hasExistingVault = await StorageEngine.hasVault();
     biometricSupported = await BiometricAuth.isAvailable();
     biometricEnabled.set(BiometricAuth.isEnabled());
@@ -144,7 +147,9 @@
     }
   }
   
-  checkForVault();
+  onMount(() => {
+    checkForVault();
+  });
 </script>
 
 {#if showBiometricSetup}

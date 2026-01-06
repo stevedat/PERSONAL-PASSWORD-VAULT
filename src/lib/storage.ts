@@ -9,6 +9,10 @@ export class StorageEngine {
   private static db: IDBDatabase | null = null;
   
   private static async openDB(): Promise<IDBDatabase> {
+    if (typeof window === 'undefined') {
+      throw new Error('IndexedDB not available on server');
+    }
+    
     if (this.db) return this.db;
     
     return new Promise((resolve, reject) => {
@@ -83,6 +87,8 @@ export class StorageEngine {
   }
   
   static async hasVault(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    
     const db = await this.openDB();
     
     return new Promise((resolve, reject) => {
