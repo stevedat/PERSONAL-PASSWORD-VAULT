@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pocketvault-v1';
+const CACHE_NAME = 'pocketvault-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -6,6 +6,7 @@ const STATIC_ASSETS = [
   '/icon-512.png'
 ];
 
+// Enhanced PWA features for iOS
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -53,4 +54,44 @@ self.addEventListener('fetch', (event) => {
       });
     })
   );
+});
+
+// Background sync for iOS PWA
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'vault-backup') {
+    event.waitUntil(performBackgroundSync());
+  }
+});
+
+async function performBackgroundSync() {
+  // Perform any background tasks here
+  console.log('Background sync performed');
+}
+
+// Handle app state changes
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'APP_STATE_CHANGE') {
+    const { state } = event.data;
+    
+    if (state === 'background') {
+      // App went to background, could trigger security measures
+      console.log('App backgrounded via service worker');
+    } else if (state === 'foreground') {
+      // App came to foreground
+      console.log('App foregrounded via service worker');
+    }
+  }
+});
+
+// iOS PWA specific handling
+self.addEventListener('beforeinstallprompt', (event) => {
+  // Prevent the mini-infobar from appearing on mobile
+  event.preventDefault();
+  // Store the event so it can be triggered later
+  self.deferredPrompt = event;
+});
+
+// Handle PWA installation
+self.addEventListener('appinstalled', (event) => {
+  console.log('PocketVault PWA installed');
 });

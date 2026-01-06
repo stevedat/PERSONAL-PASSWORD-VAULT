@@ -13,6 +13,8 @@ A minimal, offline-first, zero-cloud, encrypted password vault PWA built with Sv
 
 ## 🚀 Features
 
+- ✅ **Biometric Authentication** - FaceID/TouchID unlock on iOS
+- ✅ **Advanced Auto-Lock** - Smart background detection & timeout
 - ✅ Offline-first PWA (works without internet)
 - ✅ Add/Edit/Delete credentials
 - ✅ One-tap copy to clipboard
@@ -22,6 +24,7 @@ A minimal, offline-first, zero-cloud, encrypted password vault PWA built with Sv
 - ✅ Import vault files
 - ✅ Mobile-optimized interface
 - ✅ Auto-generated secure passwords
+- ✅ Native app experience on iOS
 
 ## 📱 Installation
 
@@ -93,12 +96,25 @@ vault.json → vault.encrypted → IndexedDB
 - **Zero third-party** - no external dependencies
 - **Open source** - fully auditable code
 
-## 📱 Browser Support
+## 📱 iOS PWA Features
 
-- Chrome/Edge 88+
-- Firefox 90+
-- Safari 14+
-- Mobile browsers with WebCrypto support
+### Biometric Authentication
+- **FaceID/TouchID** support for quick unlock
+- Automatic device detection (FaceID vs TouchID)
+- Secure credential storage using WebAuthn
+- Optional setup during vault creation
+
+### Advanced Auto-Lock
+- **Smart background detection** - locks when app is backgrounded
+- **Activity-based timeout** - 5 minutes of inactivity
+- **iOS-specific events** - handles PWA lifecycle properly
+- **Memory cleanup** - clears sensitive data on lock
+
+### Native App Experience
+- **Standalone display** - no browser UI
+- **App switcher integration** - appears as native app
+- **Launch handler** - focus existing instance
+- **Background sync** - for future enhancements
 
 ## 🔧 Configuration
 

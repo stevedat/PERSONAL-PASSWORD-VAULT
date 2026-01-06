@@ -1,13 +1,21 @@
 {
   "name": "PocketVault",
   "short_name": "PocketVault",
-  "description": "Secure offline password manager",
+  "description": "Secure offline password manager with biometric unlock",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
-  "categories": ["productivity", "utilities"],
+  "categories": ["productivity", "utilities", "security"],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -21,5 +29,12 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }

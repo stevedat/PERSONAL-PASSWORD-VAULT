@@ -1,11 +1,16 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import UnlockScreen from '$lib/components/UnlockScreen.svelte';
   import VaultItemComponent from '$lib/components/VaultItem.svelte';
   import AddEditForm from '$lib/components/AddEditForm.svelte';
   import { StorageEngine } from '$lib/storage';
-  import { isUnlocked, vaultItems, searchQuery, darkMode, showAddForm, editingItem, resetAutoLock, lock } from '$lib/stores';
+  import { 
+    isUnlocked, vaultItems, searchQuery, darkMode, showAddForm, editingItem, 
+    resetAutoLock, lock, biometricEnabled, appState,
+    initializeAppStateMonitoring, initializeActivityTracking, cleanup
+  } from '$lib/stores';
   import { CryptoEngine } from '$lib/crypto';
+  import { BiometricAuth } from '$lib/biometric';
   
   let filteredItems = [];
   let fileInput;
@@ -123,22 +128,24 @@
     darkMode.update(d => !d);
   }
   
-  // Reset auto-lock on user activity
+  function toggleBiometric() {
+    if ($biometricEnabled) {
+      BiometricAuth.disable();
+      biometricEnabled.set(false);
+    } else {
+      // Would trigger biometric setup flow
+      alert('Biometric setup would be triggered here');
+    }
+  }
+  
+  // Initialize enhanced monitoring and activity tracking
   onMount(() => {
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    const resetTimer = () => {
-      if ($isUnlocked) resetAutoLock();
-    };
-    
-    events.forEach(event => {
-      document.addEventListener(event, resetTimer, true);
-    });
-    
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, resetTimer, true);
-      });
-    };
+    initializeAppStateMonitoring();
+    initializeActivityTracking();
+  });
+  
+  onDestroy(() => {
+    cleanup();
   });
 </script>
 
@@ -157,6 +164,11 @@
           <button class="icon-btn" on:click={toggleTheme} title="Toggle theme">
             {$darkMode ? '☀️' : '🌙'}
           </button>
+          {#if $biometricEnabled}
+            <button class="icon-btn biometric-enabled" on:click={toggleBiometric} title="Biometric enabled">
+              {BiometricAuth.getBiometricType() === 'FaceID' ? '👤' : '👆'}
+            </button>
+          {/if}
           <button class="icon-btn" on:click={exportVault} title="Export vault">
             📤
           </button>
@@ -272,6 +284,15 @@
   
   .icon-btn:hover {
     background: var(--bg-hover);
+  }
+  
+  .biometric-enabled {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  .biometric-enabled:hover {
+    opacity: 0.9;
   }
   
   .search-input {
