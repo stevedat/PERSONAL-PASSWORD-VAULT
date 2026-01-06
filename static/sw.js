@@ -2,8 +2,8 @@ const CACHE_NAME = 'pocketvault-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/icon.svg',
+  '/favicon.svg'
 ];
 
 // Enhanced PWA features for iOS

@@ -153,10 +153,10 @@
 </script>
 
 {#if showBiometricSetup}
-  <div class="unlock-screen">
-    <div class="unlock-container">
-      <div class="logo">
-        <div class="biometric-icon">
+  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="glass-modal">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="font-size: 3.75rem; margin-bottom: 1rem;" class="animate-bounce-subtle">
           {#if biometricType === 'FaceID'}
             👤
           {:else if biometricType === 'TouchID'}
@@ -165,59 +165,81 @@
             🔐
           {/if}
         </div>
-        <h1>Set up {biometricType}</h1>
-        <p>Enable {biometricType} for quick and secure access</p>
+        <h1 style="font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem 0;" class="text-glass">Set up {biometricType}</h1>
+        <p class="text-glass-secondary">Enable {biometricType} for quick and secure access</p>
       </div>
       
-      <div class="form">
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
         {#if error}
-          <div class="error">{error}</div>
+          <div class="glass animate-fade-in" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.75rem; border-radius: 18px; font-size: 0.875rem; text-align: center;">
+            {error}
+          </div>
         {/if}
         
-        <button class="biometric-btn" on:click={setupBiometric} disabled={loading}>
+        <button 
+          class="glass-btn-primary haptic-medium" 
+          style="width: 100%; padding: 1rem; font-size: 1.125rem;"
+          on:click={setupBiometric} 
+          disabled={loading}
+        >
           {#if loading}
-            Setting up...
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <div class="glass-spinner"></div>
+              <span>Setting up...</span>
+            </div>
           {:else}
             Enable {biometricType}
           {/if}
         </button>
         
-        <button class="skip-btn" on:click={skipBiometricSetup}>
+        <button class="glass-btn haptic-light" style="width: 100%; padding: 0.75rem;" on:click={skipBiometricSetup}>
           Skip for now
         </button>
         
-        <div class="info">
-          <p>You can enable this later in settings</p>
+        <div style="text-align: center;">
+          <p style="font-size: 0.75rem; margin: 0;" class="text-glass-secondary">You can enable this later in settings</p>
         </div>
       </div>
     </div>
   </div>
 {:else}
-  <div class="unlock-screen">
-    <div class="unlock-container">
-      <div class="logo">
-        <div class="lock-icon">🔒</div>
-        <h1>PocketVault</h1>
-        <p>Secure Password Manager</p>
+  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="glass-modal">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="font-size: 3.75rem; margin-bottom: 1rem;" class="animate-bounce-subtle">🔒</div>
+        <h1 style="font-size: 1.875rem; font-weight: 700; margin: 0 0 0.5rem 0;" class="text-glass">PocketVault</h1>
+        <p class="text-glass-secondary">Secure Password Manager</p>
       </div>
       
-      <div class="form">
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
         {#if BiometricAuth.isEnabled() && hasExistingVault}
-          <button class="biometric-unlock-btn" on:click={unlockWithBiometric} disabled={loading}>
-            <div class="biometric-icon-small">
-              {#if biometricType === 'FaceID'}
-                👤
-              {:else if biometricType === 'TouchID'}
-                👆
-              {:else}
-                🔐
-              {/if}
+          <button 
+            class="glass-btn-primary haptic-medium" 
+            style="width: 100%; padding: 1rem; font-size: 1.125rem;"
+            on:click={unlockWithBiometric} 
+            disabled={loading}
+          >
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+              <div style="font-size: 1.25rem;">
+                {#if biometricType === 'FaceID'}
+                  👤
+                {:else if biometricType === 'TouchID'}
+                  👆
+                {:else}
+                  🔐
+                {/if}
+              </div>
+              <span>Unlock with {biometricType}</span>
             </div>
-            Unlock with {biometricType}
           </button>
           
-          <div class="divider">
-            <span>or</span>
+          <div style="position: relative;">
+            <div style="position: absolute; inset: 0; display: flex; align-items: center;">
+              <div style="width: 100%; border-top: 1px solid rgba(255,255,255,0.35);"></div>
+            </div>
+            <div style="position: relative; display: flex; justify-content: center; font-size: 0.875rem;">
+              <span class="glass text-glass-secondary" style="padding: 0 1rem; font-size: 0.75rem;">or</span>
+            </div>
           </div>
         {/if}
         
@@ -225,22 +247,29 @@
           type="password"
           bind:value={masterPassword}
           placeholder={hasExistingVault ? 'Enter master password' : 'Create master password'}
-          class="password-input"
+          class="glass-input"
+          style="font-size: 1.125rem; padding: 1rem;"
           on:keydown={handleKeydown}
           disabled={loading}
         />
         
         {#if error}
-          <div class="error">{error}</div>
+          <div class="glass animate-fade-in" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.75rem; border-radius: 18px; font-size: 0.875rem; text-align: center;">
+            {error}
+          </div>
         {/if}
         
         <button
-          class="unlock-btn"
+          class="glass-btn-primary haptic-heavy"
+          style="width: 100%; padding: 1rem; font-size: 1.125rem;"
           on:click={hasExistingVault ? unlock : createVault}
           disabled={loading || !masterPassword.trim()}
         >
           {#if loading}
-            Unlocking...
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <div class="glass-spinner"></div>
+              <span>Unlocking...</span>
+            </div>
           {:else if hasExistingVault}
             Unlock Vault
           {:else}
@@ -249,186 +278,13 @@
         </button>
         
         {#if !hasExistingVault}
-          <div class="info">
-            <p>Choose a strong master password. This cannot be recovered if forgotten.</p>
+          <div class="glass" style="padding: 1rem; text-align: center;">
+            <p style="font-size: 0.75rem; margin: 0; line-height: 1.6;" class="text-glass-secondary">
+              Choose a strong master password. This cannot be recovered if forgotten.
+            </p>
           </div>
         {/if}
       </div>
     </div>
   </div>
 {/if}
-
-<style>
-  .unlock-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 1rem;
-  }
-  
-  .unlock-container {
-    background: var(--bg-primary);
-    border-radius: 1rem;
-    padding: 2rem;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  }
-  
-  .logo {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-  
-  .lock-icon, .biometric-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-  
-  .biometric-icon-small {
-    font-size: 1.2rem;
-    margin-right: 0.5rem;
-  }
-  
-  h1 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-primary);
-    font-size: 1.8rem;
-    font-weight: 600;
-  }
-  
-  p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-  }
-  
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .biometric-unlock-btn {
-    padding: 1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .biometric-unlock-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-  
-  .biometric-btn {
-    padding: 1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  
-  .biometric-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-  
-  .skip-btn {
-    padding: 0.75rem;
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .skip-btn:hover {
-    background: var(--bg-hover);
-  }
-  
-  .divider {
-    text-align: center;
-    position: relative;
-    margin: 0.5rem 0;
-  }
-  
-  .divider::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--border);
-  }
-  
-  .divider span {
-    background: var(--bg-primary);
-    padding: 0 1rem;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-  }
-  
-  .password-input {
-    padding: 1rem;
-    border: 2px solid var(--border);
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    transition: border-color 0.2s;
-  }
-  
-  .password-input:focus {
-    outline: none;
-    border-color: var(--primary);
-  }
-  
-  .unlock-btn {
-    padding: 1rem;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .unlock-btn:hover:not(:disabled) {
-    background: var(--primary-dark);
-  }
-  
-  .unlock-btn:disabled, .biometric-unlock-btn:disabled, .biometric-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
-  .error {
-    color: var(--error);
-    font-size: 0.9rem;
-    text-align: center;
-  }
-  
-  .info {
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-  }
-</style>

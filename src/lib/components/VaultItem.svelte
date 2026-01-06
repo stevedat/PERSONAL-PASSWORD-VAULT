@@ -26,41 +26,59 @@
   }
 </script>
 
-<div class="vault-item">
-  <div class="item-header">
-    <h3 class="item-title">{item.title}</h3>
-    <div class="item-actions">
-      <button class="action-btn" on:click={editItem} title="Edit">
+<div class="glass-card animate-slide-up">
+  <div class="flex justify-between items-start mb-4">
+    <h3 class="text-lg font-semibold text-glass dark:text-glass-dark truncate flex-1 mr-2">{item.title}</h3>
+    <div class="flex space-x-2 flex-shrink-0">
+      <button 
+        class="glass-btn p-2 text-sm haptic-light hover:scale-110" 
+        on:click={editItem} 
+        title="Edit"
+      >
         ✏️
       </button>
-      <button class="action-btn delete" on:click={() => onDelete(item.id)} title="Delete">
+      <button 
+        class="glass-btn-danger p-2 text-sm haptic-heavy hover:scale-110" 
+        on:click={() => onDelete(item.id)} 
+        title="Delete"
+      >
         🗑️
       </button>
     </div>
   </div>
   
-  <div class="item-content">
-    <div class="field">
-      <span class="field-label">Username</span>
-      <div class="field-value">
-        <span class="value">{item.username}</span>
-        <button class="copy-btn" on:click={() => copyToClipboard(item.username)}>
+  <div class="space-y-3">
+    <div class="space-y-1">
+      <span class="field-label text-xs font-medium text-glass-secondary dark:text-glass-secondary-dark uppercase tracking-wide">Username</span>
+      <div class="flex items-center justify-between glass p-3 rounded-lg">
+        <span class="text-glass dark:text-glass-dark font-mono text-sm flex-1 truncate">{item.username}</span>
+        <button 
+          class="glass-btn-primary px-3 py-1 text-xs haptic-medium ml-2" 
+          on:click={() => copyToClipboard(item.username)}
+        >
           Copy
         </button>
       </div>
     </div>
     
-    <div class="field">
-      <span class="field-label">Password</span>
-      <div class="field-value">
-        <span class="value password">
-          {showPassword ? item.password : '••••••••'}
+    <div class="space-y-1">
+      <span class="field-label text-xs font-medium text-glass-secondary dark:text-glass-secondary-dark uppercase tracking-wide">Password</span>
+      <div class="flex items-center justify-between glass p-3 rounded-lg">
+        <span class="text-glass dark:text-glass-dark font-mono text-sm flex-1 truncate">
+          {showPassword ? item.password : '••••••••••••'}
         </span>
-        <div class="password-actions">
-          <button class="toggle-btn" on:click={() => showPassword = !showPassword}>
+        <div class="flex space-x-2 ml-2">
+          <button 
+            class="glass-btn p-2 text-xs haptic-light hover:scale-110" 
+            on:click={() => showPassword = !showPassword}
+            title={showPassword ? 'Hide password' : 'Show password'}
+          >
             {showPassword ? '🙈' : '👁️'}
           </button>
-          <button class="copy-btn" on:click={() => copyToClipboard(item.password)}>
+          <button 
+            class="glass-btn-primary px-3 py-1 text-xs haptic-medium" 
+            on:click={() => copyToClipboard(item.password)}
+          >
             Copy
           </button>
         </div>
@@ -68,127 +86,13 @@
     </div>
     
     {#if item.note}
-      <div class="field">
-        <span class="field-label">Note</span>
-        <div class="field-value">
-          <span class="value note">{item.note}</span>
+      <div class="space-y-1">
+        <span class="field-label text-xs font-medium text-glass-secondary dark:text-glass-secondary-dark uppercase tracking-wide">Note</span>
+        <div class="glass p-3 rounded-lg">
+          <span class="text-glass dark:text-glass-dark text-sm whitespace-pre-wrap">{item.note}</span>
         </div>
       </div>
     {/if}
   </div>
 </div>
 
-<style>
-  .vault-item {
-    background: var(--bg-secondary);
-    border-radius: 0.75rem;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--border);
-  }
-  
-  .item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  
-  .item-title {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-  
-  .item-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  .action-btn {
-    background: none;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 0.25rem;
-    transition: background-color 0.2s;
-  }
-  
-  .action-btn:hover {
-    background: var(--bg-hover);
-  }
-  
-  .action-btn.delete:hover {
-    background: var(--error-light);
-  }
-  
-  .item-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  
-  .field-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-  
-  .field-value {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .value {
-    color: var(--text-primary);
-    font-family: monospace;
-    font-size: 0.9rem;
-    flex: 1;
-    word-break: break-all;
-  }
-  
-  .value.note {
-    font-family: inherit;
-    white-space: pre-wrap;
-  }
-  
-  .password-actions {
-    display: flex;
-    gap: 0.25rem;
-  }
-  
-  .copy-btn, .toggle-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    white-space: nowrap;
-  }
-  
-  .copy-btn:hover, .toggle-btn:hover {
-    background: var(--primary-dark);
-  }
-  
-  .toggle-btn {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
-  
-  .toggle-btn:hover {
-    background: var(--bg-hover);
-  }
-</style>
