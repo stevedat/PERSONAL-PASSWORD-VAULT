@@ -11,21 +11,30 @@
   let isEditing = false;
   let editId = '';
   
-  // Watch for changes in editingItem and showAddForm
-  $: if ($editingItem) {
-    isEditing = true;
-    editId = $editingItem.id;
-    title = $editingItem.title;
-    username = $editingItem.username;
-    password = $editingItem.password;
-    note = $editingItem.note || '';
-  } else if ($showAddForm) {
-    isEditing = false;
-    editId = '';
-    title = '';
-    username = '';
-    password = '';
-    note = '';
+  // Watch for changes in editingItem
+  $: {
+    if ($editingItem) {
+      console.log('[AddEditForm] Editing item:', $editingItem.id);
+      isEditing = true;
+      editId = $editingItem.id;
+      title = $editingItem.title;
+      username = $editingItem.username;
+      password = $editingItem.password;
+      note = $editingItem.note || '';
+    }
+  }
+  
+  // Watch for changes in showAddForm
+  $: {
+    if ($showAddForm && !$editingItem) {
+      console.log('[AddEditForm] Adding new item');
+      isEditing = false;
+      editId = '';
+      title = '';
+      username = '';
+      password = '';
+      note = '';
+    }
   }
   
   function generatePassword() {
@@ -51,11 +60,18 @@
       note: note.trim() || undefined
     };
     
+    console.log('[AddEditForm] Saving item:', {
+      id: item.id,
+      isEditing,
+      title: item.title
+    });
+    
     onSave(item);
     cancel();
   }
   
   function cancel() {
+    console.log('[AddEditForm] Cancelled');
     showAddForm.set(false);
     editingItem.set(null);
   }

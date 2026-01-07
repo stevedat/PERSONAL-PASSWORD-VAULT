@@ -36,6 +36,7 @@
   }
   
   function editItem() {
+    console.log('[VaultItem] Edit clicked for item:', item.id, item.title);
     editingItem.set(item);
   }
 </script>

@@ -19,17 +19,31 @@
   import { logAppInit, suppressExtensionErrors } from '$lib/logger';
   
   let filteredItems = [];
-  let fileInput;
   let successMessage = '';
   let successTimeout;
   
-  $: filteredItems = $vaultItems.filter(item => 
-    !$searchQuery || 
-    item.title.toLowerCase().includes($searchQuery.toLowerCase()) ||
-    item.username.toLowerCase().includes($searchQuery.toLowerCase())
-  );
+  // Reactive statement to filter items
+  $: {
+    filteredItems = $vaultItems.filter(item => 
+      !$searchQuery || 
+      item.title.toLowerCase().includes($searchQuery.toLowerCase()) ||
+      item.username.toLowerCase().includes($searchQuery.toLowerCase())
+    );
+    console.log('[Main] Filtered items updated:', {
+      total: $vaultItems.length,
+      filtered: filteredItems.length,
+      searchQuery: $searchQuery
+    });
+  }
+  let fileInput;
   
   async function saveItem(item) {
+    console.log('[Main] saveItem called:', {
+      id: item.id,
+      title: item.title,
+      isNew: !$vaultItems.find(i => i.id === item.id)
+    });
+    
     const currentItems = $vaultItems;
     const existingIndex = currentItems.findIndex(i => i.id === item.id);
     
@@ -37,15 +51,20 @@
     const isNewItem = existingIndex < 0;
     
     if (existingIndex >= 0) {
+      console.log('[Main] Updating existing item at index:', existingIndex);
       updatedItems = [...currentItems];
       updatedItems[existingIndex] = item;
     } else {
+      console.log('[Main] Adding new item');
       updatedItems = [...currentItems, item];
     }
+    
+    console.log('[Main] Updated items count:', updatedItems.length);
     
     // Use cached master password from session
     const masterPassword = sessionStorage.getItem('pv_master_key');
     if (!masterPassword) {
+      console.log('[Main] No cached master password, prompting user');
       const inputPassword = prompt('Enter master password to save changes:');
       if (!inputPassword) return;
       
@@ -57,17 +76,24 @@
         
         // Create auto-backup
         await AutoBackupService.createBackup(updatedItems, inputPassword);
+        
+        console.log('[Main] Vault saved successfully');
       } catch (error) {
+        console.error('[Main] Save failed:', error);
         alert('Failed to save: Invalid master password');
         return;
       }
     } else {
       try {
+        console.log('[Main] Saving with cached password');
         await StorageEngine.saveVault(updatedItems, masterPassword);
         
         // Create auto-backup
         await AutoBackupService.createBackup(updatedItems, masterPassword);
+        
+        console.log('[Main] Vault saved successfully');
       } catch (error) {
+        console.error('[Main] Save failed with cached password:', error);
         // Master password might have changed, ask for new one
         sessionStorage.removeItem('pv_master_key');
         const inputPassword = prompt('Master password expired. Enter password to save:');
@@ -79,13 +105,18 @@
           
           // Create auto-backup
           await AutoBackupService.createBackup(updatedItems, inputPassword);
+          
+          console.log('[Main] Vault saved successfully after password refresh');
         } catch (error) {
+          console.error('[Main] Save failed after password refresh:', error);
           alert('Failed to save: Invalid master password');
           return;
         }
       }
     }
     
+    // IMPORTANT: Update the store AFTER successful save
+    console.log('[Main] Updating vaultItems store');
     vaultItems.set(updatedItems);
     resetAutoLock();
     
@@ -96,7 +127,8 @@
     }
     
     // Show success feedback
-    showSuccessMessage('Password saved successfully');
+    showSuccessMessage(isNewItem ? 'Password added successfully' : 'Password updated successfully');
+    console.log('[Main] Save complete, store updated');
   }
   
   async function deleteItem(id) {
@@ -332,7 +364,9 @@
   }
   
   function addNew() {
+    console.log('[Main] Add new password clicked');
     showAddForm.set(true);
+    editingItem.set(null); // Clear any editing state
   }
   
   function toggleTheme() {
@@ -363,6 +397,24 @@
     
     // Reset reminder session flag
     ReminderSystem.resetSession();
+    
+    // Debug: Watch vaultItems changes
+    vaultItems.subscribe(items => {
+      console.log('[Main] vaultItems store changed:', {
+        count: items.length,
+        items: items.map(i => ({ id: i.id, title: i.title }))
+      });
+    });
+    
+    // Debug: Watch editingItem changes
+    editingItem.subscribe(item => {
+      console.log('[Main] editingItem store changed:', item ? { id: item.id, title: item.title } : null);
+    });
+    
+    // Debug: Watch showAddForm changes
+    showAddForm.subscribe(show => {
+      console.log('[Main] showAddForm store changed:', show);
+    });
   });
   
   onDestroy(() => {
