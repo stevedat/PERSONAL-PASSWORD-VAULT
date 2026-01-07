@@ -492,8 +492,8 @@
   
   function addNew() {
     console.log('[Main] Add new password clicked');
-    showAddForm.set(true);
-    editingItem.set(null); // Clear any editing state
+    editingItem.set(null); // Clear editing state FIRST
+    showAddForm.set(true); // Then show form
   }
   
   function toggleTheme() {

@@ -32,9 +32,10 @@
     { value: 'other', label: 'Other', icon: '📌' }
   ];
   
-  // Watch for changes in editingItem - only update if ID changed
+  // Single reactive statement to handle both edit and add modes
   $: {
     if ($editingItem && $editingItem.id !== lastEditingId) {
+      // EDIT MODE: Load item data
       console.log('[AddEditForm] Editing item:', $editingItem.id);
       lastEditingId = $editingItem.id;
       isEditing = true;
@@ -44,34 +45,23 @@
       password = $editingItem.password;
       note = $editingItem.note || '';
       category = $editingItem.category || 'other';
-      
-      // Reset password security state
       showPassword = false;
       passwordUnlocked = false;
-    } else if (!$editingItem && lastEditingId !== null) {
-      // Reset when editingItem is cleared
-      console.log('[AddEditForm] Clearing edit state');
-      lastEditingId = null;
-      isEditing = false;
-      editId = '';
-    }
-  }
-  
-  // Watch for changes in showAddForm - reset form for new item
-  $: {
-    if ($showAddForm && !$editingItem) {
-      console.log('[AddEditForm] Opening add form, resetting all fields');
-      // Force reset all fields
-      isEditing = false;
-      editId = '';
-      title = '';
-      username = '';
-      password = '';
-      note = '';
-      category = 'other';
-      lastEditingId = null;
-      showPassword = false;
-      passwordUnlocked = false;
+    } else if ($showAddForm && !$editingItem) {
+      // ADD MODE: Reset all fields (only if not already reset)
+      if (isEditing || title || username || password || note || category !== 'other') {
+        console.log('[AddEditForm] Opening add form, resetting all fields');
+        isEditing = false;
+        editId = '';
+        title = '';
+        username = '';
+        password = '';
+        note = '';
+        category = 'other';
+        lastEditingId = null;
+        showPassword = false;
+        passwordUnlocked = false;
+      }
     }
   }
   

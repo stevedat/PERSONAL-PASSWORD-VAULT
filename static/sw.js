@@ -1,5 +1,5 @@
-const CACHE_NAME = 'pocketvault-v3'; // Increment version for updates
-const APP_VERSION = '1.0.0';
+const CACHE_NAME = 'pocketvault-v4'; // Increment version for updates
+const APP_VERSION = '1.0.1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
