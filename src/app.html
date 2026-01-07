@@ -34,9 +34,53 @@
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
 		<script>
+			// Global error handler
+			window.addEventListener('error', (event) => {
+				console.error('[Global Error]', {
+					message: event.message,
+					filename: event.filename,
+					lineno: event.lineno,
+					colno: event.colno,
+					error: event.error
+				});
+			});
+			
+			// Unhandled promise rejections
+			window.addEventListener('unhandledrejection', (event) => {
+				console.error('[Unhandled Rejection]', event.reason);
+				event.preventDefault(); // Prevent default error handling
+			});
+			
+			// Service Worker registration with error handling
 			if ('serviceWorker' in navigator) {
-				navigator.serviceWorker.register('/sw.js');
+				navigator.serviceWorker.register('/sw.js')
+					.then((registration) => {
+						console.log('[SW] Registered successfully');
+					})
+					.catch((error) => {
+						console.error('[SW] Registration failed:', error);
+					});
 			}
+			
+			// Performance monitoring - detect freezes
+			let lastCheck = Date.now();
+			let freezeCount = 0;
+			
+			setInterval(() => {
+				const now = Date.now();
+				const delta = now - lastCheck;
+				
+				if (delta > 1500) { // More than 1.5 seconds = freeze
+					freezeCount++;
+					console.warn('[FREEZE DETECTED]', {
+						duration: delta + 'ms',
+						count: freezeCount,
+						timestamp: new Date().toISOString()
+					});
+				}
+				
+				lastCheck = now;
+			}, 500);
 		</script>
 	</body>
 </html>
