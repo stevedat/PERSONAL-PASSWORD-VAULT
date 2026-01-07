@@ -1,6 +1,7 @@
 <script>
   export let type = 'export'; // 'export' or 'import'
   export let show = false;
+  export let onClose = () => {}; // Callback to close tooltip
   
   const content = {
     export: {
@@ -28,10 +29,18 @@
   };
   
   $: info = content[type];
+  
+  function handleClick(event) {
+    // Close tooltip when clicked
+    event.stopPropagation();
+    onClose();
+  }
 </script>
 
 {#if show}
-  <div class="tooltip glass animate-fade-in">
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="tooltip glass animate-fade-in" on:click={handleClick}>
     <div class="tooltip-header">
       <span class="tooltip-icon">{info.icon}</span>
       <h4 class="tooltip-title text-glass">{info.title}</h4>
@@ -49,6 +58,10 @@
     <div class="tooltip-security">
       <span class="security-badge">{info.security}</span>
     </div>
+    
+    <div class="tooltip-hint">
+      <span style="font-size: 0.6875rem; opacity: 0.6;">Tap to close</span>
+    </div>
   </div>
 {/if}
 
@@ -62,7 +75,8 @@
     border-radius: 14px;
     z-index: 100;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
   }
 
   :global(.dark) .tooltip {
@@ -146,6 +160,17 @@
   :global(.dark) .security-badge {
     background: rgba(34, 197, 94, 0.25);
     color: #4ade80;
+  }
+
+  .tooltip-hint {
+    text-align: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.dark) .tooltip-hint {
+    border-top-color: rgba(255, 255, 255, 0.1);
   }
 
   /* Mobile optimization */

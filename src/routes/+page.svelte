@@ -525,6 +525,14 @@
     // Reset reminder session flag
     ReminderSystem.resetSession();
     
+    // Global click handler to close tooltips
+    const handleGlobalClick = () => {
+      showExportTooltip = false;
+      showImportTooltip = false;
+    };
+    
+    document.addEventListener('click', handleGlobalClick);
+    
     // Debug: Watch vaultItems changes
     vaultItems.subscribe(items => {
       console.log('[Main] vaultItems store changed:', {
@@ -542,6 +550,10 @@
     showAddForm.subscribe(show => {
       console.log('[Main] showAddForm store changed:', show);
     });
+    
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+    };
   });
   
   onDestroy(() => {
@@ -581,27 +593,35 @@
             <button 
               class="glass-btn haptic-light" 
               style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" 
-              on:click={exportVault}
+              on:click={(e) => {
+                e.stopPropagation();
+                exportVault();
+                showExportTooltip = false;
+              }}
               on:mouseenter={() => showExportTooltip = true}
               on:mouseleave={() => showExportTooltip = false}
               title="Export vault"
             >
               <span style="font-size: 1.25rem;">📤</span>
             </button>
-            <BackupTooltip type="export" show={showExportTooltip} />
+            <BackupTooltip type="export" show={showExportTooltip} onClose={() => showExportTooltip = false} />
           </div>
           <div style="position: relative;">
             <button 
               class="glass-btn haptic-light" 
               style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" 
-              on:click={importVault}
+              on:click={(e) => {
+                e.stopPropagation();
+                importVault();
+                showImportTooltip = false;
+              }}
               on:mouseenter={() => showImportTooltip = true}
               on:mouseleave={() => showImportTooltip = false}
               title="Import vault"
             >
               <span style="font-size: 1.25rem;">📥</span>
             </button>
-            <BackupTooltip type="import" show={showImportTooltip} />
+            <BackupTooltip type="import" show={showImportTooltip} onClose={() => showImportTooltip = false} />
           </div>
           <button class="glass-btn haptic-medium" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={lock} title="Lock vault">
             <span style="font-size: 1.25rem;">🔒</span>
