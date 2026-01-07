@@ -181,11 +181,19 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding: 1rem;
+    padding: 0;
     z-index: 1000;
     animation: fadeIn 0.2s ease-out;
+  }
+  
+  /* Tablet/iPad - center modal */
+  @media (min-width: 768px) {
+    .modal-backdrop {
+      align-items: center;
+      padding: 1rem;
+    }
   }
   
   @keyframes fadeIn {

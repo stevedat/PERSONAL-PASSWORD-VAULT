@@ -507,32 +507,32 @@
   <div style="min-height: 100vh;">
     <header class="glass-header">
       {#if successMessage}
-        <div class="glass animate-fade-in" style="background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; padding: 0.75rem; border-radius: 18px; font-size: 0.875rem; text-align: center; margin-bottom: 1rem;">
+        <div class="glass animate-fade-in" style="background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; padding: 0.875rem; border-radius: 18px; font-size: 0.875rem; text-align: center; margin-bottom: 1rem;">
           {successMessage}
         </div>
       {/if}
       
       <ReminderBanner onBackupNow={exportVault} />
       
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h1 style="margin: 0; font-size: 1.25rem; font-weight: 600;" class="text-glass">🔒 PocketVault</h1>
-        <div style="display: flex; gap: 0.5rem;">
-          <button class="glass-btn haptic-light" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={toggleTheme} title="Toggle theme">
-            {$darkMode ? '☀️' : '🌙'}
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.75rem;">
+        <h1 style="margin: 0; font-size: 1.5rem; font-weight: 600; flex-shrink: 0;" class="text-glass">🔒 PocketVault</h1>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+          <button class="glass-btn haptic-light" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={toggleTheme} title="Toggle theme">
+            <span style="font-size: 1.25rem;">{$darkMode ? '☀️' : '🌙'}</span>
           </button>
           {#if $biometricEnabled}
-            <button class="glass-btn-primary" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={toggleBiometric} title="Biometric enabled">
-              {BiometricAuth.getBiometricType() === 'FaceID' ? '👤' : '👆'}
+            <button class="glass-btn-primary" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={toggleBiometric} title="Biometric enabled">
+              <span style="font-size: 1.25rem;">{BiometricAuth.getBiometricType() === 'FaceID' ? '👤' : '👆'}</span>
             </button>
           {/if}
-          <button class="glass-btn haptic-light" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={exportVault} title="Export vault">
-            📤
+          <button class="glass-btn haptic-light" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={exportVault} title="Export vault">
+            <span style="font-size: 1.25rem;">📤</span>
           </button>
-          <button class="glass-btn haptic-light" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={importVault} title="Import vault">
-            📥
+          <button class="glass-btn haptic-light" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={importVault} title="Import vault">
+            <span style="font-size: 1.25rem;">📥</span>
           </button>
-          <button class="glass-btn haptic-medium" style="padding: 0.5rem; border-radius: 0.5rem;" on:click={lock} title="Lock vault">
-            🔒
+          <button class="glass-btn haptic-medium" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={lock} title="Lock vault">
+            <span style="font-size: 1.25rem;">🔒</span>
           </button>
         </div>
       </div>
@@ -543,27 +543,27 @@
           placeholder="Search passwords..."
           bind:value={$searchQuery}
           class="glass-input"
-          style="width: 100%; padding: 0.75rem;"
+          style="width: 100%; padding: 0.875rem; border-radius: 14px;"
         />
       </div>
     </header>
     
-    <main style="padding: 1rem; padding-bottom: 5rem;">
-      <div style="max-width: 600px; margin: 0 auto;">
+    <main style="padding: 1rem; padding-bottom: 6rem;">
+      <div style="max-width: 100%; margin: 0 auto;">
         {#if filteredItems.length === 0}
           <div style="text-align: center; padding: 3rem 1rem;" class="text-glass-secondary">
             {#if $vaultItems.length === 0}
-              <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
-              <h2 style="margin: 0 0 0.5rem 0;" class="text-glass">Your vault is empty</h2>
-              <p style="margin: 0;">Add your first password to get started</p>
+              <div style="font-size: 4rem; margin-bottom: 1rem;">🔐</div>
+              <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;" class="text-glass">Your vault is empty</h2>
+              <p style="margin: 0; font-size: 1rem;">Add your first password to get started</p>
             {:else}
-              <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
-              <h2 style="margin: 0 0 0.5rem 0;" class="text-glass">No matches found</h2>
-              <p style="margin: 0;">Try a different search term</p>
+              <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+              <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;" class="text-glass">No matches found</h2>
+              <p style="margin: 0; font-size: 1rem;">Try a different search term</p>
             {/if}
           </div>
         {:else}
-          <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; flex-direction: column; gap: 0.875rem;">
             {#each filteredItems as item (item.id)}
               <VaultItemComponent {item} onDelete={deleteItem} />
             {/each}
@@ -572,7 +572,7 @@
       </div>
     </main>
     
-    <div style="position: fixed; bottom: 2rem; right: 2rem; z-index: 100;">
+    <div style="position: fixed; bottom: 2rem; right: 1.5rem; z-index: 100;">
       <button class="glass-fab haptic-heavy" on:click={addNew} title="Add password">
         +
       </button>
