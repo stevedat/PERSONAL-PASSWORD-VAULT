@@ -122,72 +122,70 @@
   }
 </script>
 
-<div class="glass-card animate-slide-up">
-  <div class="flex justify-between items-start mb-3">
-    <div class="flex-1 mr-2">
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.375rem;">
-        <h3 class="text-lg font-semibold text-glass truncate" style="margin: 0;">{item.title}</h3>
-        {#if item.category}
-          <span class="category-tag category-{item.category}" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
-            {categoryIcons[item.category]} {categoryLabels[item.category]}
-          </span>
-        {/if}
-      </div>
+<div class="vault-card glass animate-slide-up">
+  <div class="card-header">
+    <div class="card-title-section">
+      <h3 class="card-title text-glass">{item.title}</h3>
+      {#if item.category}
+        <span class="category-tag category-{item.category}">
+          {categoryIcons[item.category]} {categoryLabels[item.category]}
+        </span>
+      {/if}
     </div>
-    <div class="flex space-x-2 flex-shrink-0">
+    <div class="card-actions">
       <button 
-        class="glass-btn haptic-light hover:scale-110" 
-        style="padding: 0.5rem; min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px;"
+        class="action-btn action-btn-edit haptic-light" 
         on:click={editItem} 
         title="Edit"
+        aria-label="Edit password"
       >
-        <span style="font-size: 1.125rem;">✏️</span>
+        <span class="action-icon">✏️</span>
       </button>
       <button 
-        class="glass-btn-danger haptic-heavy hover:scale-110" 
-        style="padding: 0.5rem; min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px;"
+        class="action-btn action-btn-delete haptic-heavy" 
         on:click={() => onDelete(item.id)} 
         title="Delete"
+        aria-label="Delete password"
       >
-        <span style="font-size: 1.125rem;">🗑️</span>
+        <span class="action-icon">🗑️</span>
       </button>
     </div>
   </div>
   
-  <div class="space-y-3">
-    <div class="space-y-1">
-      <span class="field-label text-xs font-medium text-glass-secondary uppercase tracking-wide">Username</span>
-      <div class="flex items-center justify-between glass p-3 rounded-lg">
-        <span class="text-glass font-mono text-sm flex-1 truncate">{item.username}</span>
+  <div class="card-body">
+    <div class="field-group">
+      <label class="field-label text-glass-secondary">Username</label>
+      <div class="field-content glass-field">
+        <span class="field-value text-glass">{item.username}</span>
         <button 
-          class="glass-btn-primary haptic-medium ml-2" 
-          style="padding: 0.5rem 0.875rem; font-size: 0.75rem; min-height: 36px;"
+          class="field-btn glass-btn-primary haptic-medium" 
           on:click={() => copyToClipboard(item.username, 'username')}
+          aria-label="Copy username"
         >
           {copyFeedback.username ? '✓ Copied!' : 'Copy'}
         </button>
       </div>
     </div>
     
-    <div class="space-y-1">
-      <span class="field-label text-xs font-medium text-glass-secondary uppercase tracking-wide">Password</span>
-      <div class="flex items-center justify-between glass p-3 rounded-lg">
-        <span class="text-glass font-mono text-sm flex-1 truncate">
+    <div class="field-group">
+      <label class="field-label text-glass-secondary">Password</label>
+      <div class="field-content glass-field">
+        <span class="field-value text-glass">
           {showPassword ? item.password : '••••••••••••'}
         </span>
-        <div class="flex space-x-2 ml-2">
+        <div class="field-actions">
           <button 
-            class="glass-btn haptic-light hover:scale-110" 
-            style="padding: 0.5rem; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px;"
+            class="field-btn-icon glass-btn haptic-light" 
             on:click={togglePasswordVisibility}
             title={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            <span style="font-size: 1rem;">{showPassword ? '🙈' : '👁️'}</span>
+            <span class="action-icon">{showPassword ? '🙈' : '👁️'}</span>
           </button>
           <button 
-            class="glass-btn-primary haptic-medium" 
-            style="padding: 0.5rem 0.875rem; font-size: 0.75rem; min-height: 36px;"
+            class="field-btn glass-btn-primary haptic-medium" 
             on:click={() => copyToClipboard(item.password, 'password')}
+            aria-label="Copy password"
           >
             {copyFeedback.password ? '✓ Copied!' : 'Copy'}
           </button>
@@ -196,10 +194,10 @@
     </div>
     
     {#if item.note}
-      <div class="space-y-1">
-        <span class="field-label text-xs font-medium text-glass-secondary uppercase tracking-wide">Note</span>
-        <div class="glass p-3 rounded-lg">
-          <span class="text-glass text-sm whitespace-pre-wrap">{item.note}</span>
+      <div class="field-group">
+        <label class="field-label text-glass-secondary">Note</label>
+        <div class="field-content glass-field field-note">
+          <span class="field-value text-glass">{item.note}</span>
         </div>
       </div>
     {/if}
@@ -261,6 +259,245 @@
 {/if}
 
 <style>
+  /* Vault Card - Rounded corners */
+  .vault-card {
+    padding: 1.25rem;
+    border-radius: 20px;
+    cursor: default;
+    transition: all 0.3s ease-out;
+  }
+
+  .vault-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  }
+
+  :global(.dark) .vault-card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Card Header */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+  }
+
+  .card-title-section {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Action Buttons */
+  .action-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn-edit {
+    background: rgba(91, 140, 255, 0.1);
+    color: #5b8cff;
+  }
+
+  .action-btn-edit:hover {
+    background: rgba(91, 140, 255, 0.2);
+    transform: scale(1.05);
+  }
+
+  :global(.dark) .action-btn-edit {
+    background: rgba(91, 140, 255, 0.15);
+    color: #60a5fa;
+  }
+
+  :global(.dark) .action-btn-edit:hover {
+    background: rgba(91, 140, 255, 0.25);
+  }
+
+  .action-btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+
+  .action-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.05);
+  }
+
+  :global(.dark) .action-btn-delete {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+  }
+
+  :global(.dark) .action-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.25);
+  }
+
+  .action-icon {
+    font-size: 1.125rem;
+  }
+
+  /* Card Body */
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  /* Field Group */
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+  }
+
+  /* Glass Field - Rounded */
+  .glass-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.2s;
+  }
+
+  :global(.dark) .glass-field {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-field:hover {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  :global(.dark) .glass-field:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .field-note {
+    align-items: flex-start;
+  }
+
+  .field-value {
+    flex: 1;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.5;
+  }
+
+  .field-note .field-value {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .field-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Field Buttons */
+  .field-btn,
+  .field-btn-icon {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 36px;
+    white-space: nowrap;
+  }
+
+  .field-btn-icon {
+    padding: 0.5rem;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .field-btn-icon .action-icon {
+    font-size: 1rem;
+  }
+
+  /* Mobile optimization */
+  @media (max-width: 480px) {
+    .vault-card {
+      padding: 1rem;
+      border-radius: 18px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+    }
+
+    .action-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+
+    .action-icon {
+      font-size: 1rem;
+    }
+
+    .glass-field {
+      padding: 0.75rem 0.875rem;
+      border-radius: 14px;
+    }
+
+    .field-value {
+      font-size: 0.8125rem;
+    }
+
+    .field-btn {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.7rem;
+    }
+  }
+
   /* Verification Popup */
   .verify-backdrop {
     position: fixed;
