@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import type { VaultItem } from './crypto';
+import type { ReminderType } from './reminders';
 
 export const isUnlocked = writable(false);
 export const vaultItems = writable<VaultItem[]>([]);
@@ -9,6 +10,7 @@ export const showAddForm = writable(false);
 export const editingItem = writable<VaultItem | null>(null);
 export const biometricEnabled = writable(false);
 export const appState = writable('active'); // 'active', 'background', 'locked'
+export const showReminder = writable<ReminderType | null>(null);
 
 // Helper to get current state
 function getCurrentAppState() {

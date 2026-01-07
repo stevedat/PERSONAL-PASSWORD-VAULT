@@ -1,8 +1,9 @@
 <script>
   import { onMount } from 'svelte';
   import { StorageEngine } from '../storage';
-  import { isUnlocked, vaultItems, startAutoLock, biometricEnabled } from '../stores';
+  import { isUnlocked, vaultItems, startAutoLock, biometricEnabled, showReminder } from '../stores';
   import { BiometricAuth } from '../biometric';
+  import { ReminderSystem } from '../reminders';
   
   let masterPassword = '';
   let error = '';
@@ -39,6 +40,14 @@
       vaultItems.set(items);
       isUnlocked.set(true);
       startAutoLock();
+      
+      // Reset reminder session and check if reminder should be shown
+      ReminderSystem.resetSession();
+      const reminderType = ReminderSystem.shouldShowReminder();
+      if (reminderType) {
+        showReminder.set(reminderType);
+        ReminderSystem.markShownThisSession();
+      }
       
       // Show biometric setup if supported and not enabled
       if (biometricSupported && !BiometricAuth.isEnabled()) {

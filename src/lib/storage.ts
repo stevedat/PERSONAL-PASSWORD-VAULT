@@ -103,34 +103,14 @@ export class StorageEngine {
   
   static async exportVault(masterPassword: string): Promise<Blob> {
     const items = await this.loadVault(masterPassword);
-    const encryptedVault = await CryptoEngine.encrypt(items, masterPassword);
-    
-    const exportData = {
-      data: this.arrayBufferToBase64(encryptedVault.data),
-      iv: this.arrayBufferToBase64(encryptedVault.iv),
-      salt: this.arrayBufferToBase64(encryptedVault.salt),
-      version: 1,
-      app: 'PocketVault'
-    };
-    
-    return new Blob([JSON.stringify(exportData)], { type: 'application/json' });
+    const { BackupManager } = await import('./backup');
+    return BackupManager.quickExport(items, masterPassword);
   }
   
   static async importVault(file: File, masterPassword: string): Promise<VaultItem[]> {
-    const text = await file.text();
-    const importData = JSON.parse(text);
-    
-    if (!importData.app || importData.app !== 'PocketVault') {
-      throw new Error('Invalid vault file format');
-    }
-    
-    const encryptedVault: EncryptedVault = {
-      data: this.base64ToArrayBuffer(importData.data),
-      iv: this.base64ToArrayBuffer(importData.iv),
-      salt: this.base64ToArrayBuffer(importData.salt)
-    };
-    
-    return CryptoEngine.decrypt(encryptedVault, masterPassword);
+    const { RestoreManager } = await import('./restore');
+    const result = await RestoreManager.importVault(file, masterPassword, []);
+    return result.items;
   }
   
   private static arrayBufferToBase64(buffer: ArrayBuffer): string {

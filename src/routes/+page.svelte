@@ -3,14 +3,19 @@
   import UnlockScreen from '$lib/components/UnlockScreen.svelte';
   import VaultItemComponent from '$lib/components/VaultItem.svelte';
   import AddEditForm from '$lib/components/AddEditForm.svelte';
+  import ReminderBanner from '$lib/components/ReminderBanner.svelte';
   import { StorageEngine } from '$lib/storage';
   import { 
     isUnlocked, vaultItems, searchQuery, darkMode, showAddForm, editingItem, 
-    resetAutoLock, lock, biometricEnabled, appState,
+    resetAutoLock, lock, biometricEnabled, appState, showReminder,
     initializeAppStateMonitoring, initializeActivityTracking, cleanup
   } from '$lib/stores';
   import { CryptoEngine } from '$lib/crypto';
   import { BiometricAuth } from '$lib/biometric';
+  import { BackupManager } from '$lib/backup';
+  import { RestoreManager } from '$lib/restore';
+  import { ReminderSystem } from '$lib/reminders';
+  import { AutoBackupService } from '$lib/auto-backup';
   
   let filteredItems = [];
   let fileInput;
@@ -28,6 +33,8 @@
     const existingIndex = currentItems.findIndex(i => i.id === item.id);
     
     let updatedItems;
+    const isNewItem = existingIndex < 0;
+    
     if (existingIndex >= 0) {
       updatedItems = [...currentItems];
       updatedItems[existingIndex] = item;
@@ -46,6 +53,9 @@
         await StorageEngine.loadVault(inputPassword);
         sessionStorage.setItem('pv_master_key', inputPassword);
         await StorageEngine.saveVault(updatedItems, inputPassword);
+        
+        // Create auto-backup
+        await AutoBackupService.createBackup(updatedItems, inputPassword);
       } catch (error) {
         alert('Failed to save: Invalid master password');
         return;
@@ -53,6 +63,9 @@
     } else {
       try {
         await StorageEngine.saveVault(updatedItems, masterPassword);
+        
+        // Create auto-backup
+        await AutoBackupService.createBackup(updatedItems, masterPassword);
       } catch (error) {
         // Master password might have changed, ask for new one
         sessionStorage.removeItem('pv_master_key');
@@ -62,6 +75,9 @@
         try {
           await StorageEngine.saveVault(updatedItems, inputPassword);
           sessionStorage.setItem('pv_master_key', inputPassword);
+          
+          // Create auto-backup
+          await AutoBackupService.createBackup(updatedItems, inputPassword);
         } catch (error) {
           alert('Failed to save: Invalid master password');
           return;
@@ -71,6 +87,12 @@
     
     vaultItems.set(updatedItems);
     resetAutoLock();
+    
+    // Track password addition for reminders
+    if (isNewItem) {
+      ReminderSystem.recordPasswordAdd();
+      checkReminders();
+    }
     
     // Show success feedback
     showSuccessMessage('Password saved successfully');
@@ -134,24 +156,45 @@
         // Test password first
         await StorageEngine.loadVault(inputPassword);
         sessionStorage.setItem('pv_master_key', inputPassword);
-        const blob = await StorageEngine.exportVault(inputPassword);
-        downloadVaultFile(blob);
+        const blob = await BackupManager.quickExport($vaultItems, inputPassword);
+        const filename = BackupManager.generateFileName();
+        BackupManager.triggerDownload(blob, filename);
+        
+        // Record backup for reminders
+        ReminderSystem.recordBackup();
+        showReminder.set(null);
+        
+        showSuccessMessage('Vault exported successfully');
       } catch (error) {
         alert('Export failed: Invalid master password');
       }
     } else {
       try {
-        const blob = await StorageEngine.exportVault(masterPassword);
-        downloadVaultFile(blob);
+        const blob = await BackupManager.quickExport($vaultItems, masterPassword);
+        const filename = BackupManager.generateFileName();
+        BackupManager.triggerDownload(blob, filename);
+        
+        // Record backup for reminders
+        ReminderSystem.recordBackup();
+        showReminder.set(null);
+        
+        showSuccessMessage('Vault exported successfully');
       } catch (error) {
         sessionStorage.removeItem('pv_master_key');
         const inputPassword = prompt('Master password expired. Enter password to export:');
         if (!inputPassword) return;
         
         try {
-          const blob = await StorageEngine.exportVault(inputPassword);
+          const blob = await BackupManager.quickExport($vaultItems, inputPassword);
+          const filename = BackupManager.generateFileName();
           sessionStorage.setItem('pv_master_key', inputPassword);
-          downloadVaultFile(blob);
+          BackupManager.triggerDownload(blob, filename);
+          
+          // Record backup for reminders
+          ReminderSystem.recordBackup();
+          showReminder.set(null);
+          
+          showSuccessMessage('Vault exported successfully');
         } catch (error) {
           alert('Export failed: Invalid master password');
         }
@@ -177,28 +220,19 @@
     const file = event.target.files && event.target.files[0];
     if (!file) return;
     
+    // Validate file first
+    const validation = await RestoreManager.validateVaultFile(file);
+    if (!validation.valid) {
+      alert(`Import failed: ${validation.error}`);
+      fileInput.value = '';
+      return;
+    }
+    
     const masterPassword = prompt('Enter master password for the vault file:');
     if (!masterPassword) return;
     
     try {
-      const importedItems = await StorageEngine.importVault(file, masterPassword);
-      
-      // Merge with existing items
-      const existingItems = $vaultItems;
-      const mergedItems = [...existingItems];
-      let newItemsCount = 0;
-      let updatedItemsCount = 0;
-      
-      for (const item of importedItems) {
-        const existingIndex = mergedItems.findIndex(i => i.id === item.id);
-        if (existingIndex >= 0) {
-          mergedItems[existingIndex] = item;
-          updatedItemsCount++;
-        } else {
-          mergedItems.push(item);
-          newItemsCount++;
-        }
-      }
+      const result = await RestoreManager.importVault(file, masterPassword, $vaultItems);
       
       // Use cached master password for saving
       const currentMasterPassword = sessionStorage.getItem('pv_master_key');
@@ -207,23 +241,32 @@
         if (!savePassword) return;
         
         try {
-          await StorageEngine.saveVault(mergedItems, savePassword);
+          await StorageEngine.saveVault(result.items, savePassword);
           sessionStorage.setItem('pv_master_key', savePassword);
+          
+          // Create auto-backup
+          await AutoBackupService.createBackup(result.items, savePassword);
         } catch (error) {
           alert('Failed to save merged vault: Invalid master password');
           return;
         }
       } else {
         try {
-          await StorageEngine.saveVault(mergedItems, currentMasterPassword);
+          await StorageEngine.saveVault(result.items, currentMasterPassword);
+          
+          // Create auto-backup
+          await AutoBackupService.createBackup(result.items, currentMasterPassword);
         } catch (error) {
           sessionStorage.removeItem('pv_master_key');
           const savePassword = prompt('Master password expired. Enter password to save:');
           if (!savePassword) return;
           
           try {
-            await StorageEngine.saveVault(mergedItems, savePassword);
+            await StorageEngine.saveVault(result.items, savePassword);
             sessionStorage.setItem('pv_master_key', savePassword);
+            
+            // Create auto-backup
+            await AutoBackupService.createBackup(result.items, savePassword);
           } catch (error) {
             alert('Failed to save merged vault: Invalid master password');
             return;
@@ -231,10 +274,12 @@
         }
       }
       
-      vaultItems.set(mergedItems);
-      showSuccessMessage(`Import successful: ${newItemsCount} new, ${updatedItemsCount} updated`);
+      vaultItems.set(result.items);
+      showSuccessMessage(
+        `Import successful: ${result.stats.newCount} new, ${result.stats.updatedCount} updated, ${result.stats.unchangedCount} unchanged`
+      );
     } catch (error) {
-      alert('Import failed: Invalid file or password');
+      alert(`Import failed: ${error.message}`);
     }
     
     // Reset file input
@@ -247,6 +292,14 @@
     successTimeout = setTimeout(() => {
       successMessage = '';
     }, 3000);
+  }
+  
+  function checkReminders() {
+    const reminderType = ReminderSystem.shouldShowReminder();
+    if (reminderType) {
+      showReminder.set(reminderType);
+      ReminderSystem.markShownThisSession();
+    }
   }
   
   function addNew() {
@@ -271,6 +324,12 @@
   onMount(() => {
     initializeAppStateMonitoring();
     initializeActivityTracking();
+    
+    // Check for reminders on mount
+    checkReminders();
+    
+    // Reset reminder session flag
+    ReminderSystem.resetSession();
     
     // Add global error handler to suppress extension errors
     window.addEventListener('error', (event) => {
@@ -319,6 +378,8 @@
           {successMessage}
         </div>
       {/if}
+      
+      <ReminderBanner onBackupNow={exportVault} />
       
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h1 style="margin: 0; font-size: 1.25rem; font-weight: 600;" class="text-glass">🔒 PocketVault</h1>
