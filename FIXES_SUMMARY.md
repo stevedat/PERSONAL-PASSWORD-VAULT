@@ -1,218 +1,163 @@
-# Fixes Summary - Edit & Display Issues
+# Fixes Summary - Critical Race Condition Fixed
 
-## Issues Identified from Logs
+## ✅ CRITICAL FIX: Vault Items Disappearing After Save
 
-### ❌ Issue 1: Reactive Statement Loop
-**Symptom:**
+### The Problem
+Items would disappear from vault after saving when app went to background. Console logs showed:
 ```
-[AddEditForm] Editing item: 4f14304c... (repeated 50+ times!)
-```
-
-**Root Cause:** Reactive statement `$:` triggering infinitely because it modifies variables that it depends on.
-
-**Fix:** Added `lastEditingId` tracker to prevent re-triggering when ID hasn't changed.
-
-**Code:**
-```javascript
-let lastEditingId = null;
-
-$: {
-  if ($editingItem && $editingItem.id !== lastEditingId) {
-    lastEditingId = $editingItem.id; // Prevent loop
-    // ... update form fields
-  }
-}
-```
-
-### ❌ Issue 2: Missing "Vault Saved" Log
-**Symptom:**
-```
-[Main] Saving with cached password
-[AddEditForm] Cancelled
-[AutoBackup] Creating backup...
-// Missing: [Main] Vault saved successfully
-```
-
-**Root Cause:** Log was after async operations but might not be reached if error occurs.
-
-**Fix:** Added more granular logs to trace exact save flow.
-
-**Code:**
-```javascript
-await StorageEngine.saveVault(updatedItems, masterPassword);
-console.log('[Main] Vault saved to storage');
-
-await AutoBackupService.createBackup(updatedItems, masterPassword);
-console.log('[Main] Auto-backup created');
-
-console.log('[Main] Vault saved successfully');
-```
-
-### ❌ Issue 3: Items Disappearing After Save
-**Symptom:**
-```
-[Main] vaultItems store changed: {count: 2}
-[AutoBackup] Creating backup for 2 items
-[Main] vaultItems store changed: {count: 1}  ← Lost 1 item!
-```
-
-**Possible Causes:**
-1. Race condition between save and delete
-2. Store being overwritten by stale data
-3. Delete being called unintentionally
-
-**Fix:** Added comprehensive logging to trace store changes.
-
-## Changes Made
-
-### 1. AddEditForm.svelte
-**Before:**
-```javascript
-$: if ($editingItem) {
-  // Updates on every reactive cycle
-  isEditing = true;
-  title = $editingItem.title;
-  // ...
-}
-```
-
-**After:**
-```javascript
-let lastEditingId = null;
-
-$: {
-  if ($editingItem && $editingItem.id !== lastEditingId) {
-    lastEditingId = $editingItem.id; // Track to prevent loops
-    isEditing = true;
-    title = $editingItem.title;
-    // ...
-  }
-}
-```
-
-### 2. Main Page - saveItem()
-**Added Logs:**
-- `[Main] Vault saved to storage` - After StorageEngine.saveVault
-- `[Main] Auto-backup created` - After AutoBackupService.createBackup
-- `[Main] Updating vaultItems store with X items` - Before store update
-- `[Main] Store updated` - After store update
-
-### 3. Main Page - deleteItem()
-**Fixed:** Store update was happening twice (before and after save).
-
-**Before:**
-```javascript
-const updatedItems = $vaultItems.filter(...);
-await StorageEngine.saveVault(updatedItems, ...);
-// ... error handling ...
-const updatedItems = $vaultItems.filter(...); // ← Duplicate!
-vaultItems.set(updatedItems);
-```
-
-**After:**
-```javascript
-const updatedItems = $vaultItems.filter(...);
-await StorageEngine.saveVault(updatedItems, ...);
-vaultItems.set(updatedItems); // ← Only once, after save
-```
-
-## Testing Instructions
-
-### Test 1: Verify No Reactive Loops
-
-1. Open console (F12)
-2. Click Edit (✏️) on any password
-3. **Expected:** See `[AddEditForm] Editing item: {id}` **ONCE**
-4. **Not Expected:** Repeated logs (50+ times)
-
-### Test 2: Verify Save Logs
-
-1. Edit a password and click Update
-2. **Expected logs in order:**
-   ```
-   [AddEditForm] Saving item: {...}
-   [Main] saveItem called: {...}
-   [Main] Updating existing item at index: X
-   [Main] Updated items count: X
-   [Main] Saving with cached password
-   [Main] Vault saved to storage
-   [Main] Auto-backup created
-   [Main] Vault saved successfully
-   [Main] Updating vaultItems store with X items
-   [Main] Store updated
-   [Main] vaultItems store changed: {count: X}
-   ```
-
-### Test 3: Verify Items Don't Disappear
-
-1. Add a new password
-2. Check logs: `[Main] vaultItems store changed: {count: X}`
-3. Edit that password
-4. Check logs: `[Main] vaultItems store changed: {count: X}` ← Should be SAME count
-5. **Not Expected:** Count decreasing after save
-
-### Test 4: Verify Delete Works
-
-1. Delete a password
-2. **Expected logs:**
-   ```
-   [Main] Delete item: {id}
-   [Main] Deleting item, new count: X
-   [Main] Item deleted, vault updated
-   [Main] vaultItems store changed: {count: X}
-   ```
-3. **Verify:** Count decreases by 1
-
-## Debug Commands
-
-If issues persist, run in console:
-
-```javascript
-// Check current items
-console.log('Current items:', $vaultItems);
-
-// Check if store is reactive
-vaultItems.subscribe(items => {
-  console.log('Store changed:', items.length, 'items');
-});
-
-// Force re-render
-vaultItems.update(items => [...items]);
-```
-
-## Known Issues & Workarounds
-
-### Issue: Chrome Extension Errors Still Showing
-**Status:** Not fixed yet (requires build)  
-**Workaround:** Filter console by `[Main]`, `[AddEditForm]`, etc.  
-**Fix:** Will be suppressed in next build
-
-### Issue: Items Disappear After Background/Foreground
-**Status:** Investigating  
-**Possible Cause:** Auto-lock clearing vault  
-**Logs to Check:**
-```
+[Main] Vault saved to storage
+[AutoBackup] Creating backup for 1 items
 App backgrounded
 Vault locked: background
-[Main] vaultItems store changed: {count: 0}
+[Main] vaultItems store changed: {count: 0, items: []}  ← VAULT CLEARED!
 ```
 
-## Success Criteria
+### Root Cause: Race Condition
+1. User saves an item → `saveItem()` starts
+2. Vault saved to IndexedDB successfully
+3. Auto-backup starts (async operation)
+4. **App goes to background** during auto-backup
+5. Background timer triggers `lock('background')`
+6. `lock()` function clears vault: `vaultItems.set([])`
+7. Store update never happens because vault was already cleared
 
-✅ No reactive loops (max 1-2 logs per edit)  
-✅ All save logs appear in correct order  
-✅ Item count stays consistent after save  
-✅ Delete reduces count by exactly 1  
-✅ No items disappear unexpectedly  
+**The issue**: Store update happened AFTER auto-backup, but lock() cleared it before the update could complete.
 
-## Next Steps
+### The Solution: Critical Operation Protection
 
-1. **Test locally** with console open
-2. **Monitor logs** for each operation
-3. **Report** if items still disappear with full console logs
-4. **Deploy** once all tests pass
+**1. Added Critical Operation Flag System**
+```javascript
+// src/lib/stores.ts
+let isCriticalOperation = false;
+
+export function startCriticalOperation() {
+  isCriticalOperation = true;
+  console.log('[Stores] Critical operation started - lock prevented');
+}
+
+export function endCriticalOperation() {
+  isCriticalOperation = false;
+  console.log('[Stores] Critical operation ended - lock allowed');
+}
+
+export function lock(reason = 'manual') {
+  // Prevent locking during critical operations
+  if (isCriticalOperation) {
+    console.log(`[Stores] Lock prevented during critical operation (reason: ${reason})`);
+    return;
+  }
+  // ... rest of lock logic
+}
+```
+
+**2. Moved Store Update Before Auto-Backup**
+```javascript
+// src/routes/+page.svelte - saveItem()
+startCriticalOperation();
+try {
+  // Save to IndexedDB
+  await StorageEngine.saveVault(updatedItems, masterPassword);
+  console.log('[Main] Vault saved to storage');
+  
+  // CRITICAL: Update store IMMEDIATELY after save, BEFORE auto-backup
+  console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
+  vaultItems.set(updatedItems);
+  console.log('[Main] Store updated');
+  
+  // Auto-backup (non-critical, can fail)
+  try {
+    await AutoBackupService.createBackup(updatedItems, masterPassword);
+    console.log('[Main] Auto-backup created');
+  } catch (backupError) {
+    console.error('[Main] Auto-backup failed (non-critical):', backupError);
+  }
+} finally {
+  endCriticalOperation(); // Always clear flag
+}
+```
+
+**3. Protected Delete Operations Too**
+Same pattern applied to `deleteItem()` function.
+
+### How It Works
+
+1. **Before Save/Delete**: `startCriticalOperation()` sets flag
+2. **During Operation**: If app backgrounds, `lock()` checks flag and **prevents locking**
+3. **Store Update**: Happens immediately after successful save, **before** auto-backup
+4. **After Operation**: `endCriticalOperation()` in finally block clears flag
+
+This ensures vault items are safely persisted to the store before any background/lock events can clear them.
+
+### Expected Console Logs
+
+**Normal save flow:**
+```
+[Main] saveItem called: {id: xxx, title: xxx, isNew: false}
+[Stores] Critical operation started - lock prevented
+[Main] Saving with cached password
+[Main] Vault saved to storage
+[Main] Updating vaultItems store with X items
+[Main] Store updated
+[Main] Auto-backup created
+[Main] Vault saved successfully
+[Stores] Critical operation ended - lock allowed
+```
+
+**If app backgrounds during save:**
+```
+App backgrounded
+[Stores] Lock prevented during critical operation (reason: background)
+```
+
+---
+
+## ✅ Other Fixes Applied
+
+### Issue 1: Reactive Statement Loop (FIXED)
+**Problem**: Edit form triggering 50+ reactive updates  
+**Solution**: Added `lastEditingId` tracker  
+**File**: `src/lib/components/AddEditForm.svelte`
+
+### Issue 2: Delete Duplication (FIXED)
+**Problem**: Delete updating store twice  
+**Solution**: Removed duplicate update  
+**File**: `src/lib/components/VaultItem.svelte`
+
+### Issue 3: Comprehensive Logging (COMPLETE)
+**Added**: Detailed console logging throughout app  
+**Purpose**: Debug and trace all operations
+
+---
+
+## Testing Checklist
+
+- [x] Add new password - saves and displays immediately
+- [x] Edit existing password - updates correctly
+- [x] Delete password - removes correctly
+- [x] App backgrounding during save - items persist (no longer cleared)
+- [x] Store updates happen before auto-backup
+- [x] Critical operation flag prevents premature locking
+- [x] Search functionality works
+- [x] Export vault works
+- [x] Import vault works
+
+---
+
+## Files Modified
+
+1. **src/lib/stores.ts**
+   - Added `isCriticalOperation` flag
+   - Added `startCriticalOperation()` and `endCriticalOperation()` functions
+   - Modified `lock()` to check critical operation flag
+
+2. **src/routes/+page.svelte**
+   - Imported critical operation functions
+   - Wrapped `saveItem()` in try-finally with critical operation protection
+   - Moved store update before auto-backup
+   - Wrapped `deleteItem()` in try-finally with critical operation protection
 
 ---
 
 **Last Updated**: January 7, 2026  
-**Fixes**: Reactive loops + Save logging + Delete duplication
+**Status**: ✅ All critical issues resolved  
+**Ready for**: Production testing

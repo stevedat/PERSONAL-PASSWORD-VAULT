@@ -12,6 +12,19 @@ export const biometricEnabled = writable(false);
 export const appState = writable('active'); // 'active', 'background', 'locked'
 export const showReminder = writable<ReminderType | null>(null);
 
+// Critical operation flag to prevent locking during saves
+let isCriticalOperation = false;
+
+export function startCriticalOperation() {
+  isCriticalOperation = true;
+  console.log('[Stores] Critical operation started - lock prevented');
+}
+
+export function endCriticalOperation() {
+  isCriticalOperation = false;
+  console.log('[Stores] Critical operation ended - lock allowed');
+}
+
 // Helper to get current state
 function getCurrentAppState() {
   let currentState;
@@ -41,6 +54,12 @@ export function resetAutoLock() {
 }
 
 export function lock(reason = 'manual') {
+  // Prevent locking during critical operations (like saving)
+  if (isCriticalOperation) {
+    console.log(`[Stores] Lock prevented during critical operation (reason: ${reason})`);
+    return;
+  }
+  
   console.log(`Vault locked: ${reason}`);
   isUnlocked.set(false);
   vaultItems.set([]);
