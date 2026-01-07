@@ -1,4 +1,5 @@
-const CACHE_NAME = 'pocketvault-v2';
+const CACHE_NAME = 'pocketvault-v3'; // Increment version for updates
+const APP_VERSION = '1.0.0';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -8,26 +9,42 @@ const STATIC_ASSETS = [
 
 // Enhanced PWA features for iOS
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing new version:', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
+  // Force immediate activation
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating new version:', CACHE_NAME);
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      // Notify all clients about the update
+      return self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'SW_UPDATED',
+            version: APP_VERSION,
+            cacheName: CACHE_NAME
+          });
+        });
+      });
     })
   );
+  // Take control of all pages immediately
   self.clients.claim();
 });
 
