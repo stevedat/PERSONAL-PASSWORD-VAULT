@@ -1,9 +1,12 @@
+export type CategoryType = 'email' | 'banking' | 'app' | 'website' | 'work' | 'games' | 'other';
+
 export interface VaultItem {
   id: string;
   title: string;
   username: string;
   password: string;
   note?: string;
+  category?: CategoryType;
 }
 
 export interface EncryptedVault {

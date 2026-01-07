@@ -9,9 +9,20 @@
   let username = '';
   let password = '';
   let note = '';
+  let category = 'other';
   let isEditing = false;
   let editId = '';
   let lastEditingId = null; // Track last editing ID to prevent loops
+  
+  const categories = [
+    { value: 'email', label: 'Email', icon: '📧' },
+    { value: 'banking', label: 'Banking', icon: '🏦' },
+    { value: 'app', label: 'App', icon: '📱' },
+    { value: 'website', label: 'Website', icon: '🌐' },
+    { value: 'work', label: 'Work', icon: '💼' },
+    { value: 'games', label: 'Games', icon: '🎮' },
+    { value: 'other', label: 'Other', icon: '📌' }
+  ];
   
   // Watch for changes in editingItem - only update if ID changed
   $: {
@@ -24,6 +35,7 @@
       username = $editingItem.username;
       password = $editingItem.password;
       note = $editingItem.note || '';
+      category = $editingItem.category || 'other';
     } else if (!$editingItem && lastEditingId !== null) {
       // Reset when editingItem is cleared
       lastEditingId = null;
@@ -40,6 +52,7 @@
       username = '';
       password = '';
       note = '';
+      category = 'other';
       lastEditingId = null;
     }
   }
@@ -64,13 +77,15 @@
       title: title.trim(),
       username: username.trim(),
       password: password.trim(),
-      note: note.trim() || undefined
+      note: note.trim() || undefined,
+      category: category
     };
     
     console.log('[AddEditForm] Saving item:', {
       id: item.id,
       isEditing,
-      title: item.title
+      title: item.title,
+      category: item.category
     });
     
     onSave(item);
@@ -116,6 +131,22 @@
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <label style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Category</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {#each categories as cat}
+              <button
+                type="button"
+                class="category-tag category-{cat.value} haptic-light {category === cat.value ? 'selected' : ''}"
+                on:click={() => category = cat.value}
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           <label for="username" style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Username *</label>
           <input
             id="username"
@@ -139,8 +170,8 @@
               style="flex: 1;"
               required
             />
-            <button type="button" class="glass-btn" style="padding: 0.75rem 1rem; white-space: nowrap;" on:click={generatePassword}>
-              Generate
+            <button type="button" class="glass-btn haptic-medium" style="padding: 0.75rem 1rem; white-space: nowrap;" on:click={generatePassword}>
+              🎲 Generate
             </button>
           </div>
         </div>
