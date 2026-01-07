@@ -41,18 +41,35 @@ export class RestoreManager {
     password: string,
     existingItems: VaultItem[] = []
   ): Promise<ImportResult> {
+    console.log('[RestoreManager] Starting import...', {
+      fileName: file.name,
+      fileSize: file.size,
+      existingItemCount: existingItems.length
+    });
+    
     try {
       // Validate file
+      console.log('[RestoreManager] Validating file...');
       const validation = await this.validateVaultFile(file);
       if (!validation.valid) {
+        console.error('[RestoreManager] Validation failed:', validation.error);
         throw new Error(validation.error || 'Invalid vault file');
       }
+      console.log('[RestoreManager] File validation passed');
       
       // Read and parse file
       const text = await file.text();
       const exportFile: VaultExportFile = JSON.parse(text);
       
+      console.log('[RestoreManager] Parsed file:', {
+        version: exportFile.version,
+        platform: exportFile.platform,
+        itemCount: exportFile.itemCount,
+        created: exportFile.created
+      });
+      
       // Decrypt vault
+      console.log('[RestoreManager] Decrypting vault...');
       const encryptedVault: EncryptedVault = {
         data: this.base64ToArrayBuffer(exportFile.data),
         iv: this.base64ToArrayBuffer(exportFile.iv),
@@ -60,10 +77,15 @@ export class RestoreManager {
       };
       
       const importedItems = await CryptoEngine.decrypt(encryptedVault, password);
+      console.log('[RestoreManager] Decryption complete, items:', importedItems.length);
       
       // Merge with existing items
+      console.log('[RestoreManager] Merging vaults...');
       const preview = this.previewMerge(importedItems, existingItems);
+      console.log('[RestoreManager] Merge preview:', preview.stats);
+      
       const mergedItems = this.applyMerge(preview);
+      console.log('[RestoreManager] Merge complete, total items:', mergedItems.length);
       
       return {
         success: true,
@@ -71,7 +93,9 @@ export class RestoreManager {
         items: mergedItems
       };
     } catch (error) {
-      throw new Error(`Import failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[RestoreManager] Import failed:', error);
+      throw new Error(`Import failed: ${errorMessage}`);
     }
   }
   
@@ -79,9 +103,12 @@ export class RestoreManager {
    * Validate vault file format
    */
   static async validateVaultFile(file: File): Promise<ValidationResult> {
+    console.log('[RestoreManager] Validating file:', file.name);
+    
     try {
       // Check file extension
       if (!file.name.endsWith('.vault')) {
+        console.error('[RestoreManager] Invalid file extension:', file.name);
         return {
           valid: false,
           error: 'Invalid file extension. Expected .vault file'
@@ -92,8 +119,11 @@ export class RestoreManager {
       const text = await file.text();
       const exportFile = JSON.parse(text);
       
+      console.log('[RestoreManager] File parsed successfully');
+      
       // Check required fields
       if (!exportFile.app || exportFile.app !== this.APP_NAME) {
+        console.error('[RestoreManager] Invalid app name:', exportFile.app);
         return {
           valid: false,
           error: 'Not a valid PocketVault file'
@@ -101,6 +131,7 @@ export class RestoreManager {
       }
       
       if (!exportFile.version || !this.SUPPORTED_VERSIONS.includes(exportFile.version)) {
+        console.error('[RestoreManager] Unsupported version:', exportFile.version);
         return {
           valid: false,
           error: `Unsupported version: ${exportFile.version}. Supported: ${this.SUPPORTED_VERSIONS.join(', ')}`
@@ -108,6 +139,7 @@ export class RestoreManager {
       }
       
       if (!exportFile.data || !exportFile.iv || !exportFile.salt) {
+        console.error('[RestoreManager] Missing encryption data');
         return {
           valid: false,
           error: 'Missing required encryption data'
@@ -116,24 +148,30 @@ export class RestoreManager {
       
       // Verify checksum if present
       if (exportFile.checksum) {
+        console.log('[RestoreManager] Verifying checksum...');
         const calculatedChecksum = await this.calculateChecksum(exportFile.data);
         if (calculatedChecksum !== exportFile.checksum) {
+          console.error('[RestoreManager] Checksum mismatch');
           return {
             valid: false,
             error: 'File integrity check failed. File may be corrupted'
           };
         }
+        console.log('[RestoreManager] Checksum verified');
       }
       
+      console.log('[RestoreManager] Validation successful');
       return {
         valid: true,
         format: 'standard',
         version: exportFile.version
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[RestoreManager] Validation error:', error);
       return {
         valid: false,
-        error: `File validation failed: ${error.message}`
+        error: `File validation failed: ${errorMessage}`
       };
     }
   }

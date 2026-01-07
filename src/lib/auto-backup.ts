@@ -70,7 +70,12 @@ export class AutoBackupService {
    */
   static async createBackup(items: VaultItem[], masterPassword: string): Promise<void> {
     const config = this.getConfig();
-    if (!config.enabled) return;
+    if (!config.enabled) {
+      console.log('[AutoBackup] Auto-backup disabled, skipping');
+      return;
+    }
+    
+    console.log('[AutoBackup] Creating backup for', items.length, 'items');
     
     try {
       const db = await this.openDB();
@@ -94,17 +99,27 @@ export class AutoBackupService {
         size: JSON.stringify(vault).length
       };
       
+      console.log('[AutoBackup] Backup created:', {
+        id: backup.id,
+        itemCount: backup.itemCount,
+        size: backup.size,
+        sizeKB: (backup.size / 1024).toFixed(2) + 'KB'
+      });
+      
       // Save backup
       const tx = db.transaction([this.STORE_NAME], 'readwrite');
       const store = tx.objectStore(this.STORE_NAME);
       await store.put(backup);
+      
+      console.log('[AutoBackup] Backup saved to IndexedDB');
       
       // Rotate if needed
       if (config.autoRotate) {
         await this.rotateBackups();
       }
     } catch (error) {
-      console.error('Auto-backup failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[AutoBackup] Backup creation failed:', errorMessage, error);
     }
   }
   
@@ -186,7 +201,8 @@ export class AutoBackupService {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      throw new Error(`Restore failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Restore failed: ${errorMessage}`);
     }
   }
   
@@ -217,12 +233,23 @@ export class AutoBackupService {
     const config = this.getConfig();
     const backups = await this.listBackups();
     
+    console.log('[AutoBackup] Rotating backups:', {
+      current: backups.length,
+      max: config.maxBackups
+    });
+    
     // Delete oldest backups if we exceed max
     if (backups.length > config.maxBackups) {
       const toDelete = backups.slice(config.maxBackups);
+      console.log('[AutoBackup] Deleting', toDelete.length, 'old backups');
+      
       for (const backup of toDelete) {
         await this.deleteBackup(backup.id);
       }
+      
+      console.log('[AutoBackup] Rotation complete');
+    } else {
+      console.log('[AutoBackup] No rotation needed');
     }
   }
   

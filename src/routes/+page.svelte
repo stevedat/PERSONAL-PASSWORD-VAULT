@@ -147,8 +147,11 @@
   }
   
   async function exportVault() {
+    console.log('[Main] Export vault initiated');
+    
     const masterPassword = sessionStorage.getItem('pv_master_key');
     if (!masterPassword) {
+      console.log('[Main] No cached master password, prompting user');
       const inputPassword = prompt('Enter master password to export vault:');
       if (!inputPassword) return;
       
@@ -165,11 +168,14 @@
         showReminder.set(null);
         
         showSuccessMessage('Vault exported successfully');
+        console.log('[Main] Export successful:', filename);
       } catch (error) {
+        console.error('[Main] Export failed:', error);
         alert('Export failed: Invalid master password');
       }
     } else {
       try {
+        console.log('[Main] Using cached master password');
         const blob = await BackupManager.quickExport($vaultItems, masterPassword);
         const filename = BackupManager.generateFileName();
         BackupManager.triggerDownload(blob, filename);
@@ -179,7 +185,9 @@
         showReminder.set(null);
         
         showSuccessMessage('Vault exported successfully');
+        console.log('[Main] Export successful:', filename);
       } catch (error) {
+        console.error('[Main] Export failed with cached password:', error);
         sessionStorage.removeItem('pv_master_key');
         const inputPassword = prompt('Master password expired. Enter password to export:');
         if (!inputPassword) return;
@@ -195,7 +203,9 @@
           showReminder.set(null);
           
           showSuccessMessage('Vault exported successfully');
+          console.log('[Main] Export successful after password refresh:', filename);
         } catch (error) {
+          console.error('[Main] Export failed after password refresh:', error);
           alert('Export failed: Invalid master password');
         }
       }
@@ -220,13 +230,18 @@
     const file = event.target.files && event.target.files[0];
     if (!file) return;
     
+    console.log('[Main] Import initiated:', file.name);
+    
     // Validate file first
     const validation = await RestoreManager.validateVaultFile(file);
     if (!validation.valid) {
+      console.error('[Main] Import validation failed:', validation.error);
       alert(`Import failed: ${validation.error}`);
       fileInput.value = '';
       return;
     }
+    
+    console.log('[Main] File validation passed');
     
     const masterPassword = prompt('Enter master password for the vault file:');
     if (!masterPassword) return;
@@ -234,9 +249,12 @@
     try {
       const result = await RestoreManager.importVault(file, masterPassword, $vaultItems);
       
+      console.log('[Main] Import successful, merge stats:', result.stats);
+      
       // Use cached master password for saving
       const currentMasterPassword = sessionStorage.getItem('pv_master_key');
       if (!currentMasterPassword) {
+        console.log('[Main] No cached password, prompting for save');
         const savePassword = prompt('Enter master password to save merged vault:');
         if (!savePassword) return;
         
@@ -247,16 +265,19 @@
           // Create auto-backup
           await AutoBackupService.createBackup(result.items, savePassword);
         } catch (error) {
+          console.error('[Main] Save failed:', error);
           alert('Failed to save merged vault: Invalid master password');
           return;
         }
       } else {
         try {
+          console.log('[Main] Saving with cached password');
           await StorageEngine.saveVault(result.items, currentMasterPassword);
           
           // Create auto-backup
           await AutoBackupService.createBackup(result.items, currentMasterPassword);
         } catch (error) {
+          console.error('[Main] Save failed with cached password:', error);
           sessionStorage.removeItem('pv_master_key');
           const savePassword = prompt('Master password expired. Enter password to save:');
           if (!savePassword) return;
@@ -268,6 +289,7 @@
             // Create auto-backup
             await AutoBackupService.createBackup(result.items, savePassword);
           } catch (error) {
+            console.error('[Main] Save failed after password refresh:', error);
             alert('Failed to save merged vault: Invalid master password');
             return;
           }
@@ -278,7 +300,9 @@
       showSuccessMessage(
         `Import successful: ${result.stats.newCount} new, ${result.stats.updatedCount} updated, ${result.stats.unchangedCount} unchanged`
       );
+      console.log('[Main] Import complete, vault updated');
     } catch (error) {
+      console.error('[Main] Import failed:', error);
       alert(`Import failed: ${error.message}`);
     }
     
@@ -295,10 +319,14 @@
   }
   
   function checkReminders() {
+    console.log('[Main] Checking reminders...');
     const reminderType = ReminderSystem.shouldShowReminder();
     if (reminderType) {
+      console.log('[Main] Showing reminder:', reminderType);
       showReminder.set(reminderType);
       ReminderSystem.markShownThisSession();
+    } else {
+      console.log('[Main] No reminder needed');
     }
   }
   

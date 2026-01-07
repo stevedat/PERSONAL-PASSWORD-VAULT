@@ -29,34 +29,48 @@ export class ReminderSystem {
     if (typeof window === 'undefined') return null;
     
     const prefs = this.loadPreferences();
+    const stats = this.getStats();
+    
+    console.log('[ReminderSystem] Checking reminder conditions:', {
+      enabled: prefs.enabled,
+      neverShow: prefs.neverShow,
+      shownThisSession: prefs.shownThisSession,
+      passwordsSinceBackup: stats.passwordsSinceBackup,
+      daysSinceBackup: stats.daysSinceBackup,
+      lastBackupDate: stats.lastBackupDate
+    });
     
     // Check if reminders are disabled
     if (!prefs.enabled || prefs.neverShow) {
+      console.log('[ReminderSystem] Reminders disabled');
       return null;
     }
     
     // Check if already shown this session
     if (prefs.shownThisSession) {
+      console.log('[ReminderSystem] Already shown this session');
       return null;
     }
     
-    const stats = this.getStats();
-    
     // Check password count threshold
     if (stats.passwordsSinceBackup >= prefs.passwordThreshold) {
+      console.log('[ReminderSystem] Triggering password-count reminder');
       return 'password-count';
     }
     
     // Check time-based threshold
     if (stats.daysSinceBackup >= prefs.dayThreshold) {
+      console.log('[ReminderSystem] Triggering time-based reminder');
       return 'time-based';
     }
     
     // Check if first time (no backup ever)
     if (stats.lastBackupDate === null && stats.passwordsSinceBackup > 0) {
+      console.log('[ReminderSystem] Triggering first-time reminder');
       return 'first-time';
     }
     
+    console.log('[ReminderSystem] No reminder needed');
     return null;
   }
   
@@ -77,6 +91,8 @@ export class ReminderSystem {
   static dismissReminder(option: DismissOption): void {
     if (typeof window === 'undefined') return;
     
+    console.log('[ReminderSystem] Dismissing reminder with option:', option);
+    
     const prefs = this.loadPreferences();
     const stats = this.getStats();
     
@@ -85,16 +101,19 @@ export class ReminderSystem {
         // Just mark as shown this session
         prefs.shownThisSession = true;
         stats.remindersDismissed++;
+        console.log('[ReminderSystem] Reminder postponed');
         break;
         
       case 'never':
         // Disable reminders permanently
         prefs.neverShow = true;
         prefs.enabled = false;
+        console.log('[ReminderSystem] Reminders disabled permanently');
         break;
         
       case 'done':
         // User completed backup, reset counters
+        console.log('[ReminderSystem] Backup completed, resetting counters');
         this.recordBackup();
         return;
     }
@@ -109,6 +128,8 @@ export class ReminderSystem {
   static recordBackup(): void {
     if (typeof window === 'undefined') return;
     
+    console.log('[ReminderSystem] Recording backup');
+    
     const stats: ReminderStats = {
       passwordsSinceBackup: 0,
       daysSinceBackup: 0,
@@ -122,6 +143,8 @@ export class ReminderSystem {
     const prefs = this.loadPreferences();
     prefs.shownThisSession = false;
     this.savePreferences(prefs);
+    
+    console.log('[ReminderSystem] Backup recorded, counters reset');
   }
   
   /**
@@ -133,6 +156,8 @@ export class ReminderSystem {
     const stats = this.getStats();
     stats.passwordsSinceBackup++;
     this.saveStats(stats);
+    
+    console.log('[ReminderSystem] Password added, count:', stats.passwordsSinceBackup);
   }
   
   /**
