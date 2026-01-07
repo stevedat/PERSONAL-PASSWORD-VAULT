@@ -50,14 +50,18 @@
       passwordUnlocked = false;
     } else if (!$editingItem && lastEditingId !== null) {
       // Reset when editingItem is cleared
+      console.log('[AddEditForm] Clearing edit state');
       lastEditingId = null;
+      isEditing = false;
+      editId = '';
     }
   }
   
-  // Watch for changes in showAddForm - only when not editing
+  // Watch for changes in showAddForm - reset form for new item
   $: {
-    if ($showAddForm && !$editingItem && !isEditing) {
-      console.log('[AddEditForm] Adding new item');
+    if ($showAddForm && !$editingItem) {
+      console.log('[AddEditForm] Opening add form, resetting all fields');
+      // Force reset all fields
       isEditing = false;
       editId = '';
       title = '';
@@ -170,12 +174,26 @@
   }
   
   function cancel() {
-    console.log('[AddEditForm] Cancelled');
+    console.log('[AddEditForm] Cancelled, resetting all state');
+    
+    // Reset all form fields
+    title = '';
+    username = '';
+    password = '';
+    note = '';
+    category = 'other';
+    isEditing = false;
+    editId = '';
     lastEditingId = null;
+    showPassword = false;
+    passwordUnlocked = false;
+    showVerifyPopup = false;
+    verifyPassword = '';
+    verifyError = '';
+    
+    // Clear stores
     showAddForm.set(false);
     editingItem.set(null);
-    passwordUnlocked = false;
-    showPassword = false;
   }
 </script>
 
