@@ -6,7 +6,7 @@
   import ReminderBanner from '$lib/components/ReminderBanner.svelte';
   import { StorageEngine } from '$lib/storage';
   import { 
-    isUnlocked, vaultItems, searchQuery, darkMode, showAddForm, editingItem, 
+    isUnlocked, vaultItems, searchQuery, categoryFilter, darkMode, showAddForm, editingItem, 
     resetAutoLock, lock, biometricEnabled, appState, showReminder,
     initializeAppStateMonitoring, initializeActivityTracking, cleanup,
     startCriticalOperation, endCriticalOperation
@@ -23,17 +23,52 @@
   let successMessage = '';
   let successTimeout;
   
-  // Reactive statement to filter items
+  const categoryFilters = [
+    { value: 'all', label: 'All', icon: '🔐', count: 0 },
+    { value: 'email', label: 'Email', icon: '📧', count: 0 },
+    { value: 'banking', label: 'Banking', icon: '🏦', count: 0 },
+    { value: 'app', label: 'App', icon: '📱', count: 0 },
+    { value: 'website', label: 'Website', icon: '🌐', count: 0 },
+    { value: 'work', label: 'Work', icon: '💼', count: 0 },
+    { value: 'games', label: 'Games', icon: '🎮', count: 0 },
+    { value: 'other', label: 'Other', icon: '📌', count: 0 }
+  ];
+  
+  // Update category counts
   $: {
-    filteredItems = $vaultItems.filter(item => 
-      !$searchQuery || 
-      item.title.toLowerCase().includes($searchQuery.toLowerCase()) ||
-      item.username.toLowerCase().includes($searchQuery.toLowerCase())
-    );
+    categoryFilters.forEach(filter => {
+      if (filter.value === 'all') {
+        filter.count = $vaultItems.length;
+      } else {
+        filter.count = $vaultItems.filter(item => (item.category || 'other') === filter.value).length;
+      }
+    });
+  }
+  
+  // Reactive statement to filter items by search and category
+  $: {
+    let items = $vaultItems;
+    
+    // Filter by category
+    if ($categoryFilter !== 'all') {
+      items = items.filter(item => (item.category || 'other') === $categoryFilter);
+    }
+    
+    // Filter by search query
+    if ($searchQuery) {
+      items = items.filter(item => 
+        item.title.toLowerCase().includes($searchQuery.toLowerCase()) ||
+        item.username.toLowerCase().includes($searchQuery.toLowerCase())
+      );
+    }
+    
+    filteredItems = items;
+    
     console.log('[Main] Filtered items updated:', {
       total: $vaultItems.length,
       filtered: filteredItems.length,
-      searchQuery: $searchQuery
+      searchQuery: $searchQuery,
+      categoryFilter: $categoryFilter
     });
   }
   let fileInput;
@@ -548,7 +583,7 @@
       </div>
     </header>
     
-    <main style="padding: 1rem; padding-bottom: 6rem;">
+    <main style="padding: 1rem; padding-bottom: 7rem;">
       <div style="max-width: 100%; margin: 0 auto;">
         {#if filteredItems.length === 0}
           <div style="text-align: center; padding: 3rem 1rem;" class="text-glass-secondary">
@@ -556,6 +591,10 @@
               <div style="font-size: 4rem; margin-bottom: 1rem;">🔐</div>
               <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;" class="text-glass">Your vault is empty</h2>
               <p style="margin: 0; font-size: 1rem;">Add your first password to get started</p>
+            {:else if $searchQuery || $categoryFilter !== 'all'}
+              <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+              <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;" class="text-glass">No matches found</h2>
+              <p style="margin: 0; font-size: 1rem;">Try a different search or filter</p>
             {:else}
               <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
               <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;" class="text-glass">No matches found</h2>
@@ -572,7 +611,25 @@
       </div>
     </main>
     
-    <div style="position: fixed; bottom: 2rem; right: 1.5rem; z-index: 100;">
+    <!-- Bottom Navigation with Category Filters -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-scroll">
+        {#each categoryFilters as filter}
+          <button
+            class="filter-chip haptic-light filter-{filter.value} {$categoryFilter === filter.value ? 'active' : ''}"
+            on:click={() => categoryFilter.set(filter.value)}
+          >
+            <span>{filter.icon}</span>
+            <span>#{filter.label}</span>
+            {#if filter.count > 0}
+              <span style="opacity: 0.7; font-size: 0.75rem;">({filter.count})</span>
+            {/if}
+          </button>
+        {/each}
+      </div>
+    </nav>
+    
+    <div style="position: fixed; bottom: 6.5rem; right: 1.5rem; z-index: 100;">
       <button class="glass-fab haptic-heavy" on:click={addNew} title="Add password">
         +
       </button>

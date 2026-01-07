@@ -5,6 +5,7 @@ import type { ReminderType } from './reminders';
 export const isUnlocked = writable(false);
 export const vaultItems = writable<VaultItem[]>([]);
 export const searchQuery = writable('');
+export const categoryFilter = writable<string>('all'); // 'all' or category type
 export const darkMode = writable(false);
 export const showAddForm = writable(false);
 export const editingItem = writable<VaultItem | null>(null);
