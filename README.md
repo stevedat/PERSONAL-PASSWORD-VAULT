@@ -2,6 +2,20 @@
 
 A minimal, offline-first, zero-cloud encrypted password vault with Apple Glass design system and enterprise-grade security.
 
+## 🆕 What's New - Enhanced Backup & Restore
+
+PocketVault now includes a comprehensive backup and restore system designed with zero-trust principles:
+
+- **📤 One-Tap Export**: Create timestamped encrypted backups instantly
+- **📥 Smart Import**: Intelligent merge with detailed statistics (new/updated/unchanged)
+- **💾 Auto-Backup**: Automatic local backups after each change (keeps last 3)
+- **🔔 Smart Reminders**: Gentle notifications after 5 passwords or 30 days
+- **✅ Backup Verification**: Test backup integrity before saving
+- **🌍 Cross-Platform**: Works seamlessly across iOS, Android, and Desktop
+- **🔐 Zero-Trust**: Your encrypted files, your storage choice (iCloud, Drive, USB, email)
+
+All backups are encrypted with AES-256-GCM and include SHA-256 checksums for integrity verification.
+
 ## ✨ Features
 
 ### 🔐 Security
@@ -27,7 +41,19 @@ A minimal, offline-first, zero-cloud encrypted password vault with Apple Glass d
 - **Smart search** across titles and usernames
 - **Auto-save** with cached master password
 - **Success notifications** for all operations
-- **Import/Export** encrypted vault files
+- **Enhanced backup/restore** with smart merge and reminders
+- **Auto-backup system** with local backup rotation
+- **Backup reminders** based on activity and time
+
+### 💾 Backup & Restore
+- **One-tap export** with timestamped filenames
+- **Smart merge** on import (new/updated/unchanged tracking)
+- **Backup verification** to ensure file integrity
+- **Auto-backup** to IndexedDB (keeps last 3)
+- **Backup reminders** (after 5 passwords or 30 days)
+- **Cross-platform** compatible vault files
+- **Checksum validation** for file integrity
+- **Metadata tracking** (version, platform, timestamp)
 
 ### 🛠️ Technical
 - **SvelteKit** with adapter-static
@@ -78,9 +104,13 @@ npm run preview
 - **Show/Hide**: Toggle password visibility with 👁️
 
 ### Backup & Restore
-- **Export**: 📤 Creates encrypted .vault file
-- **Import**: 📥 Merges with existing vault
-- **Smart merge**: Updates existing, adds new entries
+- **Export**: 📤 Creates encrypted .vault file with timestamp
+- **Import**: 📥 Validates and merges with existing vault
+- **Smart merge**: Shows detailed stats (X new, Y updated, Z unchanged)
+- **Auto-backup**: Automatic local backups after each change
+- **Backup reminders**: Gentle notifications to backup regularly
+- **Verification**: Test backup integrity before saving
+- **Cross-platform**: Works across iOS, Android, and Desktop
 
 ### Security Features
 - **Auto-lock**: Locks after 5 minutes of inactivity
@@ -99,6 +129,26 @@ MasterKey (256-bit)
 vault.json → vault.encrypted → IndexedDB
 ```
 
+### Backup System
+```
+Vault Items
+    ↓ Encrypt with Master Password
+Encrypted Vault + Metadata
+    ↓ Add Checksum (SHA-256)
+.vault File (JSON)
+    ↓ User's Choice
+iCloud / Google Drive / USB / Email
+```
+
+### Auto-Backup Flow
+```
+Vault Modified
+    ↓ Create Encrypted Backup
+IndexedDB (auto-backups store)
+    ↓ Rotate (keep last 3)
+Recovery Available
+```
+
 ### Data Model
 ```typescript
 interface VaultItem {
@@ -108,12 +158,25 @@ interface VaultItem {
   password: string;
   note?: string;
 }
+
+interface VaultExportFile {
+  version: number;
+  app: string;
+  created: string;
+  platform: string;
+  itemCount: number;
+  data: string; // encrypted
+  iv: string;
+  salt: string;
+  checksum: string; // SHA-256
+}
 ```
 
 ### Storage Layer
-- **IndexedDB**: Encrypted vault storage
+- **IndexedDB**: Encrypted vault storage + auto-backups
 - **SessionStorage**: Temporary master password cache
-- **No localStorage**: For security compliance
+- **LocalStorage**: Reminder preferences and backup stats
+- **No plaintext**: All sensitive data encrypted at rest
 
 ## 🎨 Glass Design System
 
@@ -158,16 +221,28 @@ const IV_LENGTH = 12; // GCM IV length
 ## 🛡️ Security Best Practices
 
 ### For Users
-- Use a strong, unique master password
+- Use a strong, unique master password (8+ characters minimum)
 - Enable biometric unlock on supported devices
-- Regularly export encrypted backups
-- Don't share vault files without encryption
+- **Regularly export encrypted backups** to multiple locations
+- Store backups in personal cloud (iCloud, Google Drive) - they're encrypted!
+- Test restore process periodically to ensure backups work
+- Don't share vault files without verifying encryption
+- Keep master password secure - it cannot be recovered
+
+### Backup Security
+- ✅ **Safe to store in cloud**: Files are encrypted with your master password
+- ✅ **Multiple locations**: Keep backups in 2-3 different places
+- ✅ **Test regularly**: Verify you can restore from backup
+- ❌ **Never share master password**: Even with encrypted backups
+- ❌ **Don't email plaintext passwords**: Always use encrypted vault files
 
 ### For Developers
 - Never store plaintext passwords
 - Clear sensitive data from memory on lock
 - Use secure random number generation
 - Implement proper key derivation (PBKDF2)
+- Validate all imports before decryption
+- Use checksums to detect file tampering
 
 ## 🔍 Troubleshooting
 
@@ -184,15 +259,28 @@ const IV_LENGTH = 12; // GCM IV length
 - iOS: Must be installed as PWA
 
 **Import/Export issues**
-- Verify file is .vault format
+- Verify file is .vault format (JSON with proper structure)
 - Check master password for vault file
 - Ensure sufficient storage space
+- Try exporting again if verification fails
+
+**Backup reminders not showing**
+- Check if reminders were dismissed with "Don't remind again"
+- Reminders only show once per session
+- Export a backup to reset reminder counters
+
+**Auto-backup not working**
+- Check browser IndexedDB support
+- Verify sufficient storage quota
+- Check browser console for errors
+- Auto-backup creates backup after each vault modification
 
 ### Console Errors Fixed
 - ✅ Service Worker cache errors for extensions
 - ✅ Auto-lock triggering too frequently  
 - ✅ A11y warnings for modal components
 - ✅ Svelte version mismatch warnings
+- ✅ Dynamic import optimization warnings
 
 ## 📊 Performance
 
