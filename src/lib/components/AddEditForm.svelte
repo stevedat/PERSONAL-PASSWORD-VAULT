@@ -1,5 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
   import { CryptoEngine } from '../crypto';
   import { showAddForm, editingItem } from '../stores';
   
@@ -114,7 +113,14 @@
     <div class="glass-modal" on:click|stopPropagation role="document">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h2 style="margin: 0; font-size: 1.25rem;" class="text-glass">{isEditing ? 'Edit' : 'Add'} Password</h2>
-        <button class="glass-btn" style="padding: 0; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;" on:click={cancel}>×</button>
+        <button 
+          class="close-btn haptic-light" 
+          on:click={cancel}
+          type="button"
+          aria-label="Close"
+        >
+          ✕
+        </button>
       </div>
       
       <form on:submit|preventDefault={save} style="display: flex; flex-direction: column; gap: 1rem;">
@@ -170,8 +176,14 @@
               style="flex: 1;"
               required
             />
-            <button type="button" class="glass-btn haptic-medium" style="padding: 0.75rem 1rem; white-space: nowrap;" on:click={generatePassword}>
-              🎲 Generate
+            <button 
+              type="button" 
+              class="generate-btn haptic-medium" 
+              on:click={generatePassword}
+              aria-label="Generate password"
+            >
+              <span class="generate-icon">⚡</span>
+              <span class="generate-text">Generate</span>
             </button>
           </div>
         </div>
@@ -237,6 +249,103 @@
       opacity: 1;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+    }
+  }
+
+  /* Close button with better contrast */
+  .close-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 300;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .close-btn:hover {
+    background: rgba(0, 0, 0, 0.12);
+    color: rgba(0, 0, 0, 0.9);
+    transform: scale(1.05);
+  }
+
+  .close-btn:active {
+    transform: scale(0.95);
+  }
+
+  :global(.dark) .close-btn {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  :global(.dark) .close-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  /* Generate button with icon */
+  .generate-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-weight: 500;
+    font-size: 0.875rem;
+    min-height: 44px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+
+  .generate-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  .generate-btn:active {
+    transform: scale(0.95);
+  }
+
+  :global(.dark) .generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  }
+
+  :global(.dark) .generate-btn:hover {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+  }
+
+  .generate-icon {
+    font-size: 1.125rem;
+    line-height: 1;
+  }
+
+  .generate-text {
+    line-height: 1;
+  }
+
+  /* Mobile - hide text, show icon only */
+  @media (max-width: 480px) {
+    .generate-text {
+      display: none;
+    }
+    
+    .generate-btn {
+      padding: 0.75rem;
+      min-width: 44px;
     }
   }
 </style>
