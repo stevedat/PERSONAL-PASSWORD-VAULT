@@ -16,6 +16,7 @@
   import { RestoreManager } from '$lib/restore';
   import { ReminderSystem } from '$lib/reminders';
   import { AutoBackupService } from '$lib/auto-backup';
+  import { logAppInit, suppressExtensionErrors } from '$lib/logger';
   
   let filteredItems = [];
   let fileInput;
@@ -350,6 +351,10 @@
   
   // Initialize enhanced monitoring and activity tracking
   onMount(() => {
+    // Initialize logging
+    logAppInit();
+    suppressExtensionErrors();
+    
     initializeAppStateMonitoring();
     initializeActivityTracking();
     
@@ -358,33 +363,6 @@
     
     // Reset reminder session flag
     ReminderSystem.resetSession();
-    
-    // Add global error handler to suppress extension errors
-    window.addEventListener('error', (event) => {
-      if (event.error && event.error.message) {
-        const message = event.error.message.toLowerCase();
-        if (message.includes('extension') || 
-            message.includes('frame') || 
-            message.includes('dynamically imported module')) {
-          event.preventDefault();
-          return false;
-        }
-      }
-    });
-    
-    // Handle unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
-      if (event.reason && event.reason.message) {
-        const message = event.reason.message.toLowerCase();
-        if (message.includes('extension') || 
-            message.includes('frame') || 
-            message.includes('port closed') ||
-            message.includes('dynamically imported module')) {
-          event.preventDefault();
-          return;
-        }
-      }
-    });
   });
   
   onDestroy(() => {

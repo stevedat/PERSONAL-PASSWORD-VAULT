@@ -2,16 +2,24 @@
 
 ## Console Logging System
 
-PocketVault now includes comprehensive console logging to help trace issues and debug problems. All logs are prefixed with their service name for easy filtering.
+PocketVault includes a comprehensive, color-coded console logging system to help trace issues and debug problems. All logs are prefixed with their service name and use distinct colors for easy identification.
 
-## Log Prefixes
+## Enhanced Features
+
+✨ **Color-coded logs** - Each service has its own color  
+✨ **Automatic extension error suppression** - Clean console without browser extension noise  
+✨ **Development-only logs** - Info logs only show in dev mode  
+✨ **Always-on error logs** - Critical errors always visible  
+✨ **Helpful initialization message** - Shows available log filters on startup  
+
+## Log Prefixes & Colors
 
 ### Core Services
-- `[BackupManager]` - Export and backup operations
-- `[RestoreManager]` - Import and restore operations
-- `[ReminderSystem]` - Backup reminder logic
-- `[AutoBackup]` - Automatic backup operations
-- `[Main]` - Main application flow
+- 🟢 `[BackupManager]` - Export and backup operations (Emerald)
+- 🔵 `[RestoreManager]` - Import and restore operations (Cyan)
+- 🟠 `[ReminderSystem]` - Backup reminder logic (Amber)
+- 🟣 `[AutoBackup]` - Automatic backup operations (Violet)
+- 🔵 `[Main]` - Main application flow (Blue)
 
 ## How to Use Console Logs
 
@@ -20,7 +28,21 @@ PocketVault now includes comprehensive console logging to help trace issues and 
 - **Firefox**: Press `F12` or `Ctrl+Shift+K` (Windows) / `Cmd+Option+K` (Mac)
 - **Safari**: Enable Developer menu first, then `Cmd+Option+C`
 
-### 2. Filter Logs by Service
+### 2. See Initialization Message
+
+When you open the app, you'll see a welcome message:
+```
+🔒 PocketVault
+Enhanced Logging Enabled
+Filter logs by service:
+  • [BackupManager] - Export operations
+  • [RestoreManager] - Import operations
+  • [ReminderSystem] - Backup reminders
+  • [AutoBackup] - Auto-backup system
+  • [Main] - Main app flow
+```
+
+### 3. Filter Logs by Service
 
 In the Console tab, use the filter box to show only specific logs:
 
@@ -30,6 +52,13 @@ In the Console tab, use the filter box to show only specific logs:
 [ReminderSystem]    - See only reminder logic
 [AutoBackup]        - See only auto-backup operations
 [Main]              - See only main app flow
+```
+
+### 4. Extension Errors Suppressed
+
+Chrome extension errors (like password manager) are automatically suppressed for a cleaner console. You'll see:
+```
+[System] Extension error suppression enabled
 ```
 
 ### 3. Common Debugging Scenarios
