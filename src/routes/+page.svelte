@@ -4,6 +4,7 @@
   import VaultItemComponent from '$lib/components/VaultItem.svelte';
   import AddEditForm from '$lib/components/AddEditForm.svelte';
   import ReminderBanner from '$lib/components/ReminderBanner.svelte';
+  import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import { StorageEngine } from '$lib/storage';
   import { 
     isUnlocked, vaultItems, searchQuery, categoryFilter, darkMode, showAddForm, editingItem, 
@@ -636,6 +637,9 @@
     </div>
     
     <AddEditForm onSave={saveItem} />
+    
+    <!-- PWA Install Prompt -->
+    <InstallPrompt />
     
     <input
       type="file"
