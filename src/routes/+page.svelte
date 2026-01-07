@@ -6,6 +6,7 @@
   import ReminderBanner from '$lib/components/ReminderBanner.svelte';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import UpdateNotification from '$lib/components/UpdateNotification.svelte';
+  import BackupTooltip from '$lib/components/BackupTooltip.svelte';
   import { StorageEngine } from '$lib/storage';
   import { 
     isUnlocked, vaultItems, searchQuery, categoryFilter, darkMode, showAddForm, editingItem, 
@@ -24,6 +25,8 @@
   let filteredItems = [];
   let successMessage = '';
   let successTimeout;
+  let showExportTooltip = false;
+  let showImportTooltip = false;
   
   const categoryFilters = [
     { value: 'all', label: 'All', icon: '🔐', count: 0 },
@@ -574,12 +577,32 @@
               <span style="font-size: 1.25rem;">{BiometricAuth.getBiometricType() === 'FaceID' ? '👤' : '👆'}</span>
             </button>
           {/if}
-          <button class="glass-btn haptic-light" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={exportVault} title="Export vault">
-            <span style="font-size: 1.25rem;">📤</span>
-          </button>
-          <button class="glass-btn haptic-light" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={importVault} title="Import vault">
-            <span style="font-size: 1.25rem;">📥</span>
-          </button>
+          <div style="position: relative;">
+            <button 
+              class="glass-btn haptic-light" 
+              style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" 
+              on:click={exportVault}
+              on:mouseenter={() => showExportTooltip = true}
+              on:mouseleave={() => showExportTooltip = false}
+              title="Export vault"
+            >
+              <span style="font-size: 1.25rem;">📤</span>
+            </button>
+            <BackupTooltip type="export" show={showExportTooltip} />
+          </div>
+          <div style="position: relative;">
+            <button 
+              class="glass-btn haptic-light" 
+              style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" 
+              on:click={importVault}
+              on:mouseenter={() => showImportTooltip = true}
+              on:mouseleave={() => showImportTooltip = false}
+              title="Import vault"
+            >
+              <span style="font-size: 1.25rem;">📥</span>
+            </button>
+            <BackupTooltip type="import" show={showImportTooltip} />
+          </div>
           <button class="glass-btn haptic-medium" style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" on:click={lock} title="Lock vault">
             <span style="font-size: 1.25rem;">🔒</span>
           </button>
