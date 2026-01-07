@@ -36,9 +36,7 @@
   }
   
   function editItem() {
-    console.log('Edit button clicked for item:', item); // Debug log
     editingItem.set(item);
-    console.log('editingItem store set to:', item); // Debug log
   }
 </script>
 
