@@ -73,9 +73,15 @@
         await StorageEngine.loadVault(inputPassword);
         sessionStorage.setItem('pv_master_key', inputPassword);
         await StorageEngine.saveVault(updatedItems, inputPassword);
+        console.log('[Main] Vault saved to storage');
         
         // Create auto-backup
-        await AutoBackupService.createBackup(updatedItems, inputPassword);
+        try {
+          await AutoBackupService.createBackup(updatedItems, inputPassword);
+          console.log('[Main] Auto-backup created');
+        } catch (backupError) {
+          console.error('[Main] Auto-backup failed (non-critical):', backupError);
+        }
         
         console.log('[Main] Vault saved successfully');
       } catch (error) {
@@ -90,8 +96,13 @@
         console.log('[Main] Vault saved to storage');
         
         // Create auto-backup
-        await AutoBackupService.createBackup(updatedItems, masterPassword);
-        console.log('[Main] Auto-backup created');
+        try {
+          await AutoBackupService.createBackup(updatedItems, masterPassword);
+          console.log('[Main] Auto-backup created');
+        } catch (backupError) {
+          console.error('[Main] Auto-backup failed (non-critical):', backupError);
+          // Continue even if auto-backup fails
+        }
         
         console.log('[Main] Vault saved successfully');
       } catch (error) {
@@ -109,7 +120,12 @@
           sessionStorage.setItem('pv_master_key', inputPassword);
           
           // Create auto-backup
-          await AutoBackupService.createBackup(updatedItems, inputPassword);
+          try {
+            await AutoBackupService.createBackup(updatedItems, inputPassword);
+            console.log('[Main] Auto-backup created');
+          } catch (backupError) {
+            console.error('[Main] Auto-backup failed (non-critical):', backupError);
+          }
           
           console.log('[Main] Vault saved successfully after password refresh');
         } catch (error) {
