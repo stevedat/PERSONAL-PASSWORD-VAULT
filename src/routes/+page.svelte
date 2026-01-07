@@ -24,15 +24,21 @@
   );
   
   async function saveItem(item) {
+    console.log('saveItem called with:', item); // Debug log
+    
     const currentItems = $vaultItems;
     const existingIndex = currentItems.findIndex(i => i.id === item.id);
+    
+    console.log('Current items:', currentItems.length, 'Existing index:', existingIndex); // Debug log
     
     let updatedItems;
     if (existingIndex >= 0) {
       updatedItems = [...currentItems];
       updatedItems[existingIndex] = item;
+      console.log('Updated existing item at index:', existingIndex); // Debug log
     } else {
       updatedItems = [...currentItems, item];
+      console.log('Added new item, total items:', updatedItems.length); // Debug log
     }
     
     // Use cached master password from session
@@ -53,7 +59,9 @@
     } else {
       try {
         await StorageEngine.saveVault(updatedItems, masterPassword);
+        console.log('Vault saved successfully'); // Debug log
       } catch (error) {
+        console.error('Save error:', error); // Debug log
         // Master password might have changed, ask for new one
         sessionStorage.removeItem('pv_master_key');
         const inputPassword = prompt('Master password expired. Enter password to save:');
@@ -271,6 +279,33 @@
   onMount(() => {
     initializeAppStateMonitoring();
     initializeActivityTracking();
+    
+    // Add global error handler to suppress extension errors
+    window.addEventListener('error', (event) => {
+      if (event.error && event.error.message) {
+        const message = event.error.message.toLowerCase();
+        if (message.includes('extension') || 
+            message.includes('frame') || 
+            message.includes('dynamically imported module')) {
+          event.preventDefault();
+          return false;
+        }
+      }
+    });
+    
+    // Handle unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason && event.reason.message) {
+        const message = event.reason.message.toLowerCase();
+        if (message.includes('extension') || 
+            message.includes('frame') || 
+            message.includes('port closed') ||
+            message.includes('dynamically imported module')) {
+          event.preventDefault();
+          return;
+        }
+      }
+    });
   });
   
   onDestroy(() => {

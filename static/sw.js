@@ -33,16 +33,22 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests and extension requests
-  if (event.request.method !== 'GET' || 
-      event.request.url.startsWith('chrome-extension://') ||
-      event.request.url.startsWith('moz-extension://') ||
-      event.request.url.startsWith('safari-web-extension://') ||
-      event.request.url.startsWith('extension://')) {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+  
+  const url = new URL(event.request.url);
+  
+  // Skip all extension-related requests
+  if (url.protocol.startsWith('chrome-extension') || 
+      url.protocol.startsWith('moz-extension') || 
+      url.protocol.startsWith('safari-web-extension') ||
+      url.protocol.startsWith('extension') ||
+      url.hostname.includes('extension')) {
     return;
   }
   
   // Skip requests that are not from our origin
-  const url = new URL(event.request.url);
   const isOurOrigin = url.origin === self.location.origin;
   
   if (!isOurOrigin) {
@@ -64,8 +70,10 @@ self.addEventListener('fetch', (event) => {
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache).catch(err => {
-            // Silently ignore cache errors for unsupported schemes
-            if (!err.message.includes('chrome-extension')) {
+            // Silently ignore cache errors - don't log extension-related errors
+            if (!err.message.includes('chrome-extension') && 
+                !err.message.includes('extension') &&
+                !err.message.includes('unsupported')) {
               console.debug('Cache put failed:', err.message);
             }
           });
@@ -118,4 +126,33 @@ self.addEventListener('beforeinstallprompt', (event) => {
 // Handle PWA installation
 self.addEventListener('appinstalled', (event) => {
   console.log('PocketVault PWA installed');
+});
+
+// Global error handler for service worker
+self.addEventListener('error', (event) => {
+  // Silently handle errors to prevent console spam
+  if (event.error && event.error.message) {
+    const message = event.error.message.toLowerCase();
+    if (message.includes('extension') || 
+        message.includes('frame') || 
+        message.includes('port closed')) {
+      event.preventDefault();
+      return;
+    }
+  }
+});
+
+// Handle unhandled promise rejections
+self.addEventListener('unhandledrejection', (event) => {
+  // Silently handle extension-related promise rejections
+  if (event.reason && event.reason.message) {
+    const message = event.reason.message.toLowerCase();
+    if (message.includes('extension') || 
+        message.includes('frame') || 
+        message.includes('port closed') ||
+        message.includes('message port')) {
+      event.preventDefault();
+      return;
+    }
+  }
 });

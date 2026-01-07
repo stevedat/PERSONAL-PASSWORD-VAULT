@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { CryptoEngine } from '../crypto';
   import { showAddForm, editingItem } from '../stores';
   
@@ -11,20 +12,26 @@
   let isEditing = false;
   let editId = '';
   
-  $: if ($editingItem) {
-    isEditing = true;
-    editId = $editingItem.id;
-    title = $editingItem.title;
-    username = $editingItem.username;
-    password = $editingItem.password;
-    note = $editingItem.note || '';
-  } else if ($showAddForm) {
-    isEditing = false;
-    editId = '';
-    title = '';
-    username = '';
-    password = '';
-    note = '';
+  // Watch for changes in editingItem and showAddForm
+  $: {
+    console.log('Reactive update - showAddForm:', $showAddForm, 'editingItem:', $editingItem); // Debug log
+    if ($editingItem) {
+      console.log('Editing item:', $editingItem); // Debug log
+      isEditing = true;
+      editId = $editingItem.id;
+      title = $editingItem.title;
+      username = $editingItem.username;
+      password = $editingItem.password;
+      note = $editingItem.note || '';
+    } else if ($showAddForm) {
+      console.log('Adding new item'); // Debug log
+      isEditing = false;
+      editId = '';
+      title = '';
+      username = '';
+      password = '';
+      note = '';
+    }
   }
   
   function generatePassword() {
@@ -38,6 +45,7 @@
   
   function save() {
     if (!title.trim() || !username.trim() || !password.trim()) {
+      alert('Please fill in all required fields');
       return;
     }
     
@@ -49,6 +57,7 @@
       note: note.trim() || undefined
     };
     
+    console.log('Saving item:', item); // Debug log
     onSave(item);
     cancel();
   }
@@ -60,6 +69,12 @@
 </script>
 
 {#if $showAddForm || $editingItem}
+  <!-- Debug info -->
+  {#if typeof window !== 'undefined'}
+    <script>
+      console.log('Modal should show - showAddForm:', $showAddForm, 'editingItem:', $editingItem);
+    </script>
+  {/if}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
   <div 
