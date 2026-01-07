@@ -92,7 +92,10 @@ export class CryptoEngine {
       const jsonString = decoder.decode(decryptedData);
       return JSON.parse(jsonString);
     } catch (error) {
-      throw new Error('Invalid master password or corrupted data');
+      if (error instanceof Error && error.message.includes('JSON')) {
+        throw new Error('Dữ liệu vault bị hỏng hoặc không hợp lệ');
+      }
+      throw new Error('Mật khẩu chính không đúng hoặc dữ liệu bị hỏng');
     }
   }
   

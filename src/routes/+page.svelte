@@ -392,11 +392,25 @@
     
     console.log('[Main] Import initiated:', file.name);
     
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Tệp quá lớn. Kích thước tối đa là 10MB');
+      fileInput.value = '';
+      return;
+    }
+    
+    // Validate file extension
+    if (!file.name.toLowerCase().endsWith('.vault')) {
+      alert('Định dạng tệp không hợp lệ. Chỉ chấp nhận tệp .vault');
+      fileInput.value = '';
+      return;
+    }
+    
     // Validate file first
     const validation = await RestoreManager.validateVaultFile(file);
     if (!validation.valid) {
       console.error('[Main] Import validation failed:', validation.error);
-      alert(`Import failed: ${validation.error}`);
+      alert(`Nhập thất bại: ${validation.error}`);
       fileInput.value = '';
       return;
     }

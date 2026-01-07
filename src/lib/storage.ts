@@ -10,7 +10,7 @@ export class StorageEngine {
   
   private static async openDB(): Promise<IDBDatabase> {
     if (typeof window === 'undefined') {
-      throw new Error('IndexedDB not available on server');
+      throw new Error('Ứng dụng chỉ hoạt động trên trình duyệt');
     }
     
     if (this.db) return this.db;

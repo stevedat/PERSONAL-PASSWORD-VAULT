@@ -2,6 +2,7 @@
   import { CryptoEngine } from '../crypto';
   import { showAddForm, editingItem } from '../stores';
   import { StorageEngine } from '../storage';
+  import ValidationMessage from './ValidationMessage.svelte';
   
   export let onSave;
   
@@ -137,9 +138,34 @@
     }
   }
   
+  let validationErrors = {};
+  
+  function validateForm() {
+    validationErrors = {};
+    
+    if (!title.trim()) {
+      validationErrors.title = 'Tiêu đề không được để trống';
+    } else if (title.trim().length < 2) {
+      validationErrors.title = 'Tiêu đề phải có ít nhất 2 ký tự';
+    }
+    
+    if (!username.trim()) {
+      validationErrors.username = 'Tên đăng nhập không được để trống';
+    } else if (username.trim().length < 3) {
+      validationErrors.username = 'Tên đăng nhập phải có ít nhất 3 ký tự';
+    }
+    
+    if (!password.trim()) {
+      validationErrors.password = 'Mật khẩu không được để trống';
+    } else if (password.trim().length < 6) {
+      validationErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+    
+    return Object.keys(validationErrors).length === 0;
+  }
+  
   function save() {
-    if (!title.trim() || !username.trim() || !password.trim()) {
-      alert('Please fill in all required fields');
+    if (!validateForm()) {
       return;
     }
     

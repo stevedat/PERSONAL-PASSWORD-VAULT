@@ -117,14 +117,44 @@
     showBiometricSetup = false;
   }
   
-  async function createVault() {
-    if (!masterPassword.trim()) {
-      error = 'Please enter a master password';
-      return;
+  function validateMasterPassword(password) {
+    const errors = [];
+    
+    if (!password.trim()) {
+      return 'Vui lòng nhập mật khẩu chính';
     }
     
-    if (masterPassword.length < 8) {
-      error = 'Master password must be at least 8 characters';
+    if (password.length < 8) {
+      errors.push('ít nhất 8 ký tự');
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      errors.push('ít nhất 1 chữ hoa');
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      errors.push('ít nhất 1 chữ thường');
+    }
+    
+    if (!/[0-9]/.test(password)) {
+      errors.push('ít nhất 1 số');
+    }
+    
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('ít nhất 1 ký tự đặc biệt');
+    }
+    
+    if (errors.length > 0) {
+      return `Mật khẩu phải có: ${errors.join(', ')}`;
+    }
+    
+    return null;
+  }
+
+  async function createVault() {
+    const passwordError = validateMasterPassword(masterPassword);
+    if (passwordError) {
+      error = passwordError;
       return;
     }
     
