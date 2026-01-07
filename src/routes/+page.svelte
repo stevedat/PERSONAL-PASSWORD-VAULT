@@ -87,9 +87,11 @@
       try {
         console.log('[Main] Saving with cached password');
         await StorageEngine.saveVault(updatedItems, masterPassword);
+        console.log('[Main] Vault saved to storage');
         
         // Create auto-backup
         await AutoBackupService.createBackup(updatedItems, masterPassword);
+        console.log('[Main] Auto-backup created');
         
         console.log('[Main] Vault saved successfully');
       } catch (error) {
@@ -97,7 +99,10 @@
         // Master password might have changed, ask for new one
         sessionStorage.removeItem('pv_master_key');
         const inputPassword = prompt('Master password expired. Enter password to save:');
-        if (!inputPassword) return;
+        if (!inputPassword) {
+          console.log('[Main] User cancelled password prompt');
+          return;
+        }
         
         try {
           await StorageEngine.saveVault(updatedItems, inputPassword);
@@ -116,8 +121,9 @@
     }
     
     // IMPORTANT: Update the store AFTER successful save
-    console.log('[Main] Updating vaultItems store');
+    console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
     vaultItems.set(updatedItems);
+    console.log('[Main] Store updated');
     resetAutoLock();
     
     // Track password addition for reminders
@@ -134,6 +140,8 @@
   async function deleteItem(id) {
     if (!confirm('Are you sure you want to delete this item?')) return;
     
+    console.log('[Main] Delete item:', id);
+    
     // Use cached master password from session
     const masterPassword = sessionStorage.getItem('pv_master_key');
     if (!masterPassword) {
@@ -146,15 +154,22 @@
         sessionStorage.setItem('pv_master_key', inputPassword);
         const updatedItems = $vaultItems.filter(item => item.id !== id);
         await StorageEngine.saveVault(updatedItems, inputPassword);
+        vaultItems.set(updatedItems);
+        console.log('[Main] Item deleted, vault updated');
       } catch (error) {
+        console.error('[Main] Delete failed:', error);
         alert('Failed to delete: Invalid master password');
         return;
       }
     } else {
       try {
         const updatedItems = $vaultItems.filter(item => item.id !== id);
+        console.log('[Main] Deleting item, new count:', updatedItems.length);
         await StorageEngine.saveVault(updatedItems, masterPassword);
+        vaultItems.set(updatedItems);
+        console.log('[Main] Item deleted, vault updated');
       } catch (error) {
+        console.error('[Main] Delete failed:', error);
         // Master password might have changed, ask for new one
         sessionStorage.removeItem('pv_master_key');
         const inputPassword = prompt('Master password expired. Enter password to delete:');
@@ -164,15 +179,16 @@
           const updatedItems = $vaultItems.filter(item => item.id !== id);
           await StorageEngine.saveVault(updatedItems, inputPassword);
           sessionStorage.setItem('pv_master_key', inputPassword);
+          vaultItems.set(updatedItems);
+          console.log('[Main] Item deleted after password refresh');
         } catch (error) {
+          console.error('[Main] Delete failed after password refresh:', error);
           alert('Failed to delete: Invalid master password');
           return;
         }
       }
     }
     
-    const updatedItems = $vaultItems.filter(item => item.id !== id);
-    vaultItems.set(updatedItems);
     resetAutoLock();
     
     // Show success feedback

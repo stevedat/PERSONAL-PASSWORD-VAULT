@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { CryptoEngine } from '../crypto';
   import { showAddForm, editingItem } from '../stores';
   
@@ -10,23 +11,28 @@
   let note = '';
   let isEditing = false;
   let editId = '';
+  let lastEditingId = null; // Track last editing ID to prevent loops
   
-  // Watch for changes in editingItem
+  // Watch for changes in editingItem - only update if ID changed
   $: {
-    if ($editingItem) {
+    if ($editingItem && $editingItem.id !== lastEditingId) {
       console.log('[AddEditForm] Editing item:', $editingItem.id);
+      lastEditingId = $editingItem.id;
       isEditing = true;
       editId = $editingItem.id;
       title = $editingItem.title;
       username = $editingItem.username;
       password = $editingItem.password;
       note = $editingItem.note || '';
+    } else if (!$editingItem && lastEditingId !== null) {
+      // Reset when editingItem is cleared
+      lastEditingId = null;
     }
   }
   
-  // Watch for changes in showAddForm
+  // Watch for changes in showAddForm - only when not editing
   $: {
-    if ($showAddForm && !$editingItem) {
+    if ($showAddForm && !$editingItem && !isEditing) {
       console.log('[AddEditForm] Adding new item');
       isEditing = false;
       editId = '';
@@ -34,6 +40,7 @@
       username = '';
       password = '';
       note = '';
+      lastEditingId = null;
     }
   }
   
@@ -72,6 +79,7 @@
   
   function cancel() {
     console.log('[AddEditForm] Cancelled');
+    lastEditingId = null;
     showAddForm.set(false);
     editingItem.set(null);
   }
