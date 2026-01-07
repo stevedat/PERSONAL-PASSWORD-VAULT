@@ -188,7 +188,7 @@
       
       <div style="display: flex; flex-direction: column; gap: 1rem;">
         {#if error}
-          <div class="glass animate-fade-in" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.75rem; border-radius: 18px; font-size: 0.875rem; text-align: center;">
+          <div class="glass animate-fade-in" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.75rem; border-radius: 12px; font-size: 0.875rem; text-align: center;">
             {error}
           </div>
         {/if}
@@ -271,7 +271,7 @@
         />
         
         {#if error}
-          <div class="glass animate-fade-in" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.75rem; border-radius: 18px; font-size: 0.875rem; text-align: center;">
+          <div class="glass animate-fade-in" style="background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 0.75rem; border-radius: 12px; font-size: 0.875rem; text-align: center;">
             {error}
           </div>
         {/if}

@@ -86,6 +86,10 @@ let visibilityTimeout;
 export function initializeAppStateMonitoring() {
   if (typeof document === 'undefined') return;
 
+  // Detect if running as PWA (standalone mode)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                       (window.navigator as any).standalone === true;
+
   // Standard visibility API with debounce
   document.addEventListener('visibilitychange', debounceVisibilityChange);
   
@@ -96,6 +100,20 @@ export function initializeAppStateMonitoring() {
   // Focus/blur events for additional coverage with debounce
   window.addEventListener('blur', debounceWindowBlur);
   window.addEventListener('focus', debounceWindowFocus);
+  
+  // PWA-specific: Lock immediately when app is hidden/closed
+  if (isStandalone) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Lock immediately when PWA is hidden/closed
+        setTimeout(() => {
+          if (document.hidden) {
+            lock('pwa-hidden');
+          }
+        }, 1000); // 1 second delay to avoid false positives
+      }
+    });
+  }
   
   // iOS specific app state events
   if ('standalone' in window.navigator && window.navigator.standalone) {

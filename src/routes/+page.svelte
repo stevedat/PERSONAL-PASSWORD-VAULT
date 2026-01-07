@@ -46,6 +46,18 @@
     });
   }
   
+  // Debounced search query
+  let searchInput = '';
+  let searchDebounceTimer;
+  
+  function handleSearchInput(event) {
+    searchInput = event.target.value;
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      searchQuery.set(searchInput);
+    }, 300); // 300ms debounce
+  }
+  
   // Reactive statement to filter items by search and category
   $: {
     let items = $vaultItems;
@@ -543,7 +555,7 @@
   <div style="min-height: 100vh;">
     <header class="glass-header">
       {#if successMessage}
-        <div class="glass animate-fade-in" style="background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; padding: 0.875rem; border-radius: 18px; font-size: 0.875rem; text-align: center; margin-bottom: 1rem;">
+        <div class="glass animate-fade-in" style="background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; padding: 0.875rem; border-radius: 12px; font-size: 0.875rem; text-align: center; margin-bottom: 1rem;">
           {successMessage}
         </div>
       {/if}
@@ -577,7 +589,8 @@
         <input
           type="text"
           placeholder="Search passwords..."
-          bind:value={$searchQuery}
+          value={searchInput}
+          on:input={handleSearchInput}
           class="glass-input"
           style="width: 100%; padding: 0.875rem; border-radius: 14px;"
         />
