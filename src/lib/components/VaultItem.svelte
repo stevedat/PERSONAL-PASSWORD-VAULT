@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { editingItem } from '../stores';
   import { StorageEngine } from '../storage';
   
@@ -11,6 +12,16 @@
   let verifyPassword = '';
   let verifyError = '';
   let isVerifying = false;
+  let usernameId, passwordId, noteId, verifyId;
+
+  onMount(() => {
+    // Generate unique IDs for accessibility
+    const uniqueId = `item-${item.id}`;
+    usernameId = `${uniqueId}-username`;
+    passwordId = `${uniqueId}-password`;
+    noteId = `${uniqueId}-note`;
+    verifyId = `${uniqueId}-verify`;
+  });
   
   const categoryIcons = {
     email: '📧',
@@ -36,15 +47,13 @@
     try {
       await navigator.clipboard.writeText(text);
       
-      // Show feedback for this specific field
       copyFeedback[field] = true;
       setTimeout(() => {
         copyFeedback[field] = false;
-        copyFeedback = { ...copyFeedback }; // Trigger reactivity
+        copyFeedback = { ...copyFeedback };
       }, 1500);
     } catch (err) {
       console.error('Failed to copy:', err);
-      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = text;
       document.body.appendChild(textArea);
@@ -61,16 +70,13 @@
   }
   
   function editItem() {
-    console.log('[VaultItem] Edit clicked for item:', item.id, item.title);
     editingItem.set(item);
   }
   
   function togglePasswordVisibility() {
     if (showPassword) {
-      // Hide password - no verification needed
       showPassword = false;
     } else {
-      // Show password - require verification
       showVerifyPopup = true;
       verifyPassword = '';
       verifyError = '';
@@ -87,15 +93,12 @@
     verifyError = '';
     
     try {
-      // Verify by trying to load vault with the password
       await StorageEngine.loadVault(verifyPassword);
       
-      // Success - show password
       showPassword = true;
       showVerifyPopup = false;
       verifyPassword = '';
       
-      // Auto-hide after 30 seconds for security
       setTimeout(() => {
         showPassword = false;
       }, 30000);
@@ -137,7 +140,7 @@
         class="action-btn action-btn-edit haptic-light" 
         on:click={editItem} 
         title="Edit"
-        aria-label="Edit password"
+        aria-label="Edit password for {item.title}"
       >
         <span class="action-icon">✏️</span>
       </button>
@@ -145,7 +148,7 @@
         class="action-btn action-btn-delete haptic-heavy" 
         on:click={() => onDelete(item.id)} 
         title="Delete"
-        aria-label="Delete password"
+        aria-label="Delete password for {item.title}"
       >
         <span class="action-icon">🗑️</span>
       </button>
@@ -154,13 +157,13 @@
   
   <div class="card-body">
     <div class="field-group">
-      <label class="field-label text-glass-secondary">Username</label>
+      <label for={usernameId} class="field-label text-glass-secondary">Username</label>
       <div class="field-content glass-field">
-        <span class="field-value text-glass">{item.username}</span>
+        <span id={usernameId} class="field-value text-glass">{item.username}</span>
         <button 
           class="field-btn glass-btn-primary haptic-medium" 
           on:click={() => copyToClipboard(item.username, 'username')}
-          aria-label="Copy username"
+          aria-label="Copy username for {item.title}"
         >
           {copyFeedback.username ? '✓ Copied!' : 'Copy'}
         </button>
@@ -168,9 +171,9 @@
     </div>
     
     <div class="field-group">
-      <label class="field-label text-glass-secondary">Password</label>
+      <label for={passwordId} class="field-label text-glass-secondary">Password</label>
       <div class="field-content glass-field">
-        <span class="field-value text-glass">
+        <span id={passwordId} class="field-value text-glass">
           {showPassword ? item.password : '••••••••••••'}
         </span>
         <div class="field-actions">
@@ -178,14 +181,14 @@
             class="field-btn-icon glass-btn haptic-light" 
             on:click={togglePasswordVisibility}
             title={showPassword ? 'Hide password' : 'Show password'}
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-label="{showPassword ? 'Hide' : 'Show'} password for {item.title}"
           >
             <span class="action-icon">{showPassword ? '🙈' : '👁️'}</span>
           </button>
           <button 
             class="field-btn glass-btn-primary haptic-medium" 
             on:click={() => copyToClipboard(item.password, 'password')}
-            aria-label="Copy password"
+            aria-label="Copy password for {item.title}"
           >
             {copyFeedback.password ? '✓ Copied!' : 'Copy'}
           </button>
@@ -195,9 +198,9 @@
     
     {#if item.note}
       <div class="field-group">
-        <label class="field-label text-glass-secondary">Note</label>
+        <label for={noteId} class="field-label text-glass-secondary">Note</label>
         <div class="field-content glass-field field-note">
-          <span class="field-value text-glass">{item.note}</span>
+          <span id={noteId} class="field-value text-glass">{item.note}</span>
         </div>
       </div>
     {/if}
@@ -207,31 +210,29 @@
 
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div class="verify-backdrop" on:click={cancelVerify}>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="verify-popup glass" on:click|stopPropagation>
+  <div class="verify-backdrop" on:click={cancelVerify} role="dialog" aria-modal="true" aria-labelledby="verify-title">
+    <div class="verify-popup glass" on:click|stopPropagation role="document">
       <div class="verify-header">
         <div class="verify-icon">🔐</div>
-        <h3 class="verify-title text-glass">Verify Master Password</h3>
+        <h3 id="verify-title" class="verify-title text-glass">Verify Master Password</h3>
         <p class="verify-subtitle text-glass-secondary">Enter your master password to view this password</p>
       </div>
       
       <div class="verify-body">
+        <label for={verifyId} class="sr-only">Master password</label>
         <input
+          id={verifyId}
           type="password"
           bind:value={verifyPassword}
           on:keydown={handleVerifyKeydown}
           placeholder="Master password"
           class="glass-input verify-input"
-          autofocus
+          aria-label="Master password for verification"
           disabled={isVerifying}
         />
         
         {#if verifyError}
-          <div class="verify-error">
+          <div class="verify-error" role="alert">
             <span>⚠️</span>
             <span>{verifyError}</span>
           </div>
@@ -259,6 +260,19 @@
 {/if}
 
 <style>
+  /* Adding sr-only for accessibility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   /* Vault Card - Rounded corners */
   .vault-card {
     padding: 1.25rem;
