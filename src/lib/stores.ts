@@ -6,7 +6,7 @@ export const isUnlocked = writable(false);
 export const vaultItems = writable<VaultItem[]>([]);
 export const searchQuery = writable('');
 export const categoryFilter = writable<string>('all'); // 'all' or category type
-export const darkMode = writable(false);
+export const darkMode = writable(true); // Default to dark mode
 export const showAddForm = writable(false);
 export const editingItem = writable<VaultItem | null>(null);
 export const biometricEnabled = writable(false);
@@ -18,12 +18,12 @@ let isCriticalOperation = false;
 
 export function startCriticalOperation() {
   isCriticalOperation = true;
-  console.log('[Stores] Critical operation started - lock prevented');
+  if (import.meta.env.DEV) console.log('[Stores] Critical operation started - lock prevented');
 }
 
 export function endCriticalOperation() {
   isCriticalOperation = false;
-  console.log('[Stores] Critical operation ended - lock allowed');
+  if (import.meta.env.DEV) console.log('[Stores] Critical operation ended - lock allowed');
 }
 
 // Helper to get current state
@@ -57,11 +57,11 @@ export function resetAutoLock() {
 export function lock(reason = 'manual') {
   // Prevent locking during critical operations (like saving)
   if (isCriticalOperation) {
-    console.log(`[Stores] Lock prevented during critical operation (reason: ${reason})`);
+    if (import.meta.env.DEV) console.log(`[Stores] Lock prevented during critical operation (reason: ${reason})`);
     return;
   }
   
-  console.log(`Vault locked: ${reason}`);
+  if (import.meta.env.DEV) console.log(`Vault locked: ${reason}`);
   isUnlocked.set(false);
   vaultItems.set([]);
   appState.set('locked');
@@ -177,7 +177,7 @@ function handleAppBackground() {
   // Add debounce to prevent rapid state changes
   clearTimeout(backgroundTimer);
   
-  console.log('App backgrounded');
+  if (import.meta.env.DEV) console.log('App backgrounded');
   appState.set('background');
   
   // Start background lock timer
@@ -193,7 +193,7 @@ function handleAppForeground() {
   const currentState = getCurrentAppState();
   if (currentState === 'active') return; // Already active
   
-  console.log('App foregrounded');
+  if (import.meta.env.DEV) console.log('App foregrounded');
   clearTimeout(backgroundTimer);
   
   const timeInBackground = Date.now() - lastActivity;
