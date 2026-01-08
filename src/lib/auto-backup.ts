@@ -114,9 +114,26 @@ export class AutoBackupService {
         const store = tx.objectStore(this.STORE_NAME);
         const request = store.put(backup);
         
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-        tx.onerror = () => reject(tx.error);
+        request.onsuccess = () => {
+          if (import.meta.env.DEV) console.log('[AutoBackup] Put operation successful');
+          resolve();
+        };
+        request.onerror = () => {
+          console.error('[AutoBackup] Put operation failed:', request.error);
+          reject(request.error);
+        };
+        
+        tx.oncomplete = () => {
+          if (import.meta.env.DEV) console.log('[AutoBackup] Transaction completed');
+        };
+        tx.onerror = () => {
+          console.error('[AutoBackup] Transaction failed:', tx.error);
+          reject(tx.error);
+        };
+        tx.onabort = () => {
+          console.error('[AutoBackup] Transaction aborted');
+          reject(new Error('Transaction aborted'));
+        };
       });
       
       if (import.meta.env.DEV) console.log('[AutoBackup] Backup saved to IndexedDB');

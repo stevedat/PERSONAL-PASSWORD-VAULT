@@ -164,11 +164,13 @@
           if (import.meta.env.DEV) console.log('[Main] Store updated');
           
           // Create auto-backup (non-critical, can fail)
-          try {
-            await AutoBackupService.createBackup(updatedItems, inputPassword);
-            if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
-          } catch (backupError) {
-            console.error('[Main] Auto-backup failed (non-critical):', backupError);
+          if (AutoBackupService.getConfig().enabled) {
+            try {
+              await AutoBackupService.createBackup(updatedItems, inputPassword);
+              if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
+            } catch (backupError) {
+              console.error('[Main] Auto-backup failed (non-critical):', backupError);
+            }
           }
           
           if (import.meta.env.DEV) console.log('[Main] Vault saved successfully');
@@ -190,12 +192,14 @@
           if (import.meta.env.DEV) console.log('[Main] Store updated');
           
           // Create auto-backup (non-critical, can fail)
-          try {
-            await AutoBackupService.createBackup(updatedItems, masterPassword);
-            if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
-          } catch (backupError) {
-            console.error('[Main] Auto-backup failed (non-critical):', backupError);
-            // Continue even if auto-backup fails
+          if (AutoBackupService.getConfig().enabled) {
+            try {
+              await AutoBackupService.createBackup(updatedItems, masterPassword);
+              if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
+            } catch (backupError) {
+              console.error('[Main] Auto-backup failed (non-critical):', backupError);
+              // Continue even if auto-backup fails
+            }
           }
           
           if (import.meta.env.DEV) console.log('[Main] Vault saved successfully');
@@ -221,11 +225,13 @@
             if (import.meta.env.DEV) console.log('[Main] Store updated');
             
             // Create auto-backup (non-critical, can fail)
-            try {
-              await AutoBackupService.createBackup(updatedItems, inputPassword);
-              if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
-            } catch (backupError) {
-              console.error('[Main] Auto-backup failed (non-critical):', backupError);
+            if (AutoBackupService.getConfig().enabled) {
+              try {
+                await AutoBackupService.createBackup(updatedItems, inputPassword);
+                if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
+              } catch (backupError) {
+                console.error('[Main] Auto-backup failed (non-critical):', backupError);
+              }
             }
             
             if (import.meta.env.DEV) console.log('[Main] Vault saved successfully after password refresh');
@@ -460,10 +466,12 @@
           sessionStorage.setItem('pv_master_key', savePassword);
           
           // Create auto-backup (non-critical, can fail)
-          try {
-            await AutoBackupService.createBackup(result.items, savePassword);
-          } catch (backupError) {
-            console.error('[Main] Auto-backup failed (non-critical):', backupError);
+          if (AutoBackupService.getConfig().enabled) {
+            try {
+              await AutoBackupService.createBackup(result.items, savePassword);
+            } catch (backupError) {
+              console.error('[Main] Auto-backup failed (non-critical):', backupError);
+            }
           }
         } catch (error) {
           console.error('[Main] Save failed:', error);
@@ -476,10 +484,12 @@
           await StorageEngine.saveVault(result.items, currentMasterPassword);
           
           // Create auto-backup (non-critical, can fail)
-          try {
-            await AutoBackupService.createBackup(result.items, currentMasterPassword);
-          } catch (backupError) {
-            console.error('[Main] Auto-backup failed (non-critical):', backupError);
+          if (AutoBackupService.getConfig().enabled) {
+            try {
+              await AutoBackupService.createBackup(result.items, currentMasterPassword);
+            } catch (backupError) {
+              console.error('[Main] Auto-backup failed (non-critical):', backupError);
+            }
           }
         } catch (error) {
           console.error('[Main] Save failed with cached password:', error);
@@ -492,10 +502,12 @@
             sessionStorage.setItem('pv_master_key', savePassword);
             
             // Create auto-backup (non-critical, can fail)
-            try {
-              await AutoBackupService.createBackup(result.items, savePassword);
-            } catch (backupError) {
-              console.error('[Main] Auto-backup failed (non-critical):', backupError);
+            if (AutoBackupService.getConfig().enabled) {
+              try {
+                await AutoBackupService.createBackup(result.items, savePassword);
+              } catch (backupError) {
+                console.error('[Main] Auto-backup failed (non-critical):', backupError);
+              }
             }
           } catch (error) {
             console.error('[Main] Save failed after password refresh:', error);
