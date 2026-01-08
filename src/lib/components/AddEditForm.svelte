@@ -48,21 +48,24 @@
       category = $editingItem.category || 'other';
       showPassword = false;
       passwordUnlocked = false;
-    } else if ($showAddForm && !$editingItem) {
-      // ADD MODE: Reset all fields (only if not already reset)
-      if (isEditing || title || username || password || note || category !== 'other') {
-        console.log('[AddEditForm] Opening add form, resetting all fields');
-        isEditing = false;
-        editId = '';
-        title = '';
-        username = '';
-        password = '';
-        note = '';
-        category = 'other';
-        lastEditingId = null;
-        showPassword = false;
-        passwordUnlocked = false;
-      }
+    } else if ($showAddForm && !$editingItem && isEditing) {
+      // ADD MODE: Only reset when switching from edit to add
+      console.log('[AddEditForm] Switching from edit to add mode - resetting');
+      isEditing = false;
+      editId = '';
+      title = '';
+      username = '';
+      password = '';
+      note = '';
+      category = 'other';
+      lastEditingId = null;
+      showPassword = false;
+      passwordUnlocked = false;
+    } else if ($showAddForm && !$editingItem && !isEditing) {
+      // Already in add mode, just ensure flags are correct
+      editId = '';
+      lastEditingId = null;
+      passwordUnlocked = false;
     }
   }
   
