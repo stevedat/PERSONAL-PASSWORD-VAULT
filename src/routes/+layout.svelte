@@ -1,5 +1,4 @@
 <script>
-  export let data;
   import '../app.css';
   import { darkMode } from '$lib/stores';
   import { onMount } from 'svelte';
