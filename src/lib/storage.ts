@@ -67,7 +67,7 @@ export class StorageEngine {
         
         transaction.onerror = () => {
           console.error('[Storage] Transaction error:', transaction.error);
-          reject(transaction.error);
+          reject(transaction.error || new Error('Transaction failed'));
         };
         
         transaction.onabort = () => {
@@ -75,9 +75,13 @@ export class StorageEngine {
           reject(new Error('Transaction aborted'));
         };
         
+        request.onsuccess = () => {
+          // Request succeeded, wait for transaction to complete
+        };
+        
         request.onerror = () => {
           console.error('[Storage] Request error:', request.error);
-          reject(request.error);
+          reject(request.error || new Error('Put request failed'));
         };
       });
     })();
