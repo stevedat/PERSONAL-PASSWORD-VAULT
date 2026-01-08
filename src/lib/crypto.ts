@@ -1,20 +1,7 @@
 
-export type CategoryType = 'email' | 'banking' | 'app' | 'website' | 'work' | 'games' | 'other';
-
-export interface VaultItem {
-  id: string;
-  title: string;
-  username: string;
-  password: string;
-  note?: string;
-  category?: CategoryType;
-}
-
-export interface EncryptedVault {
-  data: ArrayBuffer;
-  iv: ArrayBuffer;
-  salt: ArrayBuffer;
-}
+import type { VaultItem, EncryptedVault } from './crypto';
+// Import the worker using the ?worker suffix, which is the recommended Vite syntax
+import CryptoWorker from './crypto.worker.ts?worker';
 
 // The CryptoEngine now acts as a proxy to a Web Worker.
 // All heavy crypto operations are offloaded from the main thread.
@@ -24,10 +11,12 @@ export class CryptoEngine {
 
   private static getWorker(): Worker {
     if (typeof window === 'undefined') {
+      // This check ensures we don't try to create a worker on the server.
       throw new Error('CryptoEngine only works in the browser.');
     }
     if (!this.worker) {
-      this.worker = new Worker(new URL('./crypto.worker.ts', import.meta.url), { type: 'module' });
+      // Instantiate the worker from the special Vite import.
+      this.worker = new CryptoWorker();
 
       this.worker.onmessage = (event) => {
         if (!this.currentTask) return;
