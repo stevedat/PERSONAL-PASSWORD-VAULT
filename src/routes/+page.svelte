@@ -459,8 +459,12 @@
           await StorageEngine.saveVault(result.items, savePassword);
           sessionStorage.setItem('pv_master_key', savePassword);
           
-          // Create auto-backup
-          await AutoBackupService.createBackup(result.items, savePassword);
+          // Create auto-backup (non-critical, can fail)
+          try {
+            await AutoBackupService.createBackup(result.items, savePassword);
+          } catch (backupError) {
+            console.error('[Main] Auto-backup failed (non-critical):', backupError);
+          }
         } catch (error) {
           console.error('[Main] Save failed:', error);
           alert('Failed to save merged vault: Invalid master password');
@@ -471,8 +475,12 @@
           if (import.meta.env.DEV) console.log('[Main] Saving with cached password');
           await StorageEngine.saveVault(result.items, currentMasterPassword);
           
-          // Create auto-backup
-          await AutoBackupService.createBackup(result.items, currentMasterPassword);
+          // Create auto-backup (non-critical, can fail)
+          try {
+            await AutoBackupService.createBackup(result.items, currentMasterPassword);
+          } catch (backupError) {
+            console.error('[Main] Auto-backup failed (non-critical):', backupError);
+          }
         } catch (error) {
           console.error('[Main] Save failed with cached password:', error);
           sessionStorage.removeItem('pv_master_key');
@@ -483,8 +491,12 @@
             await StorageEngine.saveVault(result.items, savePassword);
             sessionStorage.setItem('pv_master_key', savePassword);
             
-            // Create auto-backup
-            await AutoBackupService.createBackup(result.items, savePassword);
+            // Create auto-backup (non-critical, can fail)
+            try {
+              await AutoBackupService.createBackup(result.items, savePassword);
+            } catch (backupError) {
+              console.error('[Main] Auto-backup failed (non-critical):', backupError);
+            }
           } catch (error) {
             console.error('[Main] Save failed after password refresh:', error);
             alert('Failed to save merged vault: Invalid master password');
