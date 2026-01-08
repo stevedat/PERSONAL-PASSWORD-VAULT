@@ -335,56 +335,31 @@
     }
   }
   
+  let exportLoading = false;
+  
   async function exportVault() {
-    if (import.meta.env.DEV) console.log('[Main] Export vault initiated');
+    if (exportLoading) return; // Prevent double-click
     
-    const masterPassword = sessionStorage.getItem('pv_master_key');
-    if (!masterPassword) {
-      if (import.meta.env.DEV) console.log('[Main] No cached master password, prompting user');
-      const inputPassword = prompt('Enter master password to export vault:');
-      if (!inputPassword) return;
-      
-      try {
-        // Test password first
-        await StorageEngine.loadVault(inputPassword);
-        sessionStorage.setItem('pv_master_key', inputPassword);
-        const blob = await BackupManager.quickExport($vaultItems, inputPassword);
-        const filename = BackupManager.generateFileName();
-        BackupManager.triggerDownload(blob, filename);
-        
-        // Record backup for reminders
-        ReminderSystem.recordBackup();
-        showReminder.set(null);
-        
-        showSuccessMessage('Vault exported successfully');
-        if (import.meta.env.DEV) console.log('[Main] Export successful:', filename);
-      } catch (error) {
-        console.error('[Main] Export failed:', error);
-        alert('Export failed: Invalid master password');
-      }
-    } else {
-      try {
-        if (import.meta.env.DEV) console.log('[Main] Using cached master password');
-        const blob = await BackupManager.quickExport($vaultItems, masterPassword);
-        const filename = BackupManager.generateFileName();
-        BackupManager.triggerDownload(blob, filename);
-        
-        // Record backup for reminders
-        ReminderSystem.recordBackup();
-        showReminder.set(null);
-        
-        showSuccessMessage('Vault exported successfully');
-        if (import.meta.env.DEV) console.log('[Main] Export successful:', filename);
-      } catch (error) {
-        console.error('[Main] Export failed with cached password:', error);
-        sessionStorage.removeItem('pv_master_key');
-        const inputPassword = prompt('Master password expired. Enter password to export:');
+    if (import.meta.env.DEV) console.log('[Main] Export vault initiated');
+    exportLoading = true;
+    
+    try {
+      const masterPassword = sessionStorage.getItem('pv_master_key');
+      if (!masterPassword) {
+        if (import.meta.env.DEV) console.log('[Main] No cached master password, prompting user');
+        const inputPassword = prompt('Enter master password to export vault:');
         if (!inputPassword) return;
         
         try {
+          // Test password first
+          await StorageEngine.loadVault(inputPassword);
+          sessionStorage.setItem('pv_master_key', inputPassword);
+          
+          // Show loading message
+          showSuccessMessage('Exporting vault...');
+          
           const blob = await BackupManager.quickExport($vaultItems, inputPassword);
           const filename = BackupManager.generateFileName();
-          sessionStorage.setItem('pv_master_key', inputPassword);
           BackupManager.triggerDownload(blob, filename);
           
           // Record backup for reminders
@@ -392,12 +367,57 @@
           showReminder.set(null);
           
           showSuccessMessage('Vault exported successfully');
-          if (import.meta.env.DEV) console.log('[Main] Export successful after password refresh:', filename);
+          if (import.meta.env.DEV) console.log('[Main] Export successful:', filename);
         } catch (error) {
-          console.error('[Main] Export failed after password refresh:', error);
+          console.error('[Main] Export failed:', error);
           alert('Export failed: Invalid master password');
         }
+      } else {
+        try {
+          if (import.meta.env.DEV) console.log('[Main] Using cached master password');
+          
+          // Show loading message
+          showSuccessMessage('Exporting vault...');
+          
+          const blob = await BackupManager.quickExport($vaultItems, masterPassword);
+          const filename = BackupManager.generateFileName();
+          BackupManager.triggerDownload(blob, filename);
+          
+          // Record backup for reminders
+          ReminderSystem.recordBackup();
+          showReminder.set(null);
+          
+          showSuccessMessage('Vault exported successfully');
+          if (import.meta.env.DEV) console.log('[Main] Export successful:', filename);
+        } catch (error) {
+          console.error('[Main] Export failed with cached password:', error);
+          sessionStorage.removeItem('pv_master_key');
+          const inputPassword = prompt('Master password expired. Enter password to export:');
+          if (!inputPassword) return;
+          
+          try {
+            // Show loading message
+            showSuccessMessage('Exporting vault...');
+            
+            const blob = await BackupManager.quickExport($vaultItems, inputPassword);
+            const filename = BackupManager.generateFileName();
+            sessionStorage.setItem('pv_master_key', inputPassword);
+            BackupManager.triggerDownload(blob, filename);
+            
+            // Record backup for reminders
+            ReminderSystem.recordBackup();
+            showReminder.set(null);
+            
+            showSuccessMessage('Vault exported successfully');
+            if (import.meta.env.DEV) console.log('[Main] Export successful after password refresh:', filename);
+          } catch (error) {
+            console.error('[Main] Export failed after password refresh:', error);
+            alert('Export failed: Invalid master password');
+          }
+        }
       }
+    } finally {
+      exportLoading = false;
     }
   }
   
