@@ -1,55 +1,79 @@
 
 import type { VaultItem, EncryptedVault } from './crypto';
-// Import the worker using the ?worker suffix, which is the recommended Vite syntax
-import CryptoWorker from './crypto.worker.ts?worker';
 
 // The CryptoEngine now acts as a proxy to a Web Worker.
 // All heavy crypto operations are offloaded from the main thread.
 export class CryptoEngine {
   private static worker: Worker | null = null;
-  private static currentTask: { resolve: (value: any) => void; reject: (reason?: any) => void; } | null = null;
+  private static taskQueue: Array<{ type: string; payload: any; resolve: (value: any) => void; reject: (reason?: any) => void; }> = [];
+  private static isWorkerInitializing = false;
 
-  private static getWorker(): Worker {
-    if (typeof window === 'undefined') {
-      // This check ensures we don't try to create a worker on the server.
-      throw new Error('CryptoEngine only works in the browser.');
+  // Initializes the worker and sets up message handling
+  private static async initializeWorker(): Promise<Worker> {
+    // If worker exists, return it
+    if (this.worker) {
+      return this.worker;
     }
-    if (!this.worker) {
-      // Instantiate the worker from the special Vite import.
-      this.worker = new CryptoWorker();
 
-      this.worker.onmessage = (event) => {
-        if (!this.currentTask) return;
-
-        const { type, payload } = event.data;
-        if (type.endsWith('_success')) {
-          this.currentTask.resolve(payload);
-        } else if (type === 'error') {
-          this.currentTask.reject(new Error(payload));
-        }
-        this.currentTask = null;
-      };
-
-      this.worker.onerror = (error) => {
-        if (this.currentTask) {
-          this.currentTask.reject(error);
-          this.currentTask = null;
-        }
-      };
+    // If another process is already initializing, wait for it
+    if (this.isWorkerInitializing) {
+      return new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (this.worker) {
+            clearInterval(interval);
+            resolve(this.worker);
+          }
+        }, 50);
+      });
     }
-    return this.worker;
+
+    // Mark as initializing
+    this.isWorkerInitializing = true;
+
+    // Dynamically import the worker module only on the client-side
+    const WorkerModule = await import('./crypto.worker.ts?worker');
+    const worker = new WorkerModule.default() as Worker;
+
+    worker.onmessage = (event) => {
+      const nextTask = this.taskQueue.shift();
+      if (!nextTask) return;
+
+      const { type, payload } = event.data;
+      if (type.endsWith('_success')) {
+        nextTask.resolve(payload);
+      } else if (type === 'error') {
+        nextTask.reject(new Error(payload));
+      }
+    };
+
+    worker.onerror = (error) => {
+      const nextTask = this.taskQueue.shift();
+      if (nextTask) {
+        nextTask.reject(error);
+      }
+    };
+
+    this.worker = worker;
+    this.isWorkerInitializing = false;
+    return worker;
   }
 
-  private static postTask<T>(type: string, payload: any): Promise<T> {
+  private static async postTask<T>(type: string, payload: any): Promise<T> {
+    // Ensure this only runs in the browser before initializing worker
+    if (typeof window === 'undefined') {
+        // This case should ideally not be hit if called from client-side components,
+        // but serves as a safeguard.
+        return Promise.reject(new Error('Crypto operations can only be performed in the browser.'));
+    }
+
+    const worker = await this.initializeWorker();
+    
     return new Promise((resolve, reject) => {
-      if (this.currentTask) {
-        // This simple implementation only handles one task at a time.
-        // For a more robust solution, a queue system would be needed.
-        reject(new Error('A crypto operation is already in progress.'));
-        return;
+      this.taskQueue.push({ type, payload, resolve, reject });
+      // If this is the only task in the queue, post it immediately
+      if (this.taskQueue.length === 1) {
+        worker.postMessage({ type, payload });
       }
-      this.currentTask = { resolve, reject };
-      this.getWorker().postMessage({ type, payload });
     });
   }
 
@@ -62,6 +86,7 @@ export class CryptoEngine {
   }
   
   static generateId(): string {
+    // This does not require the worker
     return crypto.randomUUID();
   }
 }
