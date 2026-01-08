@@ -210,12 +210,46 @@
           <label for="password" style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Password *</label>
           <div style="display: flex; gap: 0.5rem;">
             <div style="position: relative; flex: 1;">
-              <input id="password" type={showPassword ? 'text' : 'password'} bind:value={password} placeholder="Password" class="glass-input" style="width: 100%; padding-right: 3rem;" required readonly={isEditing && !passwordUnlocked} on:focus={handlePasswordInput} />
-              <button type="button" class="password-toggle-btn haptic-light" on:click={togglePasswordVisibility} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+              {#if showPassword}
+                <input
+                  id="password"
+                  type="text"
+                  bind:value={password}
+                  placeholder="Password"
+                  class="glass-input"
+                  style="width: 100%; padding-right: 3rem;"
+                  required
+                  readonly={isEditing && !passwordUnlocked}
+                  on:focus={handlePasswordInput}
+                />
+              {:else}
+                <input
+                  id="password"
+                  type="password"
+                  bind:value={password}
+                  placeholder="Password"
+                  class="glass-input"
+                  style="width: 100%; padding-right: 3rem;"
+                  required
+                  readonly={isEditing && !passwordUnlocked}
+                  on:focus={handlePasswordInput}
+                />
+              {/if}
+              <button
+                type="button"
+                class="password-toggle-btn haptic-light"
+                on:click={togglePasswordVisibility}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
-            <button type="button" class="generate-btn haptic-medium" on:click={generatePassword} aria-label="Generate password">
+            <button 
+              type="button" 
+              class="generate-btn haptic-medium" 
+              on:click={generatePassword}
+              aria-label="Generate password"
+            >
               <span class="generate-icon">⚡</span>
               <span class="generate-text">Generate</span>
             </button>

@@ -174,9 +174,9 @@
 
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
-  <!-- svelte-ignore a11y-click-events-have-key-events, a11y-no-static-element-interactions -->
+  <!-- svelte-ignore a11y-warnings -->
   <div class="verify-backdrop" on:click={cancelVerify} role="dialog" aria-modal="true" aria-labelledby="verify-title">
-    <!-- svelte-ignore a11y-click-events-have-key-events, a11y-no-static-element-interactions -->
+    <!-- svelte-ignore a11y-warnings -->
     <div class="verify-popup glass" on:click|stopPropagation role="document">
       <div class="verify-header">
         <div class="verify-icon">🔐</div>
