@@ -2,10 +2,9 @@
   import { CryptoEngine } from '../crypto';
   import { showAddForm, editingItem } from '../stores';
   import { StorageEngine } from '../storage';
-  import ValidationMessage from './ValidationMessage.svelte';
-  
+
   export let onSave;
-  
+
   let title = '';
   let username = '';
   let password = '';
@@ -13,16 +12,15 @@
   let category = 'other';
   let isEditing = false;
   let editId = '';
-  let lastEditingId = null; // Track last editing ID to prevent loops
-  
-  // Password masking for edit mode
+  let lastEditingId = null;
+
   let showPassword = false;
   let showVerifyPopup = false;
   let verifyPassword = '';
   let verifyError = '';
   let isVerifying = false;
   let passwordUnlocked = false;
-  
+
   const categories = [
     { value: 'email', label: 'Email', icon: '📧' },
     { value: 'banking', label: 'Banking', icon: '🏦' },
@@ -32,14 +30,11 @@
     { value: 'games', label: 'Games', icon: '🎮' },
     { value: 'other', label: 'Other', icon: '📌' }
   ];
-  
-  // Track if we've initialized add mode to prevent loops
+
   let addModeInitialized = false;
-  
-  // Single reactive statement to handle both edit and add modes
+
   $: {
     if ($editingItem && $editingItem.id !== lastEditingId) {
-      // EDIT MODE: Load item data
       if (import.meta.env.DEV) console.log('[AddEditForm] Editing item:', $editingItem.id);
       lastEditingId = $editingItem.id;
       isEditing = true;
@@ -51,18 +46,16 @@
       category = $editingItem.category || 'other';
       showPassword = false;
       passwordUnlocked = false;
-      addModeInitialized = false; // Reset flag when entering edit mode
+      addModeInitialized = false;
     } else if ($showAddForm && !$editingItem && !addModeInitialized) {
-      // ADD MODE: Initialize once per open
       if (import.meta.env.DEV) console.log('[AddEditForm] Initializing add mode');
       isEditing = false;
       editId = '';
       lastEditingId = null;
       showPassword = false;
       passwordUnlocked = false;
-      addModeInitialized = true; // Prevent re-initialization
+      addModeInitialized = true;
       
-      // Only reset fields if they have data
       if (title || username || password || note || category !== 'other') {
         if (import.meta.env.DEV) console.log('[AddEditForm] Resetting fields');
         title = '';
@@ -72,11 +65,10 @@
         category = 'other';
       }
     } else if (!$showAddForm && !$editingItem) {
-      // Form closed - reset flag for next time
       addModeInitialized = false;
     }
   }
-  
+
   function generatePassword() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let result = '';
@@ -84,21 +76,19 @@
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     password = result;
-    showPassword = true; // Show generated password
+    showPassword = true;
   }
-  
+
   function togglePasswordVisibility() {
     if (isEditing && !passwordUnlocked) {
-      // Editing mode - require master password verification
       showVerifyPopup = true;
       verifyPassword = '';
       verifyError = '';
     } else {
-      // Add mode or already unlocked - just toggle
       showPassword = !showPassword;
     }
   }
-  
+
   async function verifyMasterPassword() {
     if (!verifyPassword.trim()) {
       verifyError = 'Please enter master password';
@@ -109,10 +99,7 @@
     verifyError = '';
     
     try {
-      // Verify by trying to load vault with the password
       await StorageEngine.loadVault(verifyPassword);
-      
-      // Success - unlock password field
       passwordUnlocked = true;
       showPassword = true;
       showVerifyPopup = false;
@@ -124,13 +111,13 @@
       isVerifying = false;
     }
   }
-  
+
   function cancelVerify() {
     showVerifyPopup = false;
     verifyPassword = '';
     verifyError = '';
   }
-  
+
   function handleVerifyKeydown(event) {
     if (event.key === 'Enter') {
       verifyMasterPassword();
@@ -138,48 +125,17 @@
       cancelVerify();
     }
   }
-  
+
   function handlePasswordInput(event) {
     if (isEditing && !passwordUnlocked) {
-      // Prevent editing password in edit mode without verification
       event.preventDefault();
       showVerifyPopup = true;
       verifyPassword = '';
       verifyError = '';
     }
   }
-  
-  let validationErrors = {};
-  
-  function validateForm() {
-    validationErrors = {};
-    
-    if (!title.trim()) {
-      validationErrors.title = 'Tiêu đề không được để trống';
-    } else if (title.trim().length < 2) {
-      validationErrors.title = 'Tiêu đề phải có ít nhất 2 ký tự';
-    }
-    
-    if (!username.trim()) {
-      validationErrors.username = 'Tên đăng nhập không được để trống';
-    } else if (username.trim().length < 3) {
-      validationErrors.username = 'Tên đăng nhập phải có ít nhất 3 ký tự';
-    }
-    
-    if (!password.trim()) {
-      validationErrors.password = 'Mật khẩu không được để trống';
-    } else if (password.trim().length < 6) {
-      validationErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
-    
-    return Object.keys(validationErrors).length === 0;
-  }
-  
+
   function save() {
-    if (!validateForm()) {
-      return;
-    }
-    
     const item = {
       id: isEditing ? editId : CryptoEngine.generateId(),
       title: title.trim(),
@@ -190,22 +146,15 @@
     };
     
     if (import.meta.env.DEV) {
-      console.log('[AddEditForm] Saving item:', {
-        id: item.id,
-        isEditing,
-        title: item.title,
-        category: item.category
-      });
+      console.log('[AddEditForm] Saving item:', { id: item.id, isEditing, title: item.title, category: item.category });
     }
     
     onSave(item);
     cancel();
   }
-  
+
   function cancel() {
     if (import.meta.env.DEV) console.log('[AddEditForm] Cancelled, resetting all state');
-    
-    // Reset all form fields
     title = '';
     username = '';
     password = '';
@@ -219,33 +168,17 @@
     showVerifyPopup = false;
     verifyPassword = '';
     verifyError = '';
-    
-    // Clear stores
     showAddForm.set(false);
     editingItem.set(null);
   }
 </script>
 
 {#if $showAddForm || $editingItem}
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-  <div 
-    class="modal-backdrop"
-    on:click={cancel}
-    role="dialog"
-    aria-modal="true"
-  >
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+  <div class="modal-backdrop" on:click={cancel} role="dialog" aria-modal="true" aria-labelledby="form-title">
     <div class="glass-modal" on:click|stopPropagation role="document">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h2 style="margin: 0; font-size: 1.25rem;" class="text-glass">{isEditing ? 'Edit' : 'Add'} Password</h2>
-        <button 
-          class="close-btn haptic-light" 
-          on:click={cancel}
-          type="button"
-          aria-label="Close"
-        >
+        <h2 id="form-title" style="margin: 0; font-size: 1.25rem;" class="text-glass">{isEditing ? 'Edit' : 'Add'} Password</h2>
+        <button class="close-btn haptic-light" on:click={cancel} type="button" aria-label="Close">
           ✕
         </button>
       </div>
@@ -253,88 +186,36 @@
       <form on:submit|preventDefault={save} style="display: flex; flex-direction: column; gap: 1rem;">
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           <label for="title" style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Title *</label>
-          <input
-            id="title"
-            type="text"
-            bind:value={title}
-            placeholder="e.g., Gmail, Facebook"
-            class="glass-input"
-            required
-          />
+          <input id="title" type="text" bind:value={title} placeholder="e.g., Gmail, Facebook" class="glass-input" required />
         </div>
         
-        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-          <label style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Category</label>
+        <fieldset style="border: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+          <legend style="font-size: 0.875rem; font-weight: 500; padding: 0;" class="text-glass-secondary">Category</legend>
           <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
             {#each categories as cat}
-              <button
-                type="button"
-                class="category-tag category-{cat.value} haptic-light {category === cat.value ? 'selected' : ''}"
-                on:click={() => category = cat.value}
-              >
+              <button type="button" class="category-tag category-{cat.value} haptic-light {category === cat.value ? 'selected' : ''}" on:click={() => category = cat.value}>
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
               </button>
             {/each}
           </div>
-        </div>
+        </fieldset>
         
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           <label for="username" style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Username *</label>
-          <input
-            id="username"
-            type="text"
-            bind:value={username}
-            placeholder="Username or email"
-            class="glass-input"
-            required
-          />
+          <input id="username" type="text" bind:value={username} placeholder="Username or email" class="glass-input" required />
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           <label for="password" style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Password *</label>
           <div style="display: flex; gap: 0.5rem;">
             <div style="position: relative; flex: 1;">
-              {#if showPassword}
-                <input
-                  id="password"
-                  type="text"
-                  bind:value={password}
-                  placeholder="Password"
-                  class="glass-input"
-                  style="width: 100%; padding-right: 3rem;"
-                  required
-                  readonly={isEditing && !passwordUnlocked}
-                  on:focus={handlePasswordInput}
-                />
-              {:else}
-                <input
-                  id="password"
-                  type="password"
-                  bind:value={password}
-                  placeholder="Password"
-                  class="glass-input"
-                  style="width: 100%; padding-right: 3rem;"
-                  required
-                  readonly={isEditing && !passwordUnlocked}
-                  on:focus={handlePasswordInput}
-                />
-              {/if}
-              <button
-                type="button"
-                class="password-toggle-btn haptic-light"
-                on:click={togglePasswordVisibility}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
+              <input id="password" type={showPassword ? 'text' : 'password'} bind:value={password} placeholder="Password" class="glass-input" style="width: 100%; padding-right: 3rem;" required readonly={isEditing && !passwordUnlocked} on:focus={handlePasswordInput} />
+              <button type="button" class="password-toggle-btn haptic-light" on:click={togglePasswordVisibility} aria-label={showPassword ? 'Hide password' : 'Show password'}>
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
-            <button 
-              type="button" 
-              class="generate-btn haptic-medium" 
-              on:click={generatePassword}
-              aria-label="Generate password"
-            >
+            <button type="button" class="generate-btn haptic-medium" on:click={generatePassword} aria-label="Generate password">
               <span class="generate-icon">⚡</span>
               <span class="generate-text">Generate</span>
             </button>
@@ -348,20 +229,11 @@
         
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           <label for="note" style="font-size: 0.875rem; font-weight: 500;" class="text-glass-secondary">Note</label>
-          <textarea
-            id="note"
-            bind:value={note}
-            placeholder="Optional note"
-            rows="3"
-            class="glass-input"
-            style="resize: vertical; min-height: 4rem;"
-          ></textarea>
+          <textarea id="note" bind:value={note} placeholder="Optional note" rows="3" class="glass-input" style="resize: vertical; min-height: 4rem;"></textarea>
         </div>
         
         <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-          <button type="button" class="glass-btn haptic-light" style="flex: 1; padding: 0.75rem;" on:click={cancel}>
-            Cancel
-          </button>
+          <button type="button" class="glass-btn haptic-light" style="flex: 1; padding: 0.75rem;" on:click={cancel}>Cancel</button>
           <button type="submit" class="glass-btn-primary haptic-medium" style="flex: 1; padding: 0.75rem; font-weight: 600;" disabled={!title.trim() || !username.trim() || !password.trim()}>
             {isEditing ? 'Update' : 'Save'}
           </button>
@@ -373,50 +245,26 @@
 
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div class="verify-backdrop" on:click={cancelVerify}>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="verify-popup glass" on:click|stopPropagation>
+  <div class="verify-backdrop" on:click={cancelVerify} role="dialog" aria-modal="true" aria-labelledby="verify-title">
+    <div class="verify-popup glass" on:click|stopPropagation role="document">
       <div class="verify-header">
         <div class="verify-icon">🔐</div>
-        <h3 class="verify-title text-glass">Verify Master Password</h3>
+        <h3 id="verify-title" class="verify-title text-glass">Verify Master Password</h3>
         <p class="verify-subtitle text-glass-secondary">Enter your master password to edit this password</p>
       </div>
-      
       <div class="verify-body">
-        <input
-          type="password"
-          bind:value={verifyPassword}
-          on:keydown={handleVerifyKeydown}
-          placeholder="Master password"
-          class="glass-input verify-input"
-          autofocus
-          disabled={isVerifying}
-        />
-        
+        <label for="verify-password" class="sr-only">Master password for verification</label>
+        <input id="verify-password" type="password" bind:value={verifyPassword} on:keydown={handleVerifyKeydown} placeholder="Master password" class="glass-input verify-input" disabled={isVerifying} />
         {#if verifyError}
-          <div class="verify-error">
+          <div class="verify-error" role="alert">
             <span>⚠️</span>
             <span>{verifyError}</span>
           </div>
         {/if}
       </div>
-      
       <div class="verify-actions">
-        <button 
-          class="glass-btn verify-btn-cancel haptic-light" 
-          on:click={cancelVerify}
-          disabled={isVerifying}
-        >
-          Cancel
-        </button>
-        <button 
-          class="glass-btn-primary verify-btn-confirm haptic-medium" 
-          on:click={verifyMasterPassword}
-          disabled={isVerifying || !verifyPassword.trim()}
-        >
+        <button class="glass-btn verify-btn-cancel haptic-light" on:click={cancelVerify} disabled={isVerifying}>Cancel</button>
+        <button class="glass-btn-primary verify-btn-confirm haptic-medium" on:click={verifyMasterPassword} disabled={isVerifying || !verifyPassword.trim()}>
           {isVerifying ? 'Verifying...' : 'Verify'}
         </button>
       </div>
@@ -425,6 +273,17 @@
 {/if}
 
 <style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
   .modal-backdrop {
     position: fixed;
     top: 0;
@@ -442,7 +301,6 @@
     animation: fadeIn 0.2s ease-out;
   }
   
-  /* Tablet/iPad - center modal */
   @media (min-width: 768px) {
     .modal-backdrop {
       align-items: center;
@@ -451,19 +309,10 @@
   }
   
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-    }
-    to {
-      opacity: 1;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
+    from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+    to { opacity: 1; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   }
 
-  /* Close button with better contrast */
   .close-btn {
     width: 2.5rem;
     height: 2.5rem;
@@ -488,9 +337,7 @@
     transform: scale(1.05);
   }
 
-  .close-btn:active {
-    transform: scale(0.95);
-  }
+  .close-btn:active { transform: scale(0.95); }
 
   :global(.dark) .close-btn {
     background: rgba(255, 255, 255, 0.12);
@@ -502,7 +349,6 @@
     color: rgba(255, 255, 255, 0.95);
   }
 
-  /* Generate button with icon */
   .generate-btn {
     display: flex;
     align-items: center;
@@ -526,41 +372,23 @@
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
 
-  .generate-btn:active {
-    transform: scale(0.95);
-  }
+  .generate-btn:active { transform: scale(0.95); }
 
   :global(.dark) .generate-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
   }
 
-  :global(.dark) .generate-btn:hover {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-  }
+  :global(.dark) .generate-btn:hover { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5); }
 
-  .generate-icon {
-    font-size: 1.125rem;
-    line-height: 1;
-  }
+  .generate-icon { font-size: 1.125rem; line-height: 1; }
+  .generate-text { line-height: 1; }
 
-  .generate-text {
-    line-height: 1;
-  }
-
-  /* Mobile - hide text, show icon only */
   @media (max-width: 480px) {
-    .generate-text {
-      display: none;
-    }
-    
-    .generate-btn {
-      padding: 0.75rem;
-      min-width: 44px;
-    }
+    .generate-text { display: none; }
+    .generate-btn { padding: 0.75rem; min-width: 44px; }
   }
 
-  /* Password toggle button */
   .password-toggle-btn {
     position: absolute;
     right: 0.5rem;
@@ -586,19 +414,11 @@
     transform: translateY(-50%) scale(1.05);
   }
 
-  .password-toggle-btn:active {
-    transform: translateY(-50%) scale(0.95);
-  }
+  .password-toggle-btn:active { transform: translateY(-50%) scale(0.95); }
 
-  :global(.dark) .password-toggle-btn {
-    background: rgba(255, 255, 255, 0.1);
-  }
+  :global(.dark) .password-toggle-btn { background: rgba(255, 255, 255, 0.1); }
+  :global(.dark) .password-toggle-btn:hover { background: rgba(255, 255, 255, 0.15); }
 
-  :global(.dark) .password-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-  }
-
-  /* Verification Popup */
   .verify-backdrop {
     position: fixed;
     top: 0;
@@ -636,22 +456,9 @@
     animation: pulse 0.5s ease-out;
   }
 
-  .verify-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem 0;
-  }
-
-  .verify-subtitle {
-    font-size: 0.875rem;
-    margin: 0;
-    opacity: 0.8;
-  }
-
-  .verify-body {
-    margin-bottom: 1.5rem;
-  }
-
+  .verify-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem 0; }
+  .verify-subtitle { font-size: 0.875rem; margin: 0; opacity: 0.8; }
+  .verify-body { margin-bottom: 1.5rem; }
   .verify-input {
     width: 100%;
     padding: 0.875rem 1rem;
@@ -660,9 +467,7 @@
     letter-spacing: 0.05em;
   }
 
-  .verify-input:focus {
-    box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.3);
-  }
+  .verify-input:focus { box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.3); }
 
   .verify-error {
     display: flex;
@@ -685,13 +490,8 @@
     color: #fca5a5;
   }
 
-  .verify-actions {
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  .verify-btn-cancel,
-  .verify-btn-confirm {
+  .verify-actions { display: flex; gap: 0.75rem; }
+  .verify-btn-cancel, .verify-btn-confirm {
     flex: 1;
     padding: 0.875rem;
     font-weight: 500;
@@ -699,66 +499,16 @@
     min-height: 48px;
   }
 
-  .verify-btn-confirm:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .verify-btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Animations */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  @keyframes pulse {
-    0%, 100% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.1);
-    }
-  }
-
-  @keyframes shake {
-    0%, 100% {
-      transform: translateX(0);
-    }
-    25% {
-      transform: translateX(-8px);
-    }
-    75% {
-      transform: translateX(8px);
-    }
-  }
-
-  /* Mobile optimization */
   @media (max-width: 480px) {
-    .verify-popup {
-      max-width: 100%;
-      margin: 0 0.5rem;
-    }
-
-    .verify-icon {
-      font-size: 2.5rem;
-    }
-
-    .verify-title {
-      font-size: 1.125rem;
-    }
+    .verify-popup { max-width: 100%; margin: 0 0.5rem; }
+    .verify-icon { font-size: 2.5rem; }
+    .verify-title { font-size: 1.125rem; }
   }
 </style>
