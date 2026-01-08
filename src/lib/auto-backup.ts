@@ -71,11 +71,11 @@ export class AutoBackupService {
   static async createBackup(items: VaultItem[], masterPassword: string): Promise<void> {
     const config = this.getConfig();
     if (!config.enabled) {
-      console.log('[AutoBackup] Auto-backup disabled, skipping');
+      if (import.meta.env.DEV) console.log('[AutoBackup] Auto-backup disabled, skipping');
       return;
     }
     
-    console.log('[AutoBackup] Creating backup for', items.length, 'items');
+    if (import.meta.env.DEV) console.log('[AutoBackup] Creating backup for', items.length, 'items');
     
     try {
       const db = await this.openDB();
@@ -99,12 +99,14 @@ export class AutoBackupService {
         size: JSON.stringify(vault).length
       };
       
-      console.log('[AutoBackup] Backup created:', {
-        id: backup.id,
-        itemCount: backup.itemCount,
-        size: backup.size,
-        sizeKB: (backup.size / 1024).toFixed(2) + 'KB'
-      });
+      if (import.meta.env.DEV) {
+        console.log('[AutoBackup] Backup created:', {
+          id: backup.id,
+          itemCount: backup.itemCount,
+          size: backup.size,
+          sizeKB: (backup.size / 1024).toFixed(2) + 'KB'
+        });
+      }
       
       // Save backup
       await new Promise<void>((resolve, reject) => {
@@ -117,7 +119,7 @@ export class AutoBackupService {
         tx.onerror = () => reject(tx.error);
       });
       
-      console.log('[AutoBackup] Backup saved to IndexedDB');
+      if (import.meta.env.DEV) console.log('[AutoBackup] Backup saved to IndexedDB');
       
       // Rotate if needed
       if (config.autoRotate) {
@@ -239,23 +241,25 @@ export class AutoBackupService {
     const config = this.getConfig();
     const backups = await this.listBackups();
     
-    console.log('[AutoBackup] Rotating backups:', {
-      current: backups.length,
-      max: config.maxBackups
-    });
+    if (import.meta.env.DEV) {
+      console.log('[AutoBackup] Rotating backups:', {
+        current: backups.length,
+        max: config.maxBackups
+      });
+    }
     
     // Delete oldest backups if we exceed max
     if (backups.length > config.maxBackups) {
       const toDelete = backups.slice(config.maxBackups);
-      console.log('[AutoBackup] Deleting', toDelete.length, 'old backups');
+      if (import.meta.env.DEV) console.log('[AutoBackup] Deleting', toDelete.length, 'old backups');
       
       for (const backup of toDelete) {
         await this.deleteBackup(backup.id);
       }
       
-      console.log('[AutoBackup] Rotation complete');
+      if (import.meta.env.DEV) console.log('[AutoBackup] Rotation complete');
     } else {
-      console.log('[AutoBackup] No rotation needed');
+      if (import.meta.env.DEV) console.log('[AutoBackup] No rotation needed');
     }
   }
   
@@ -300,7 +304,7 @@ export class AutoBackupService {
    */
   private static getDefaultConfig(): AutoBackupConfig {
     return {
-      enabled: true,
+      enabled: false, // Disabled by default due to IndexedDB issues
       maxBackups: this.DEFAULT_MAX_BACKUPS,
       autoRotate: true
     };

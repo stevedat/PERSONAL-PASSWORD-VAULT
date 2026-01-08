@@ -189,19 +189,21 @@
       category: category
     };
     
-    console.log('[AddEditForm] Saving item:', {
-      id: item.id,
-      isEditing,
-      title: item.title,
-      category: item.category
-    });
+    if (import.meta.env.DEV) {
+      console.log('[AddEditForm] Saving item:', {
+        id: item.id,
+        isEditing,
+        title: item.title,
+        category: item.category
+      });
+    }
     
     onSave(item);
     cancel();
   }
   
   function cancel() {
-    console.log('[AddEditForm] Cancelled, resetting all state');
+    if (import.meta.env.DEV) console.log('[AddEditForm] Cancelled, resetting all state');
     
     // Reset all form fields
     title = '';

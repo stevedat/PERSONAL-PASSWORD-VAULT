@@ -112,11 +112,13 @@
   let fileInput;
   
   async function saveItem(item) {
-    console.log('[Main] saveItem called:', {
-      id: item.id,
-      title: item.title,
-      isNew: !$vaultItems.find(i => i.id === item.id)
-    });
+    if (import.meta.env.DEV) {
+      console.log('[Main] saveItem called:', {
+        id: item.id,
+        title: item.title,
+        isNew: !$vaultItems.find(i => i.id === item.id)
+      });
+    }
     
     // Start critical operation to prevent locking during save
     startCriticalOperation();
@@ -129,20 +131,20 @@
       const isNewItem = existingIndex < 0;
       
       if (existingIndex >= 0) {
-        console.log('[Main] Updating existing item at index:', existingIndex);
+        if (import.meta.env.DEV) console.log('[Main] Updating existing item at index:', existingIndex);
         updatedItems = [...currentItems];
         updatedItems[existingIndex] = item;
       } else {
-        console.log('[Main] Adding new item');
+        if (import.meta.env.DEV) console.log('[Main] Adding new item');
         updatedItems = [...currentItems, item];
       }
       
-      console.log('[Main] Updated items count:', updatedItems.length);
+      if (import.meta.env.DEV) console.log('[Main] Updated items count:', updatedItems.length);
       
       // Use cached master password from session
       const masterPassword = sessionStorage.getItem('pv_master_key');
       if (!masterPassword) {
-        console.log('[Main] No cached master password, prompting user');
+        if (import.meta.env.DEV) console.log('[Main] No cached master password, prompting user');
         const inputPassword = prompt('Enter master password to save changes:');
         if (!inputPassword) {
           endCriticalOperation();
@@ -154,22 +156,22 @@
           await StorageEngine.loadVault(inputPassword);
           sessionStorage.setItem('pv_master_key', inputPassword);
           await StorageEngine.saveVault(updatedItems, inputPassword);
-          console.log('[Main] Vault saved to storage');
+          if (import.meta.env.DEV) console.log('[Main] Vault saved to storage');
           
           // CRITICAL: Update store IMMEDIATELY after successful save, BEFORE auto-backup
-          console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
+          if (import.meta.env.DEV) console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
           vaultItems.set(updatedItems);
-          console.log('[Main] Store updated');
+          if (import.meta.env.DEV) console.log('[Main] Store updated');
           
           // Create auto-backup (non-critical, can fail)
           try {
             await AutoBackupService.createBackup(updatedItems, inputPassword);
-            console.log('[Main] Auto-backup created');
+            if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
           } catch (backupError) {
             console.error('[Main] Auto-backup failed (non-critical):', backupError);
           }
           
-          console.log('[Main] Vault saved successfully');
+          if (import.meta.env.DEV) console.log('[Main] Vault saved successfully');
         } catch (error) {
           console.error('[Main] Save failed:', error);
           alert('Failed to save: Invalid master password');
@@ -178,32 +180,32 @@
         }
       } else {
         try {
-          console.log('[Main] Saving with cached password');
+          if (import.meta.env.DEV) console.log('[Main] Saving with cached password');
           await StorageEngine.saveVault(updatedItems, masterPassword);
-          console.log('[Main] Vault saved to storage');
+          if (import.meta.env.DEV) console.log('[Main] Vault saved to storage');
           
           // CRITICAL: Update store IMMEDIATELY after successful save, BEFORE auto-backup
-          console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
+          if (import.meta.env.DEV) console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
           vaultItems.set(updatedItems);
-          console.log('[Main] Store updated');
+          if (import.meta.env.DEV) console.log('[Main] Store updated');
           
           // Create auto-backup (non-critical, can fail)
           try {
             await AutoBackupService.createBackup(updatedItems, masterPassword);
-            console.log('[Main] Auto-backup created');
+            if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
           } catch (backupError) {
             console.error('[Main] Auto-backup failed (non-critical):', backupError);
             // Continue even if auto-backup fails
           }
           
-          console.log('[Main] Vault saved successfully');
+          if (import.meta.env.DEV) console.log('[Main] Vault saved successfully');
         } catch (error) {
           console.error('[Main] Save failed with cached password:', error);
           // Master password might have changed, ask for new one
           sessionStorage.removeItem('pv_master_key');
           const inputPassword = prompt('Master password expired. Enter password to save:');
           if (!inputPassword) {
-            console.log('[Main] User cancelled password prompt');
+            if (import.meta.env.DEV) console.log('[Main] User cancelled password prompt');
             endCriticalOperation();
             return;
           }
@@ -211,22 +213,22 @@
           try {
             await StorageEngine.saveVault(updatedItems, inputPassword);
             sessionStorage.setItem('pv_master_key', inputPassword);
-            console.log('[Main] Vault saved to storage');
+            if (import.meta.env.DEV) console.log('[Main] Vault saved to storage');
             
             // CRITICAL: Update store IMMEDIATELY after successful save, BEFORE auto-backup
-            console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
+            if (import.meta.env.DEV) console.log('[Main] Updating vaultItems store with', updatedItems.length, 'items');
             vaultItems.set(updatedItems);
-            console.log('[Main] Store updated');
+            if (import.meta.env.DEV) console.log('[Main] Store updated');
             
             // Create auto-backup (non-critical, can fail)
             try {
               await AutoBackupService.createBackup(updatedItems, inputPassword);
-              console.log('[Main] Auto-backup created');
+              if (import.meta.env.DEV) console.log('[Main] Auto-backup created');
             } catch (backupError) {
               console.error('[Main] Auto-backup failed (non-critical):', backupError);
             }
             
-            console.log('[Main] Vault saved successfully after password refresh');
+            if (import.meta.env.DEV) console.log('[Main] Vault saved successfully after password refresh');
           } catch (error) {
             console.error('[Main] Save failed after password refresh:', error);
             alert('Failed to save: Invalid master password');
@@ -246,7 +248,7 @@
       
       // Show success feedback
       showSuccessMessage(isNewItem ? 'Password added successfully' : 'Password updated successfully');
-      console.log('[Main] Save complete, store updated');
+      if (import.meta.env.DEV) console.log('[Main] Save complete, store updated');
     } finally {
       // Always end critical operation, even if there's an error
       endCriticalOperation();
@@ -256,7 +258,7 @@
   async function deleteItem(id) {
     if (!confirm('Are you sure you want to delete this item?')) return;
     
-    console.log('[Main] Delete item:', id);
+    if (import.meta.env.DEV) console.log('[Main] Delete item:', id);
     
     // Start critical operation to prevent locking during delete
     startCriticalOperation();
@@ -278,7 +280,7 @@
           const updatedItems = $vaultItems.filter(item => item.id !== id);
           await StorageEngine.saveVault(updatedItems, inputPassword);
           vaultItems.set(updatedItems);
-          console.log('[Main] Item deleted, vault updated');
+          if (import.meta.env.DEV) console.log('[Main] Item deleted, vault updated');
         } catch (error) {
           console.error('[Main] Delete failed:', error);
           alert('Failed to delete: Invalid master password');
@@ -288,10 +290,10 @@
       } else {
         try {
           const updatedItems = $vaultItems.filter(item => item.id !== id);
-          console.log('[Main] Deleting item, new count:', updatedItems.length);
+          if (import.meta.env.DEV) console.log('[Main] Deleting item, new count:', updatedItems.length);
           await StorageEngine.saveVault(updatedItems, masterPassword);
           vaultItems.set(updatedItems);
-          console.log('[Main] Item deleted, vault updated');
+          if (import.meta.env.DEV) console.log('[Main] Item deleted, vault updated');
         } catch (error) {
           console.error('[Main] Delete failed:', error);
           // Master password might have changed, ask for new one
@@ -307,7 +309,7 @@
             await StorageEngine.saveVault(updatedItems, inputPassword);
             sessionStorage.setItem('pv_master_key', inputPassword);
             vaultItems.set(updatedItems);
-            console.log('[Main] Item deleted after password refresh');
+            if (import.meta.env.DEV) console.log('[Main] Item deleted after password refresh');
           } catch (error) {
             console.error('[Main] Delete failed after password refresh:', error);
             alert('Failed to delete: Invalid master password');
@@ -328,11 +330,11 @@
   }
   
   async function exportVault() {
-    console.log('[Main] Export vault initiated');
+    if (import.meta.env.DEV) console.log('[Main] Export vault initiated');
     
     const masterPassword = sessionStorage.getItem('pv_master_key');
     if (!masterPassword) {
-      console.log('[Main] No cached master password, prompting user');
+      if (import.meta.env.DEV) console.log('[Main] No cached master password, prompting user');
       const inputPassword = prompt('Enter master password to export vault:');
       if (!inputPassword) return;
       
@@ -349,14 +351,14 @@
         showReminder.set(null);
         
         showSuccessMessage('Vault exported successfully');
-        console.log('[Main] Export successful:', filename);
+        if (import.meta.env.DEV) console.log('[Main] Export successful:', filename);
       } catch (error) {
         console.error('[Main] Export failed:', error);
         alert('Export failed: Invalid master password');
       }
     } else {
       try {
-        console.log('[Main] Using cached master password');
+        if (import.meta.env.DEV) console.log('[Main] Using cached master password');
         const blob = await BackupManager.quickExport($vaultItems, masterPassword);
         const filename = BackupManager.generateFileName();
         BackupManager.triggerDownload(blob, filename);
@@ -366,7 +368,7 @@
         showReminder.set(null);
         
         showSuccessMessage('Vault exported successfully');
-        console.log('[Main] Export successful:', filename);
+        if (import.meta.env.DEV) console.log('[Main] Export successful:', filename);
       } catch (error) {
         console.error('[Main] Export failed with cached password:', error);
         sessionStorage.removeItem('pv_master_key');
@@ -384,7 +386,7 @@
           showReminder.set(null);
           
           showSuccessMessage('Vault exported successfully');
-          console.log('[Main] Export successful after password refresh:', filename);
+          if (import.meta.env.DEV) console.log('[Main] Export successful after password refresh:', filename);
         } catch (error) {
           console.error('[Main] Export failed after password refresh:', error);
           alert('Export failed: Invalid master password');
@@ -411,7 +413,7 @@
     const file = event.target.files && event.target.files[0];
     if (!file) return;
     
-    console.log('[Main] Import initiated:', file.name);
+    if (import.meta.env.DEV) console.log('[Main] Import initiated:', file.name);
     
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
@@ -436,7 +438,7 @@
       return;
     }
     
-    console.log('[Main] File validation passed');
+    if (import.meta.env.DEV) console.log('[Main] File validation passed');
     
     const masterPassword = prompt('Enter master password for the vault file:');
     if (!masterPassword) return;
@@ -444,12 +446,12 @@
     try {
       const result = await RestoreManager.importVault(file, masterPassword, $vaultItems);
       
-      console.log('[Main] Import successful, merge stats:', result.stats);
+      if (import.meta.env.DEV) console.log('[Main] Import successful, merge stats:', result.stats);
       
       // Use cached master password for saving
       const currentMasterPassword = sessionStorage.getItem('pv_master_key');
       if (!currentMasterPassword) {
-        console.log('[Main] No cached password, prompting for save');
+        if (import.meta.env.DEV) console.log('[Main] No cached password, prompting for save');
         const savePassword = prompt('Enter master password to save merged vault:');
         if (!savePassword) return;
         
@@ -466,7 +468,7 @@
         }
       } else {
         try {
-          console.log('[Main] Saving with cached password');
+          if (import.meta.env.DEV) console.log('[Main] Saving with cached password');
           await StorageEngine.saveVault(result.items, currentMasterPassword);
           
           // Create auto-backup
@@ -495,7 +497,7 @@
       showSuccessMessage(
         `Import successful: ${result.stats.newCount} new, ${result.stats.updatedCount} updated, ${result.stats.unchangedCount} unchanged`
       );
-      console.log('[Main] Import complete, vault updated');
+      if (import.meta.env.DEV) console.log('[Main] Import complete, vault updated');
     } catch (error) {
       console.error('[Main] Import failed:', error);
       alert(`Import failed: ${error.message}`);
@@ -514,19 +516,19 @@
   }
   
   function checkReminders() {
-    console.log('[Main] Checking reminders...');
+    if (import.meta.env.DEV) console.log('[Main] Checking reminders...');
     const reminderType = ReminderSystem.shouldShowReminder();
     if (reminderType) {
-      console.log('[Main] Showing reminder:', reminderType);
+      if (import.meta.env.DEV) console.log('[Main] Showing reminder:', reminderType);
       showReminder.set(reminderType);
       ReminderSystem.markShownThisSession();
     } else {
-      console.log('[Main] No reminder needed');
+      if (import.meta.env.DEV) console.log('[Main] No reminder needed');
     }
   }
   
   function addNew() {
-    console.log('[Main] Add new password clicked');
+    if (import.meta.env.DEV) console.log('[Main] Add new password clicked');
     editingItem.set(null); // Clear editing state FIRST
     showAddForm.set(true); // Then show form
   }
