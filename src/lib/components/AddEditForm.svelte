@@ -33,6 +33,9 @@
     { value: 'other', label: 'Other', icon: '📌' }
   ];
   
+  // Track if we've initialized add mode to prevent loops
+  let addModeInitialized = false;
+  
   // Single reactive statement to handle both edit and add modes
   $: {
     if ($editingItem && $editingItem.id !== lastEditingId) {
@@ -48,24 +51,29 @@
       category = $editingItem.category || 'other';
       showPassword = false;
       passwordUnlocked = false;
-    } else if ($showAddForm && !$editingItem && isEditing) {
-      // ADD MODE: Only reset when switching from edit to add
-      console.log('[AddEditForm] Switching from edit to add mode - resetting');
+      addModeInitialized = false; // Reset flag when entering edit mode
+    } else if ($showAddForm && !$editingItem && !addModeInitialized) {
+      // ADD MODE: Initialize once per open
+      console.log('[AddEditForm] Initializing add mode');
       isEditing = false;
       editId = '';
-      title = '';
-      username = '';
-      password = '';
-      note = '';
-      category = 'other';
       lastEditingId = null;
       showPassword = false;
       passwordUnlocked = false;
-    } else if ($showAddForm && !$editingItem && !isEditing) {
-      // Already in add mode, just ensure flags are correct
-      editId = '';
-      lastEditingId = null;
-      passwordUnlocked = false;
+      addModeInitialized = true; // Prevent re-initialization
+      
+      // Only reset fields if they have data
+      if (title || username || password || note || category !== 'other') {
+        console.log('[AddEditForm] Resetting fields');
+        title = '';
+        username = '';
+        password = '';
+        note = '';
+        category = 'other';
+      }
+    } else if (!$showAddForm && !$editingItem) {
+      // Form closed - reset flag for next time
+      addModeInitialized = false;
     }
   }
   
