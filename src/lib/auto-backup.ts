@@ -107,9 +107,15 @@ export class AutoBackupService {
       });
       
       // Save backup
-      const tx = db.transaction([this.STORE_NAME], 'readwrite');
-      const store = tx.objectStore(this.STORE_NAME);
-      await store.put(backup);
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction([this.STORE_NAME], 'readwrite');
+        const store = tx.objectStore(this.STORE_NAME);
+        const request = store.put(backup);
+        
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+        tx.onerror = () => reject(tx.error);
+      });
       
       console.log('[AutoBackup] Backup saved to IndexedDB');
       
