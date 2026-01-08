@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -26,7 +24,8 @@
 
   body {
     background: var(--bg-gradient);
-    font-family: 'Inter', system-ui, sans-serif;
+    /* System font stack - optimized for mobile */
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     font-weight: 400;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -429,12 +428,14 @@
     font-size: 0.75rem;
     font-weight: 500;
     transition: all 0.2s;
-    border: 1px solid transparent;
+    border: 1.5px solid transparent;
+    cursor: pointer;
   }
 
   .category-tag.selected {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    font-weight: 600;
   }
 
   .category-email {
@@ -443,10 +444,22 @@
     border-color: rgba(59, 130, 246, 0.3);
   }
 
+  .category-email.selected {
+    background: rgba(59, 130, 246, 0.35);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.6);
+  }
+
   .dark .category-email {
     background: rgba(59, 130, 246, 0.25);
     color: #60a5fa;
     border-color: rgba(59, 130, 246, 0.4);
+  }
+
+  .dark .category-email.selected {
+    background: rgba(59, 130, 246, 0.45);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.7);
   }
 
   .category-banking {
@@ -455,10 +468,22 @@
     border-color: rgba(34, 197, 94, 0.3);
   }
 
+  .category-banking.selected {
+    background: rgba(34, 197, 94, 0.35);
+    color: #16a34a;
+    border-color: rgba(34, 197, 94, 0.6);
+  }
+
   .dark .category-banking {
     background: rgba(34, 197, 94, 0.25);
     color: #4ade80;
     border-color: rgba(34, 197, 94, 0.4);
+  }
+
+  .dark .category-banking.selected {
+    background: rgba(34, 197, 94, 0.45);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.7);
   }
 
   .category-app {
@@ -467,10 +492,22 @@
     border-color: rgba(168, 85, 247, 0.3);
   }
 
+  .category-app.selected {
+    background: rgba(168, 85, 247, 0.35);
+    color: #9333ea;
+    border-color: rgba(168, 85, 247, 0.6);
+  }
+
   .dark .category-app {
     background: rgba(168, 85, 247, 0.25);
     color: #c084fc;
     border-color: rgba(168, 85, 247, 0.4);
+  }
+
+  .dark .category-app.selected {
+    background: rgba(168, 85, 247, 0.45);
+    color: #c084fc;
+    border-color: rgba(168, 85, 247, 0.7);
   }
 
   .category-website {
@@ -479,10 +516,22 @@
     border-color: rgba(249, 115, 22, 0.3);
   }
 
+  .category-website.selected {
+    background: rgba(249, 115, 22, 0.35);
+    color: #ea580c;
+    border-color: rgba(249, 115, 22, 0.6);
+  }
+
   .dark .category-website {
     background: rgba(249, 115, 22, 0.25);
     color: #fb923c;
     border-color: rgba(249, 115, 22, 0.4);
+  }
+
+  .dark .category-website.selected {
+    background: rgba(249, 115, 22, 0.45);
+    color: #fb923c;
+    border-color: rgba(249, 115, 22, 0.7);
   }
 
   .category-work {
@@ -491,10 +540,22 @@
     border-color: rgba(99, 102, 241, 0.3);
   }
 
+  .category-work.selected {
+    background: rgba(99, 102, 241, 0.35);
+    color: #4f46e5;
+    border-color: rgba(99, 102, 241, 0.6);
+  }
+
   .dark .category-work {
     background: rgba(99, 102, 241, 0.25);
     color: #818cf8;
     border-color: rgba(99, 102, 241, 0.4);
+  }
+
+  .dark .category-work.selected {
+    background: rgba(99, 102, 241, 0.45);
+    color: #818cf8;
+    border-color: rgba(99, 102, 241, 0.7);
   }
 
   .category-games {
@@ -503,10 +564,22 @@
     border-color: rgba(236, 72, 153, 0.3);
   }
 
+  .category-games.selected {
+    background: rgba(236, 72, 153, 0.35);
+    color: #db2777;
+    border-color: rgba(236, 72, 153, 0.6);
+  }
+
   .dark .category-games {
     background: rgba(236, 72, 153, 0.25);
     color: #f472b6;
     border-color: rgba(236, 72, 153, 0.4);
+  }
+
+  .dark .category-games.selected {
+    background: rgba(236, 72, 153, 0.45);
+    color: #f472b6;
+    border-color: rgba(236, 72, 153, 0.7);
   }
 
   .category-other {
@@ -515,10 +588,22 @@
     border-color: rgba(107, 114, 128, 0.3);
   }
 
+  .category-other.selected {
+    background: rgba(107, 114, 128, 0.35);
+    color: #4b5563;
+    border-color: rgba(107, 114, 128, 0.6);
+  }
+
   .dark .category-other {
     background: rgba(107, 114, 128, 0.25);
     color: #9ca3af;
     border-color: rgba(107, 114, 128, 0.4);
+  }
+
+  .dark .category-other.selected {
+    background: rgba(107, 114, 128, 0.45);
+    color: #9ca3af;
+    border-color: rgba(107, 114, 128, 0.7);
   }
 
   /* Bottom Navigation */
