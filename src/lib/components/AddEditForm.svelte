@@ -40,7 +40,7 @@
   $: {
     if ($editingItem && $editingItem.id !== lastEditingId) {
       // EDIT MODE: Load item data
-      console.log('[AddEditForm] Editing item:', $editingItem.id);
+      if (import.meta.env.DEV) console.log('[AddEditForm] Editing item:', $editingItem.id);
       lastEditingId = $editingItem.id;
       isEditing = true;
       editId = $editingItem.id;
@@ -54,7 +54,7 @@
       addModeInitialized = false; // Reset flag when entering edit mode
     } else if ($showAddForm && !$editingItem && !addModeInitialized) {
       // ADD MODE: Initialize once per open
-      console.log('[AddEditForm] Initializing add mode');
+      if (import.meta.env.DEV) console.log('[AddEditForm] Initializing add mode');
       isEditing = false;
       editId = '';
       lastEditingId = null;
@@ -64,7 +64,7 @@
       
       // Only reset fields if they have data
       if (title || username || password || note || category !== 'other') {
-        console.log('[AddEditForm] Resetting fields');
+        if (import.meta.env.DEV) console.log('[AddEditForm] Resetting fields');
         title = '';
         username = '';
         password = '';

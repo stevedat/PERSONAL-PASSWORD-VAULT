@@ -27,6 +27,25 @@
   let successTimeout;
   let showExportTooltip = false;
   let showImportTooltip = false;
+  let globalHandlerAttached = false;
+  
+  const handleGlobalClick = () => {
+    showExportTooltip = false;
+    showImportTooltip = false;
+  };
+  
+  // Watch tooltip states and attach/detach handler accordingly
+  $: {
+    if (typeof document !== 'undefined') {
+      if ((showExportTooltip || showImportTooltip) && !globalHandlerAttached) {
+        document.addEventListener('click', handleGlobalClick);
+        globalHandlerAttached = true;
+      } else if (!showExportTooltip && !showImportTooltip && globalHandlerAttached) {
+        document.removeEventListener('click', handleGlobalClick);
+        globalHandlerAttached = false;
+      }
+    }
+  }
   
   const categoryFilters = [
     { value: 'all', label: 'All', icon: '🔐', count: 0 },
@@ -81,12 +100,14 @@
     
     filteredItems = items;
     
-    console.log('[Main] Filtered items updated:', {
-      total: $vaultItems.length,
-      filtered: filteredItems.length,
-      searchQuery: $searchQuery,
-      categoryFilter: $categoryFilter
-    });
+    if (import.meta.env.DEV) {
+      console.log('[Main] Filtered items updated:', {
+        total: $vaultItems.length,
+        filtered: filteredItems.length,
+        searchQuery: $searchQuery,
+        categoryFilter: $categoryFilter
+      });
+    }
   }
   let fileInput;
   
@@ -539,39 +560,32 @@
     // Reset reminder session flag
     ReminderSystem.resetSession();
     
-    // Global click handler to close tooltips
-    const handleGlobalClick = () => {
-      showExportTooltip = false;
-      showImportTooltip = false;
-    };
-    
-    document.addEventListener('click', handleGlobalClick);
-    
-    // Debug: Watch vaultItems changes
-    vaultItems.subscribe(items => {
-      console.log('[Main] vaultItems store changed:', {
-        count: items.length,
-        items: items.map(i => ({ id: i.id, title: i.title }))
+    // Debug: Watch vaultItems changes (disabled in production for performance)
+    if (import.meta.env.DEV) {
+      vaultItems.subscribe(items => {
+        console.log('[Main] vaultItems store changed:', {
+          count: items.length,
+          items: items.map(i => ({ id: i.id, title: i.title }))
+        });
       });
-    });
-    
-    // Debug: Watch editingItem changes
-    editingItem.subscribe(item => {
-      console.log('[Main] editingItem store changed:', item ? { id: item.id, title: item.title } : null);
-    });
-    
-    // Debug: Watch showAddForm changes
-    showAddForm.subscribe(show => {
-      console.log('[Main] showAddForm store changed:', show);
-    });
-    
-    return () => {
-      document.removeEventListener('click', handleGlobalClick);
-    };
+      
+      // Debug: Watch editingItem changes
+      editingItem.subscribe(item => {
+        console.log('[Main] editingItem store changed:', item ? { id: item.id, title: item.title } : null);
+      });
+      
+      // Debug: Watch showAddForm changes
+      showAddForm.subscribe(show => {
+        console.log('[Main] showAddForm store changed:', show);
+      });
+    }
   });
   
   onDestroy(() => {
     cleanup();
+    if (globalHandlerAttached) {
+      document.removeEventListener('click', handleGlobalClick);
+    }
   });
 </script>
 
