@@ -34,7 +34,7 @@ export class StorageEngine {
   }
   
   static async saveVault(items: VaultItem[], masterPassword: string): Promise<void> {
-    console.log('[Storage] Save started, items:', items.length);
+    if (import.meta.env.DEV) console.log('[Storage] Save started, items:', items.length);
     const startTime = Date.now();
     
     // Add timeout to prevent hanging
@@ -61,7 +61,7 @@ export class StorageEngine {
         
         // Handle transaction completion
         transaction.oncomplete = () => {
-          console.log('[Storage] Save completed in', Date.now() - startTime, 'ms');
+          if (import.meta.env.DEV) console.log('[Storage] Save completed in', Date.now() - startTime, 'ms');
           resolve();
         };
         
@@ -95,7 +95,7 @@ export class StorageEngine {
   }
   
   static async loadVault(masterPassword: string): Promise<VaultItem[]> {
-    console.log('[Storage] Load started');
+    if (import.meta.env.DEV) console.log('[Storage] Load started');
     const startTime = Date.now();
     
     // Add timeout to prevent hanging
@@ -123,7 +123,7 @@ export class StorageEngine {
         
         request.onsuccess = async () => {
           if (!request.result) {
-            console.log('[Storage] No vault found');
+            if (import.meta.env.DEV) console.log('[Storage] No vault found');
             resolve([]);
             return;
           }
@@ -137,7 +137,7 @@ export class StorageEngine {
             };
             
             const items = await CryptoEngine.decrypt(encryptedVault, masterPassword);
-            console.log('[Storage] Load completed in', Date.now() - startTime, 'ms, items:', items.length);
+            if (import.meta.env.DEV) console.log('[Storage] Load completed in', Date.now() - startTime, 'ms, items:', items.length);
             resolve(items);
           } catch (error) {
             console.error('[Storage] Decrypt error:', error);

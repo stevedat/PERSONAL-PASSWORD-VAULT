@@ -107,9 +107,9 @@ export class AutoBackupService {
     
     // Convert to base64 for storage
     const vault = {
-      data: this.arrayBufferToBase64(encryptedVault.data),
-      iv: this.arrayBufferToBase64(encryptedVault.iv),
-      salt: this.arrayBufferToBase64(encryptedVault.salt)
+      data: this.arrayBufferToBase64(encryptedVault.data as ArrayBuffer),
+      iv: this.arrayBufferToBase64(encryptedVault.iv as ArrayBuffer),
+      salt: this.arrayBufferToBase64(encryptedVault.salt as ArrayBuffer)
     };
     
     // Create backup entry
