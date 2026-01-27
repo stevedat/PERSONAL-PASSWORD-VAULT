@@ -304,7 +304,7 @@ MIT License - see LICENSE file for details
 
 ## 🔒 Security Disclosure
 
-For security issues, please email security@pocketvault.app instead of using public issues.
+For security issues, please email ttd1232004@gmail.com instead of using public issues.
 
 ---
 
