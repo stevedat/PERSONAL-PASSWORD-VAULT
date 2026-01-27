@@ -1,84 +1,88 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
-		<link rel="apple-touch-icon" href="%sveltekit.assets%/icon.svg" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-		
-		<!-- Security Headers (Note: Some headers like X-Frame-Options should be set via server config) -->
-		<meta http-equiv="Content-Security-Policy" 
-		      content="default-src 'self'; 
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+	<link rel="apple-touch-icon" href="%sveltekit.assets%/icon.svg" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+	<!-- Security Headers (Note: Some headers like X-Frame-Options should be set via server config) -->
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
 		               script-src 'self' 'unsafe-inline'; 
 		               style-src 'self' 'unsafe-inline'; 
 		               img-src 'self' data: blob:; 
 		               connect-src 'self'; 
 		               base-uri 'self'; 
 		               form-action 'self'">
-		<meta http-equiv="X-Content-Type-Options" content="nosniff">
-		<meta http-equiv="X-XSS-Protection" content="1; mode=block">
-		<meta name="referrer" content="no-referrer">
-		
-		<meta name="theme-color" content="#1a1f2e" media="(prefers-color-scheme: dark)" />
-		<meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)" />
-		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-		<meta name="mobile-web-app-capable" content="yes" />
-		<meta name="description" content="Secure offline password manager" />
-		<link rel="manifest" href="/manifest.json" />
-		<title>PocketVault</title>
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
-		<script>
-			// Global error handler
-			window.addEventListener('error', (event) => {
-				console.error('[Global Error]', {
-					message: event.message,
-					filename: event.filename,
-					lineno: event.lineno,
-					colno: event.colno,
-					error: event.error
+	<meta http-equiv="X-Content-Type-Options" content="nosniff">
+	<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+	<meta name="referrer" content="no-referrer">
+
+	<meta name="theme-color" content="#1a1f2e" media="(prefers-color-scheme: dark)" />
+	<meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="description" content="Secure offline password manager" />
+	<link rel="manifest" href="/manifest.json" />
+	<title>PocketVault</title>
+	%sveltekit.head%
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">%sveltekit.body%</div>
+	<script>
+		// Global error handler
+		window.addEventListener('error', (event) => {
+			console.error('[Global Error]', {
+				message: event.message,
+				filename: event.filename,
+				lineno: event.lineno,
+				colno: event.colno,
+				error: event.error
+			});
+		});
+
+		// Unhandled promise rejections
+		window.addEventListener('unhandledrejection', (event) => {
+			console.error('[Unhandled Rejection]', event.reason);
+			event.preventDefault(); // Prevent default error handling
+		});
+
+		// Service Worker registration with error handling
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/sw.js')
+				.then((registration) => {
+					console.log('[SW] Registered successfully');
+				})
+				.catch((error) => {
+					console.error('[SW] Registration failed:', error);
 				});
-			});
-			
-			// Unhandled promise rejections
-			window.addEventListener('unhandledrejection', (event) => {
-				console.error('[Unhandled Rejection]', event.reason);
-				event.preventDefault(); // Prevent default error handling
-			});
-			
-			// Service Worker registration with error handling
-			if ('serviceWorker' in navigator) {
-				navigator.serviceWorker.register('/sw.js')
-					.then((registration) => {
-						console.log('[SW] Registered successfully');
-					})
-					.catch((error) => {
-						console.error('[SW] Registration failed:', error);
-					});
+		}
+
+		// Performance monitoring - detect freezes
+		let lastCheck = Date.now();
+		let freezeCount = 0;
+
+		setInterval(() => {
+			const now = Date.now();
+			const delta = now - lastCheck;
+
+			// Only report if tab is visible and delta is significant
+			// This prevents false positives during browser background throttling
+			if (delta > 2000 && !document.hidden) {
+				freezeCount++;
+				console.warn('[FREEZE DETECTED]', {
+					duration: delta + 'ms',
+					count: freezeCount,
+					timestamp: new Date().toISOString()
+				});
 			}
-			
-			// Performance monitoring - detect freezes
-			let lastCheck = Date.now();
-			let freezeCount = 0;
-			
-			setInterval(() => {
-				const now = Date.now();
-				const delta = now - lastCheck;
-				
-				if (delta > 1500) { // More than 1.5 seconds = freeze
-					freezeCount++;
-					console.warn('[FREEZE DETECTED]', {
-						duration: delta + 'ms',
-						count: freezeCount,
-						timestamp: new Date().toISOString()
-					});
-				}
-				
-				lastCheck = now;
-			}, 500);
-		</script>
-	</body>
+
+			lastCheck = now;
+		}, 500);
+	</script>
+</body>
+
 </html>

@@ -2,16 +2,27 @@
   import { onMount } from "svelte";
   import { editingItem } from "../stores";
   import { StorageEngine } from "../storage";
+
+  /** @type {import('../types').VaultItem} */
   export let item;
+  /** @type {(id: string) => void} */
   export let onDelete;
 
   let showPassword = false;
+  /** @type {Record<string, boolean>} */
   let copyFeedback = {};
   let showVerifyPopup = false;
   let verifyPassword = "";
   let verifyError = "";
   let isVerifying = false;
-  let usernameId, passwordId, noteId, verifyId;
+  /** @type {string} */
+  let usernameId;
+  /** @type {string} */
+  let passwordId;
+  /** @type {string} */
+  let noteId;
+  /** @type {string} */
+  let verifyId;
 
   onMount(() => {
     const uniqueId = `item-${item.id}`;
@@ -21,6 +32,7 @@
     verifyId = `${uniqueId}-verify`;
   });
 
+  /** @type {Record<string, string>} */
   const categoryIcons = {
     email: "📧",
     banking: "🏦",
@@ -31,6 +43,7 @@
     other: "📌",
   };
 
+  /** @type {Record<string, string>} */
   const categoryLabels = {
     email: "Email",
     banking: "Banking",
@@ -41,6 +54,10 @@
     other: "Other",
   };
 
+  /**
+   * @param {string} text
+   * @param {string} field
+   */
   async function copyToClipboard(text, field) {
     try {
       await navigator.clipboard.writeText(text);
@@ -97,18 +114,21 @@
     verifyError = "";
   }
 
+  /** @param {KeyboardEvent} event */
   function handleVerifyKeydown(event) {
     if (event.key === "Enter") {
       verifyMasterPassword();
     }
   }
 
+  /** @param {KeyboardEvent} event */
   function handleGlobalKeydown(event) {
     if (event.key === "Escape" && showVerifyPopup) {
       cancelVerify();
     }
   }
 
+  /** @param {KeyboardEvent} event */
   function handleBackdropKeydown(event) {
     if (event.key === "Enter" || event.key === " ") {
       cancelVerify();
@@ -217,21 +237,18 @@
 
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
-  <div
+  <button
     class="verify-backdrop"
-    on:click={cancelVerify}
-    on:keydown={handleBackdropKeydown}
-    role="button"
-    tabindex="0"
+    on:click|self={cancelVerify}
+    on:keydown={(e) => e.key === "Escape" && cancelVerify()}
     aria-label="Close verification popup"
-    aria-labelledby="verify-title"
+    type="button"
   >
     <div
       class="verify-popup glass"
-      on:click|stopPropagation
-      on:keydown|stopPropagation
       role="dialog"
       aria-modal="true"
+      aria-labelledby="verify-title"
       tabindex="-1"
     >
       <div class="verify-header">
@@ -277,7 +294,7 @@
         </button>
       </div>
     </div>
-  </div>
+  </button>
 {/if}
 
 <style>

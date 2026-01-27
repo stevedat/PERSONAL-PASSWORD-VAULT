@@ -13,8 +13,8 @@ export interface VaultItem {
 }
 
 export interface EncryptedVault {
-  iv: string | ArrayBuffer;   // Base64 encoded or raw IV
-  salt: string | ArrayBuffer; // Base64 encoded or raw salt
-  data: string | ArrayBuffer; // Base64 encoded or raw encrypted data
+  iv: ArrayBuffer;
+  salt: ArrayBuffer;
+  data: ArrayBuffer;
   version?: number;
 }

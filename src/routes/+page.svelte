@@ -35,8 +35,13 @@
   import { AutoBackupService } from "$lib/auto-backup";
   import { logAppInit, suppressExtensionErrors } from "$lib/logger";
 
+  export let data;
+  export let params = {};
+
+  /** @type {import('$lib/types').VaultItem[]} */
   let filteredItems = [];
   let successMessage = "";
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
   let successTimeout;
   let showExportTooltip = false;
   let showImportTooltip = false;
@@ -64,36 +69,67 @@
     }
   }
 
-  const categoryFilters = [
-    { value: "all", label: "All", icon: "🔐", count: 0 },
-    { value: "email", label: "Email", icon: "📧", count: 0 },
-    { value: "banking", label: "Banking", icon: "🏦", count: 0 },
-    { value: "app", label: "App", icon: "📱", count: 0 },
-    { value: "website", label: "Website", icon: "🌐", count: 0 },
-    { value: "work", label: "Work", icon: "💼", count: 0 },
-    { value: "games", label: "Games", icon: "🎮", count: 0 },
-    { value: "other", label: "Other", icon: "📌", count: 0 },
+  $: categoryFilters = [
+    { value: "all", label: "All", icon: "🔐", count: $vaultItems.length },
+    {
+      value: "email",
+      label: "Email",
+      icon: "📧",
+      count: $vaultItems.filter((i) => (i.category || "other") === "email")
+        .length,
+    },
+    {
+      value: "banking",
+      label: "Banking",
+      icon: "🏦",
+      count: $vaultItems.filter((i) => (i.category || "other") === "banking")
+        .length,
+    },
+    {
+      value: "app",
+      label: "App",
+      icon: "📱",
+      count: $vaultItems.filter((i) => (i.category || "other") === "app")
+        .length,
+    },
+    {
+      value: "website",
+      label: "Website",
+      icon: "🌐",
+      count: $vaultItems.filter((i) => (i.category || "other") === "website")
+        .length,
+    },
+    {
+      value: "work",
+      label: "Work",
+      icon: "💼",
+      count: $vaultItems.filter((i) => (i.category || "other") === "work")
+        .length,
+    },
+    {
+      value: "games",
+      label: "Games",
+      icon: "🎮",
+      count: $vaultItems.filter((i) => (i.category || "other") === "games")
+        .length,
+    },
+    {
+      value: "other",
+      label: "Other",
+      icon: "📌",
+      count: $vaultItems.filter((i) => (i.category || "other") === "other")
+        .length,
+    },
   ];
-
-  // Update category counts
-  $: {
-    categoryFilters.forEach((filter) => {
-      if (filter.value === "all") {
-        filter.count = $vaultItems.length;
-      } else {
-        filter.count = $vaultItems.filter(
-          (item) => (item.category || "other") === filter.value,
-        ).length;
-      }
-    });
-  }
 
   // Debounced search query
   let searchInput = "";
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
   let searchDebounceTimer;
 
+  /** @param {Event & { currentTarget: EventTarget & HTMLInputElement }} event */
   function handleSearchInput(event) {
-    searchInput = event.target.value;
+    searchInput = event.currentTarget.value;
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
       searchQuery.set(searchInput);
@@ -131,8 +167,10 @@
       });
     }
   }
+  /** @type {HTMLInputElement} */
   let fileInput;
 
+  /** @param {import('$lib/types').VaultItem} item */
   async function saveItem(item) {
     if (import.meta.env.DEV) {
       console.log("[Main] saveItem called:", {
@@ -334,6 +372,7 @@
     }
   }
 
+  /** @param {string} id */
   async function deleteItem(id) {
     if (!confirm("Are you sure you want to delete this item?")) return;
 
@@ -424,7 +463,9 @@
 
   let exportLoading = false;
 
-  async function exportVault() {
+  /** @param {any} [event] */
+  async function exportVault(event) {
+    if (event && event.preventDefault) event.preventDefault();
     if (exportLoading) return; // Prevent double-click
 
     if (import.meta.env.DEV) console.log("[Main] Export vault initiated");
@@ -530,6 +571,7 @@
     }
   }
 
+  /** @param {Blob} blob */
   function downloadVaultFile(blob) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -544,8 +586,9 @@
     fileInput.click();
   }
 
+  /** @param {Event & { currentTarget: EventTarget & HTMLInputElement }} event */
   async function handleFileImport(event) {
-    const file = event.target.files && event.target.files[0];
+    const file = event.currentTarget.files && event.currentTarget.files[0];
     if (!file) return;
 
     if (import.meta.env.DEV) console.log("[Main] Import initiated:", file.name);
@@ -678,7 +721,8 @@
       );
       if (import.meta.env.DEV)
         console.log("[Main] Import complete, vault updated");
-    } catch (error) {
+    } catch (e) {
+      const error = /** @type {Error} */ (e);
       console.error("[Main] Import failed:", error);
       alert(`Import failed: ${error.message}`);
     }
@@ -687,6 +731,7 @@
     fileInput.value = "";
   }
 
+  /** @param {string} message */
   function showSuccessMessage(message) {
     successMessage = message;
     clearTimeout(successTimeout);
@@ -879,7 +924,7 @@
           <button
             class="glass-btn haptic-medium"
             style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
-            on:click={lock}
+            on:click={() => lock("manual")}
             title="Lock vault"
           >
             <span style="font-size: 1.25rem;">🔒</span>

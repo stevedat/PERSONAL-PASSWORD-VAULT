@@ -3,7 +3,9 @@
   import { showReminder } from "../stores";
   import { tick } from "svelte";
 
+  /** @type {import('../reminders').ReminderType | null} */
   export let reminderType = null;
+  /** @type {() => void} */
   export let onBackupNow = () => {};
 
   $: message = reminderType

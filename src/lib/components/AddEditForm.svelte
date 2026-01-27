@@ -3,6 +3,7 @@
   import { showAddForm, editingItem } from "../stores";
   import { StorageEngine } from "../storage";
 
+  /** @type {(item: import('../types').VaultItem) => void} */
   export let onSave;
 
   let title = "";
@@ -12,16 +13,25 @@
   let category = "other";
   let isEditing = false;
   let editId = "";
+  /** @type {string | null} */
   let lastEditingId = null;
 
   let showPassword = false;
+  /** @type {Record<string, boolean>} */
   let copyFeedback = {};
   let showVerifyPopup = false;
   let verifyPassword = "";
   let verifyError = "";
   let isVerifying = false;
   let passwordUnlocked = false;
-  let usernameId, passwordId, noteId, verifyId;
+  /** @type {string} */
+  let usernameId;
+  /** @type {string} */
+  let passwordId;
+  /** @type {string} */
+  let noteId;
+  /** @type {string} */
+  let verifyId;
 
   const categories = [
     { value: "email", label: "Email", icon: "📧" },
@@ -94,6 +104,10 @@
     }
   }
 
+  /**
+   * @param {string} text
+   * @param {string} field
+   */
   async function copyToClipboard(text, field) {
     try {
       await navigator.clipboard.writeText(text);
@@ -133,6 +147,7 @@
     verifyError = "";
   }
 
+  /** @param {KeyboardEvent} event */
   function handleVerifyKeydown(event) {
     if (event.key === "Enter") {
       verifyMasterPassword();
@@ -141,6 +156,7 @@
     }
   }
 
+  /** @param {FocusEvent} event */
   function handlePasswordInput(event) {
     if (isEditing && !passwordUnlocked) {
       event.preventDefault();
@@ -151,6 +167,7 @@
   }
 
   function save() {
+    /** @type {import('../types').VaultItem} */
     const item = {
       id: isEditing ? editId : CryptoEngine.generateId(),
       title: title.trim(),
@@ -194,12 +211,14 @@
     editingItem.set(null);
   }
 
+  /** @param {KeyboardEvent} event */
   function handleBackdropKeydown(event) {
     if (event.key === "Enter" || event.key === " ") {
       cancel();
     }
   }
 
+  /** @param {KeyboardEvent} event */
   function handleVerifyBackdropKeydown(event) {
     if (event.key === "Enter" || event.key === " ") {
       cancelVerify();
@@ -207,23 +226,15 @@
   }
 </script>
 
-```
 {#if $showAddForm || $editingItem}
-  <div
+  <button
     class="modal-backdrop"
-    on:click={cancel}
-    on:keydown={handleBackdropKeydown}
-    role="button"
-    tabindex="0"
+    on:click|self={cancel}
+    on:keydown={(e) => e.key === "Escape" && cancel()}
     aria-label="Close modal"
+    type="button"
   >
-    <div
-      class="glass-modal"
-      on:click|stopPropagation
-      on:keydown|stopPropagation
-      role="document"
-      tabindex="-1"
-    >
+    <div class="glass-modal" role="document" tabindex="-1">
       <div
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;"
       >
@@ -400,26 +411,19 @@
         </div>
       </form>
     </div>
-  </div>
+  </button>
 {/if}
 
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
-  <div
+  <button
     class="verify-backdrop"
-    on:click={cancelVerify}
-    on:keydown={handleVerifyBackdropKeydown}
-    role="button"
-    tabindex="0"
+    on:click|self={cancelVerify}
+    on:keydown={(e) => e.key === "Escape" && cancelVerify()}
     aria-label="Close verification popup"
+    type="button"
   >
-    <div
-      class="verify-popup glass"
-      on:click|stopPropagation
-      on:keydown|stopPropagation
-      role="document"
-      tabindex="-1"
-    >
+    <div class="verify-popup glass" role="document" tabindex="-1">
       <div class="verify-header">
         <div class="verify-icon">🔐</div>
         <h3 id="verify-title" class="verify-title text-glass">
@@ -464,7 +468,7 @@
         </button>
       </div>
     </div>
-  </div>
+  </button>
 {/if}
 
 <style>
