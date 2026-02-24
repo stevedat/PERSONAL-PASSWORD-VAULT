@@ -4,6 +4,17 @@
   import { onMount } from "svelte";
   import { initializeHapticFeedback } from "$lib/haptic";
 
+  // Án / silent toàn bộ console trong production
+  if (typeof window !== "undefined" && !import.meta.env.DEV) {
+    window.console.log = function () {};
+    window.console.info = function () {};
+    window.console.warn = function () {};
+    window.console.error = function () {};
+    window.console.debug = function () {};
+    window.console.group = function () {};
+    window.console.groupEnd = function () {};
+  }
+
   export let data;
   export let form;
   export let params = {};

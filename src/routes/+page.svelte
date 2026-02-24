@@ -34,12 +34,34 @@
   import { ReminderSystem } from "$lib/reminders";
   import { AutoBackupService } from "$lib/auto-backup";
   import { logAppInit, suppressExtensionErrors } from "$lib/logger";
+  import {
+    LayoutGrid,
+    Mail,
+    Landmark,
+    Smartphone,
+    Globe,
+    Briefcase,
+    Gamepad2,
+    Folder,
+    Sun,
+    Moon,
+    ScanFace,
+    Fingerprint,
+    Upload,
+    Download,
+    Lock,
+    Plus,
+    LockKeyhole,
+    SearchX,
+    ShieldAlert,
+  } from "lucide-svelte";
 
   export let data;
   export let params = {};
 
   /** @type {import('$lib/types').VaultItem[]} */
   let filteredItems = [];
+  let showAllItems = false;
   let successMessage = "";
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let successTimeout;
@@ -70,53 +92,53 @@
   }
 
   $: categoryFilters = [
-    { value: "all", label: "All", icon: "🔐", count: $vaultItems.length },
+    { value: "all", label: "All", icon: LayoutGrid, count: $vaultItems.length },
     {
       value: "email",
       label: "Email",
-      icon: "📧",
+      icon: Mail,
       count: $vaultItems.filter((i) => (i.category || "other") === "email")
         .length,
     },
     {
       value: "banking",
       label: "Banking",
-      icon: "🏦",
+      icon: Landmark,
       count: $vaultItems.filter((i) => (i.category || "other") === "banking")
         .length,
     },
     {
       value: "app",
       label: "App",
-      icon: "📱",
+      icon: Smartphone,
       count: $vaultItems.filter((i) => (i.category || "other") === "app")
         .length,
     },
     {
       value: "website",
       label: "Website",
-      icon: "🌐",
+      icon: Globe,
       count: $vaultItems.filter((i) => (i.category || "other") === "website")
         .length,
     },
     {
       value: "work",
       label: "Work",
-      icon: "💼",
+      icon: Briefcase,
       count: $vaultItems.filter((i) => (i.category || "other") === "work")
         .length,
     },
     {
       value: "games",
       label: "Games",
-      icon: "🎮",
+      icon: Gamepad2,
       count: $vaultItems.filter((i) => (i.category || "other") === "games")
         .length,
     },
     {
       value: "other",
       label: "Other",
-      icon: "📌",
+      icon: Folder,
       count: $vaultItems.filter((i) => (i.category || "other") === "other")
         .length,
     },
@@ -157,6 +179,7 @@
     }
 
     filteredItems = items;
+    showAllItems = false;
 
     if (import.meta.env.DEV) {
       console.log("[Main] Filtered items updated:", {
@@ -862,114 +885,142 @@
         />
       {/if}
 
-      <div
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.75rem;"
-      >
-        <h1
-          style="margin: 0; font-size: 1.5rem; font-weight: 600; flex-shrink: 0;"
-          class="text-glass"
-        >
-          🔒 PocketVault
-        </h1>
+      <div style="max-width: 800px; margin: 0 auto; width: 100%;">
         <div
-          style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.75rem;"
         >
-          <button
-            class="glass-btn haptic-light"
-            style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
-            on:click={toggleTheme}
-            title="Toggle theme"
+          <h1
+            style="margin: 0; font-size: 1.5rem; font-weight: 600; flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem;"
+            class="text-glass"
           >
-            <span style="font-size: 1.25rem;">{$darkMode ? "☀️" : "🌙"}</span>
-          </button>
-          {#if $biometricEnabled}
+            <ShieldAlert size={28} strokeWidth={1.5} color="currentColor" /> PocketVault
+          </h1>
+          <div
+            style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;"
+          >
             <button
-              class="glass-btn-primary"
+              class="glass-btn haptic-light"
               style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
-              on:click={toggleBiometric}
-              title="Biometric enabled"
+              on:click={toggleTheme}
+              title="Toggle theme"
             >
-              <span style="font-size: 1.25rem;"
-                >{BiometricAuth.getBiometricType() === "FaceID"
-                  ? "👤"
-                  : "👆"}</span
+              <span
+                style="display: flex; align-items: center; justify-content: center;"
+                ><svelte:component
+                  this={$darkMode ? Sun : Moon}
+                  size={20}
+                  strokeWidth={1.5}
+                /></span
               >
             </button>
-          {/if}
-          <div style="position: relative;">
+            {#if $biometricEnabled}
+              <button
+                class="glass-btn-primary"
+                style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
+                on:click={toggleBiometric}
+                title="Biometric enabled"
+              >
+                <span
+                  style="display: flex; align-items: center; justify-content: center;"
+                >
+                  <svelte:component
+                    this={BiometricAuth.getBiometricType() === "FaceID"
+                      ? ScanFace
+                      : Fingerprint}
+                    size={20}
+                    strokeWidth={1.5}
+                  />
+                </span>
+              </button>
+            {/if}
+            <div style="position: relative;">
+              <button
+                class="glass-btn haptic-light"
+                style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
+                on:click={(e) => {
+                  e.stopPropagation();
+                  exportVault();
+                  showExportTooltip = false;
+                }}
+                on:mouseenter={() => (showExportTooltip = true)}
+                on:mouseleave={() => (showExportTooltip = false)}
+                title="Export vault"
+              >
+                <span
+                  style="display: flex; align-items: center; justify-content: center;"
+                  ><Upload size={20} strokeWidth={1.5} /></span
+                >
+              </button>
+              <BackupTooltip
+                type="export"
+                show={showExportTooltip}
+                onClose={() => (showExportTooltip = false)}
+              />
+            </div>
+            <div style="position: relative;">
+              <button
+                class="glass-btn haptic-light"
+                style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
+                on:click={(e) => {
+                  e.stopPropagation();
+                  importVault();
+                  showImportTooltip = false;
+                }}
+                on:mouseenter={() => (showImportTooltip = true)}
+                on:mouseleave={() => (showImportTooltip = false)}
+                title="Import vault"
+              >
+                <span
+                  style="display: flex; align-items: center; justify-content: center;"
+                  ><Download size={20} strokeWidth={1.5} /></span
+                >
+              </button>
+              <BackupTooltip
+                type="import"
+                show={showImportTooltip}
+                onClose={() => (showImportTooltip = false)}
+              />
+            </div>
             <button
-              class="glass-btn haptic-light"
+              class="glass-btn haptic-medium"
               style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
-              on:click={(e) => {
-                e.stopPropagation();
-                exportVault();
-                showExportTooltip = false;
-              }}
-              on:mouseenter={() => (showExportTooltip = true)}
-              on:mouseleave={() => (showExportTooltip = false)}
-              title="Export vault"
+              on:click={() => lock("manual")}
+              title="Lock vault"
             >
-              <span style="font-size: 1.25rem;">📤</span>
+              <span
+                style="display: flex; align-items: center; justify-content: center;"
+                ><Lock size={20} strokeWidth={1.5} /></span
+              >
             </button>
-            <BackupTooltip
-              type="export"
-              show={showExportTooltip}
-              onClose={() => (showExportTooltip = false)}
-            />
           </div>
-          <div style="position: relative;">
-            <button
-              class="glass-btn haptic-light"
-              style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
-              on:click={(e) => {
-                e.stopPropagation();
-                importVault();
-                showImportTooltip = false;
-              }}
-              on:mouseenter={() => (showImportTooltip = true)}
-              on:mouseleave={() => (showImportTooltip = false)}
-              title="Import vault"
-            >
-              <span style="font-size: 1.25rem;">📥</span>
-            </button>
-            <BackupTooltip
-              type="import"
-              show={showImportTooltip}
-              onClose={() => (showImportTooltip = false)}
-            />
-          </div>
-          <button
-            class="glass-btn haptic-medium"
-            style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;"
-            on:click={() => lock("manual")}
-            title="Lock vault"
-          >
-            <span style="font-size: 1.25rem;">🔒</span>
-          </button>
         </div>
-      </div>
 
-      <div>
-        <input
-          type="text"
-          placeholder="Search passwords..."
-          value={searchInput}
-          on:input={handleSearchInput}
-          class="glass-input"
-          style="width: 100%; padding: 0.875rem; border-radius: 14px;"
-        />
+        <div>
+          <input
+            type="text"
+            placeholder="Search passwords..."
+            value={searchInput}
+            on:input={handleSearchInput}
+            class="glass-input"
+            style="width: 100%; padding: 0.875rem; border-radius: 14px;"
+          />
+        </div>
       </div>
     </header>
 
     <main style="padding: 1rem; padding-bottom: 7rem;">
-      <div style="max-width: 100%; margin: 0 auto;">
+      <div style="max-width: 800px; margin: 0 auto; width: 100%;">
         {#if filteredItems.length === 0}
           <div
             style="text-align: center; padding: 3rem 1rem;"
             class="text-glass-secondary"
           >
             {#if $vaultItems.length === 0}
-              <div style="font-size: 4rem; margin-bottom: 1rem;">🔐</div>
+              <div
+                style="display: flex; justify-content: center; margin-bottom: 1rem;"
+              >
+                <LockKeyhole size={64} strokeWidth={1} />
+              </div>
               <h2
                 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;"
                 class="text-glass"
@@ -980,7 +1031,11 @@
                 Add your first password to get started
               </p>
             {:else if $searchQuery || $categoryFilter !== "all"}
-              <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+              <div
+                style="display: flex; justify-content: center; margin-bottom: 1rem;"
+              >
+                <SearchX size={64} strokeWidth={1} />
+              </div>
               <h2
                 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;"
                 class="text-glass"
@@ -991,7 +1046,11 @@
                 Try a different search or filter
               </p>
             {:else}
-              <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+              <div
+                style="display: flex; justify-content: center; margin-bottom: 1rem;"
+              >
+                <SearchX size={64} strokeWidth={1} />
+              </div>
               <h2
                 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;"
                 class="text-glass"
@@ -1005,9 +1064,21 @@
           </div>
         {:else}
           <div style="display: flex; flex-direction: column; gap: 0.875rem;">
-            {#each filteredItems as item (item.id)}
+            {#each showAllItems ? filteredItems : filteredItems.slice(0, 5) as item (item.id)}
               <VaultItemComponent {item} onDelete={deleteItem} />
             {/each}
+
+            {#if filteredItems.length > 5}
+              <button
+                class="glass-btn haptic-medium"
+                style="margin-top: 0.5rem; padding: 0.875rem; border-radius: 14px; width: 100%; text-align: center; font-weight: 500;"
+                on:click={() => (showAllItems = !showAllItems)}
+              >
+                {showAllItems
+                  ? "Thu gọn"
+                  : `Xem thêm (${filteredItems.length - 5} mục)`}
+              </button>
+            {/if}
           </div>
         {/if}
 
@@ -1030,8 +1101,14 @@
               : ''}"
             on:click={() => categoryFilter.set(filter.value)}
           >
-            <span>{filter.icon}</span>
-            <span>#{filter.label}</span>
+            <span style="display: flex; align-items: center;"
+              ><svelte:component
+                this={filter.icon}
+                size={16}
+                strokeWidth={1.5}
+              /></span
+            >
+            <span>{filter.label}</span>
             {#if filter.count > 0}
               <span style="opacity: 0.7; font-size: 0.75rem;"
                 >({filter.count})</span
@@ -1043,13 +1120,20 @@
     </nav>
 
     <div style="position: fixed; bottom: 6.5rem; right: 1.5rem; z-index: 100;">
-      <button
-        class="glass-fab haptic-heavy"
-        on:click={addNew}
-        title="Add password"
+      <div
+        style="position: absolute; right: 0; bottom: 0; transform: translateX(calc(max(0px, 100vw - 800px) / -2)); transition: transform 0.3s;"
       >
-        +
-      </button>
+        <button
+          class="glass-fab haptic-heavy"
+          on:click={addNew}
+          title="Add password"
+        >
+          <span
+            style="display: flex; align-items: center; justify-content: center;"
+            ><Plus size={24} strokeWidth={2} /></span
+          >
+        </button>
+      </div>
     </div>
 
     <AddEditForm onSave={saveItem} />

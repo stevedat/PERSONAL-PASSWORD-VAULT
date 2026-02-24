@@ -2,6 +2,22 @@
   import { onMount } from "svelte";
   import { editingItem } from "../stores";
   import { StorageEngine } from "../storage";
+  import {
+    Mail,
+    Landmark,
+    Smartphone,
+    Globe,
+    Briefcase,
+    Gamepad2,
+    Folder,
+    ChevronDown,
+    Pencil,
+    Trash2,
+    Eye,
+    EyeOff,
+    LockKeyhole,
+    AlertTriangle,
+  } from "lucide-svelte";
 
   /** @type {import('../types').VaultItem} */
   export let item;
@@ -9,6 +25,16 @@
   export let onDelete;
 
   let showPassword = false;
+  let isExpanded = false;
+
+  function toggleExpand() {
+    isExpanded = !isExpanded;
+    if (!isExpanded) {
+      // Re-hide password when collapsing to maintain security
+      showPassword = false;
+    }
+  }
+
   /** @type {Record<string, boolean>} */
   let copyFeedback = {};
   let showVerifyPopup = false;
@@ -32,15 +58,15 @@
     verifyId = `${uniqueId}-verify`;
   });
 
-  /** @type {Record<string, string>} */
+  /** @type {Record<string, any>} */
   const categoryIcons = {
-    email: "📧",
-    banking: "🏦",
-    app: "📱",
-    website: "🌐",
-    work: "💼",
-    games: "🎮",
-    other: "📌",
+    email: Mail,
+    banking: Landmark,
+    app: Smartphone,
+    website: Globe,
+    work: Briefcase,
+    games: Gamepad2,
+    other: Folder,
   };
 
   /** @type {Record<string, string>} */
@@ -143,25 +169,57 @@
 
 <svelte:window on:keydown={handleGlobalKeydown} />
 
-<div class="vault-card glass animate-slide-up">
-  <div class="card-header">
+<div class="vault-card glass animate-slide-up" class:expanded={isExpanded}>
+  <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+  <div
+    class="card-header"
+    on:click={toggleExpand}
+    style="cursor: pointer; margin-bottom: {isExpanded
+      ? '1rem'
+      : '0'}; align-items: center;"
+  >
     <div class="card-title-section">
       <h3 class="card-title text-glass">{item.title}</h3>
       {#if item.category}
         <span class="category-tag category-{item.category}">
-          {categoryIcon}
+          <span style="display: flex; align-items: center;"
+            ><svelte:component
+              this={categoryIcon}
+              size={14}
+              strokeWidth={1.5}
+            /></span
+          >
           {categoryLabel}
         </span>
       {/if}
     </div>
-    <div class="card-actions">
+    <div class="card-actions" on:click|stopPropagation>
+      <button
+        class="action-btn haptic-light"
+        on:click={toggleExpand}
+        title={isExpanded ? "Collapse" : "Expand"}
+        style="background: transparent;"
+      >
+        <span
+          class="action-icon"
+          style="display: flex; align-items: center; justify-content: center; transform: rotate({isExpanded
+            ? '180deg'
+            : '0deg'}); transition: transform 0.3s;"
+        >
+          <ChevronDown size={18} strokeWidth={1.5} />
+        </span>
+      </button>
       <button
         class="action-btn action-btn-edit haptic-light"
         on:click={editItem}
         title="Edit"
         aria-label="Edit password for {item.title}"
       >
-        <span class="action-icon">✏️</span>
+        <span
+          class="action-icon"
+          style="display: flex; align-items: center; justify-content: center;"
+          ><Pencil size={18} strokeWidth={1.5} /></span
+        >
       </button>
       <button
         class="action-btn action-btn-delete haptic-heavy"
@@ -169,70 +227,86 @@
         title="Delete"
         aria-label="Delete password for {item.title}"
       >
-        <span class="action-icon">🗑️</span>
+        <span
+          class="action-icon"
+          style="display: flex; align-items: center; justify-content: center;"
+          ><Trash2 size={18} strokeWidth={1.5} /></span
+        >
       </button>
     </div>
   </div>
 
-  <div class="card-body">
-    <div class="field-group">
-      <label for={usernameId} class="field-label text-glass-secondary"
-        >Username</label
-      >
-      <div class="field-content glass-field">
-        <span id={usernameId} class="field-value text-glass"
-          >{item.username}</span
+  {#if isExpanded}
+    <div class="card-body">
+      <div class="field-group">
+        <label for={usernameId} class="field-label text-glass-secondary"
+          >Username</label
         >
-        <button
-          class="field-btn glass-btn-primary haptic-medium"
-          on:click={() => copyToClipboard(item.username, "username")}
-          aria-label="Copy username for {item.title}"
-        >
-          {copyFeedback.username ? "✓ Copied!" : "Copy"}
-        </button>
-      </div>
-    </div>
-
-    <div class="field-group">
-      <label for={passwordId} class="field-label text-glass-secondary"
-        >Password</label
-      >
-      <div class="field-content glass-field">
-        <span id={passwordId} class="field-value text-glass">
-          {showPassword ? item.password : "••••••••••••"}
-        </span>
-        <div class="field-actions">
-          <button
-            class="field-btn-icon glass-btn haptic-light"
-            on:click={togglePasswordVisibility}
-            title={showPassword ? "Hide password" : "Show password"}
-            aria-label="{showPassword
-              ? 'Hide'
-              : 'Show'} password for {item.title}"
+        <div class="field-content glass-field">
+          <span id={usernameId} class="field-value text-glass"
+            >{item.username}</span
           >
-            <span class="action-icon">{showPassword ? "🙈" : "👁️"}</span>
-          </button>
           <button
             class="field-btn glass-btn-primary haptic-medium"
-            on:click={() => copyToClipboard(item.password || "", "password")}
-            aria-label="Copy password for {item.title}"
+            on:click={() => copyToClipboard(item.username, "username")}
+            aria-label="Copy username for {item.title}"
           >
-            {copyFeedback.password ? "✓ Copied!" : "Copy"}
+            {copyFeedback.username ? "✓ Copied!" : "Copy"}
           </button>
         </div>
       </div>
-    </div>
 
-    {#if item.note}
       <div class="field-group">
-        <label for={noteId} class="field-label text-glass-secondary">Note</label
+        <label for={passwordId} class="field-label text-glass-secondary"
+          >Password</label
         >
-        <div class="field-content glass-field field-note">
-          <span id={noteId} class="field-value text-glass">{item.note}</span>
+        <div class="field-content glass-field">
+          <span id={passwordId} class="field-value text-glass">
+            {showPassword ? item.password : "••••••••••••"}
+          </span>
+          <div class="field-actions">
+            <button
+              class="field-btn-icon glass-btn haptic-light"
+              on:click={togglePasswordVisibility}
+              title={showPassword ? "Hide password" : "Show password"}
+              aria-label="{showPassword
+                ? 'Hide'
+                : 'Show'} password for {item.title}"
+            >
+              <span
+                class="action-icon"
+                style="display: flex; align-items: center; justify-content: center;"
+              >
+                <svelte:component
+                  this={showPassword ? EyeOff : Eye}
+                  size={18}
+                  strokeWidth={1.5}
+                />
+              </span>
+            </button>
+            <button
+              class="field-btn glass-btn-primary haptic-medium"
+              on:click={() => copyToClipboard(item.password || "", "password")}
+              aria-label="Copy password for {item.title}"
+            >
+              {copyFeedback.password ? "✓ Copied!" : "Copy"}
+            </button>
+          </div>
         </div>
       </div>
-    {/if}
-  </div>
+
+      {#if item.note}
+        <div class="field-group">
+          <label for={noteId} class="field-label text-glass-secondary"
+            >Note</label
+          >
+          <div class="field-content glass-field field-note">
+            <span id={noteId} class="field-value text-glass">{item.note}</span>
+          </div>
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <!-- Master Password Verification Popup -->
@@ -252,7 +326,12 @@
       tabindex="-1"
     >
       <div class="verify-header">
-        <div class="verify-icon">🔐</div>
+        <div
+          class="verify-icon"
+          style="display: flex; align-items: center; justify-content: center;"
+        >
+          <LockKeyhole size={48} strokeWidth={1} />
+        </div>
         <h3 id="verify-title" class="verify-title text-glass">
           Verify Master Password
         </h3>
@@ -274,7 +353,9 @@
         />
         {#if verifyError}
           <div class="verify-error" role="alert">
-            <span>⚠️</span>
+            <span style="display: flex; align-items: center;"
+              ><AlertTriangle size={16} strokeWidth={1.5} /></span
+            >
             <span>{verifyError}</span>
           </div>
         {/if}
@@ -311,16 +392,22 @@
   }
   .vault-card {
     padding: 1.25rem;
-    border-radius: 20px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     cursor: default;
-    transition: all 0.3s ease-out;
+    transition: all 0.2s ease-out;
+  }
+  :global(.dark) .vault-card {
+    background: #18181b;
+    border-color: #27272a;
   }
   .vault-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
   }
   :global(.dark) .vault-card:hover {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.3);
   }
   .card-header {
     display: flex;
@@ -415,22 +502,22 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.875rem 1rem;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     transition: all 0.2s;
   }
   :global(.dark) .glass-field {
-    background: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: #27272a;
+    border-color: #3f3f46;
   }
   .glass-field:hover {
-    background: rgba(255, 255, 255, 0.6);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: #f1f5f9;
+    border-color: #cbd5e1;
   }
   :global(.dark) .glass-field:hover {
-    background: rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: #3f3f46;
+    border-color: #52525b;
   }
   .field-note {
     align-items: flex-start;
@@ -522,9 +609,15 @@
     max-width: 400px;
     width: 100%;
     padding: 1.5rem;
-    border-radius: 20px;
+    border-radius: 16px;
     animation: slideUp 0.2s ease-out;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    background: #ffffff;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+  }
+  :global(.dark) .verify-popup {
+    background: #18181b;
+    border: 1px solid #27272a;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
   }
   .verify-header {
     text-align: center;

@@ -2,6 +2,22 @@
   import { CryptoEngine } from "../crypto";
   import { showAddForm, editingItem } from "../stores";
   import { StorageEngine } from "../storage";
+  import {
+    Mail,
+    Landmark,
+    Smartphone,
+    Globe,
+    Briefcase,
+    Gamepad2,
+    Folder,
+    X,
+    Eye,
+    EyeOff,
+    Zap,
+    LockKeyhole,
+    AlertTriangle,
+    Lock,
+  } from "lucide-svelte";
 
   /** @type {(item: import('../types').VaultItem) => void} */
   export let onSave;
@@ -34,13 +50,13 @@
   let verifyId;
 
   const categories = [
-    { value: "email", label: "Email", icon: "📧" },
-    { value: "banking", label: "Banking", icon: "🏦" },
-    { value: "app", label: "App", icon: "📱" },
-    { value: "website", label: "Website", icon: "🌐" },
-    { value: "work", label: "Work", icon: "💼" },
-    { value: "games", label: "Games", icon: "🎮" },
-    { value: "other", label: "Other", icon: "📌" },
+    { value: "email", label: "Email", icon: Mail },
+    { value: "banking", label: "Banking", icon: Landmark },
+    { value: "app", label: "App", icon: Smartphone },
+    { value: "website", label: "Website", icon: Globe },
+    { value: "work", label: "Work", icon: Briefcase },
+    { value: "games", label: "Games", icon: Gamepad2 },
+    { value: "other", label: "Other", icon: Folder },
   ];
 
   let addModeInitialized = false;
@@ -251,7 +267,10 @@
           type="button"
           aria-label="Close"
         >
-          ✕
+          <span
+            style="display: flex; align-items: center; justify-content: center;"
+            ><X size={20} strokeWidth={1.5} /></span
+          >
         </button>
       </div>
 
@@ -292,7 +311,14 @@
                   : ''}"
                 on:click={() => (category = cat.value)}
               >
-                <span>{cat.icon}</span>
+                <span
+                  style="display: flex; align-items: center; justify-content: center;"
+                  ><svelte:component
+                    this={cat.icon}
+                    size={16}
+                    strokeWidth={1.5}
+                  /></span
+                >
                 <span>{cat.label}</span>
               </button>
             {/each}
@@ -354,7 +380,15 @@
                 on:click={togglePasswordVisibility}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? "🙈" : "👁️"}
+                <span
+                  style="display: flex; align-items: center; justify-content: center;"
+                >
+                  <svelte:component
+                    this={showPassword ? EyeOff : Eye}
+                    size={18}
+                    strokeWidth={1.5}
+                  />
+                </span>
               </button>
             </div>
             <button
@@ -363,16 +397,23 @@
               on:click={generatePassword}
               aria-label="Generate password"
             >
-              <span class="generate-icon">⚡</span>
+              <span
+                class="generate-icon"
+                style="display: flex; align-items: center; justify-content: center;"
+                ><Zap size={18} strokeWidth={2} /></span
+              >
               <span class="generate-text">Generate</span>
             </button>
           </div>
           {#if isEditing && !passwordUnlocked}
             <p
-              style="font-size: 0.75rem; margin: 0; opacity: 0.7;"
+              style="font-size: 0.75rem; margin: 0; opacity: 0.7; display: flex; align-items: center; gap: 0.25rem;"
               class="text-glass-secondary"
             >
-              🔒 Click 👁️ to verify master password and edit
+              <Lock size={12} strokeWidth={2} /> Click <Eye
+                size={12}
+                strokeWidth={2}
+              /> to verify master password and edit
             </p>
           {/if}
         </div>
@@ -425,7 +466,12 @@
   >
     <div class="verify-popup glass" role="document" tabindex="-1">
       <div class="verify-header">
-        <div class="verify-icon">🔐</div>
+        <div
+          class="verify-icon"
+          style="display: flex; align-items: center; justify-content: center;"
+        >
+          <LockKeyhole size={48} strokeWidth={1} />
+        </div>
         <h3 id="verify-title" class="verify-title text-glass">
           Verify Master Password
         </h3>
@@ -448,7 +494,10 @@
         />
         {#if verifyError}
           <div class="verify-error" role="alert">
-            <span>⚠️</span>
+            <span
+              style="display: flex; align-items: center; justify-content: center;"
+              ><AlertTriangle size={16} strokeWidth={1.5} /></span
+            >
             <span>{verifyError}</span>
           </div>
         {/if}
@@ -571,14 +620,13 @@
     font-weight: 500;
     font-size: 0.875rem;
     min-height: 44px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #000000;
     color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
   }
 
   .generate-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    opacity: 0.85;
   }
 
   .generate-btn:active {
@@ -586,12 +634,12 @@
   }
 
   :global(.dark) .generate-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    background: #ffffff;
+    color: #000000;
   }
 
   :global(.dark) .generate-btn:hover {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    opacity: 0.85;
   }
 
   .generate-icon {
@@ -669,9 +717,16 @@
     max-width: 400px;
     width: 100%;
     padding: 1.5rem;
-    border-radius: 20px;
+    border-radius: 16px;
     animation: slideUp 0.2s ease-out;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    background: #ffffff;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+  }
+
+  :global(.dark) .verify-popup {
+    background: #18181b;
+    border: 1px solid #27272a;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
   }
 
   .verify-header {
