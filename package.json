@@ -9,7 +9,12 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "clean": "rm -rf .svelte-kit build",
-    "rebuild": "npm run clean && npm run build"
+    "rebuild": "npm run clean && npm run build",
+    "native:sync": "npm run build && npx cap sync",
+    "native:ios": "npm run native:sync && npx cap open ios",
+    "native:android": "npm run native:sync && npx cap open android",
+    "native:run:ios": "npm run native:sync && npx cap run ios",
+    "native:run:android": "npm run native:sync && npx cap run android"
   },
   "devDependencies": {
     "@capacitor/android": "^8.1.0",
@@ -30,7 +35,12 @@
   },
   "type": "module",
   "dependencies": {
+    "@capacitor/app": "^8.0.1",
     "@capacitor/core": "^8.1.0",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "lucide-svelte": "^0.575.0"
   }
 }

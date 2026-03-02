@@ -34,6 +34,8 @@
   import { ReminderSystem } from "$lib/reminders";
   import { AutoBackupService } from "$lib/auto-backup";
   import { logAppInit, suppressExtensionErrors } from "$lib/logger";
+  import { NativeApp } from "$lib/native";
+  import GuideContent from "$lib/components/GuideContent.svelte";
   import {
     LayoutGrid,
     Mail,
@@ -43,6 +45,7 @@
     Briefcase,
     Gamepad2,
     Folder,
+    BookOpen,
     Sun,
     Moon,
     ScanFace,
@@ -141,6 +144,12 @@
       icon: Folder,
       count: $vaultItems.filter((i) => (i.category || "other") === "other")
         .length,
+    },
+    {
+      value: "guide",
+      label: "Guide",
+      icon: BookOpen,
+      count: 0, // Guide không có count
     },
   ];
 
@@ -515,7 +524,7 @@
             inputPassword,
           );
           const filename = BackupManager.generateFileName();
-          BackupManager.triggerDownload(blob, filename);
+          await downloadVaultFile(blob, filename);
 
           // Record backup for reminders
           ReminderSystem.recordBackup();
@@ -541,7 +550,7 @@
             masterPassword,
           );
           const filename = BackupManager.generateFileName();
-          BackupManager.triggerDownload(blob, filename);
+          await downloadVaultFile(blob, filename);
 
           // Record backup for reminders
           ReminderSystem.recordBackup();
@@ -568,7 +577,7 @@
             );
             const filename = BackupManager.generateFileName();
             sessionStorage.setItem("pv_master_key", inputPassword);
-            BackupManager.triggerDownload(blob, filename);
+            await downloadVaultFile(blob, filename);
 
             // Record backup for reminders
             ReminderSystem.recordBackup();
@@ -595,14 +604,29 @@
   }
 
   /** @param {Blob} blob */
-  function downloadVaultFile(blob) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `pocketvault-backup-${new Date().toISOString().split("T")[0]}.vault`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showSuccessMessage("Vault exported successfully");
+  async function downloadVaultFile(blob, filename) {
+    // Check if running as native app
+    if (NativeApp.isNative()) {
+      // Native app: Use native share or save
+      const result = await NativeApp.shareFile(filename, blob);
+      if (!result.success) {
+        // Fallback to save to filesystem
+        const saveResult = await NativeApp.exportToFile(filename, blob);
+        if (saveResult.success) {
+          showSuccessMessage(`Saved to: ${saveResult.path}`);
+        } else {
+          throw new Error(saveResult.error || 'Failed to save file');
+        }
+      }
+    } else {
+      // Web: Use browser download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   }
 
   async function importVault() {
@@ -797,7 +821,10 @@
   }
 
   // Initialize enhanced monitoring and activity tracking
-  onMount(() => {
+  onMount(async () => {
+    // Initialize native app features (iOS/Android)
+    await NativeApp.initialize();
+    
     // Initialize logging
     logAppInit();
     suppressExtensionErrors();
@@ -995,22 +1022,27 @@
           </div>
         </div>
 
-        <div>
-          <input
-            type="text"
-            placeholder="Search passwords..."
-            value={searchInput}
-            on:input={handleSearchInput}
-            class="glass-input"
-            style="width: 100%; padding: 0.875rem; border-radius: 14px;"
-          />
-        </div>
+        {#if $categoryFilter !== "guide"}
+          <div>
+            <input
+              type="text"
+              placeholder="Search passwords..."
+              value={searchInput}
+              on:input={handleSearchInput}
+              class="glass-input"
+              style="width: 100%; padding: 0.875rem; border-radius: 14px;"
+            />
+          </div>
+        {/if}
       </div>
     </header>
 
     <main style="padding: 1rem; padding-bottom: 7rem;">
       <div style="max-width: 800px; margin: 0 auto; width: 100%;">
-        {#if filteredItems.length === 0}
+        {#if $categoryFilter === "guide"}
+          <!-- Show Guide Content -->
+          <GuideContent />
+        {:else if filteredItems.length === 0}
           <div
             style="text-align: center; padding: 3rem 1rem;"
             class="text-glass-secondary"
@@ -1120,20 +1152,22 @@
     </nav>
 
     <div style="position: fixed; bottom: 6.5rem; right: 1.5rem; z-index: 100;">
-      <div
-        style="position: absolute; right: 0; bottom: 0; transform: translateX(calc(max(0px, 100vw - 800px) / -2)); transition: transform 0.3s;"
-      >
-        <button
-          class="glass-fab haptic-heavy"
-          on:click={addNew}
-          title="Add password"
+      {#if $categoryFilter !== "guide"}
+        <div
+          style="position: absolute; right: 0; bottom: 0; transform: translateX(calc(max(0px, 100vw - 800px) / -2)); transition: transform 0.3s;"
         >
-          <span
-            style="display: flex; align-items: center; justify-content: center;"
-            ><Plus size={24} strokeWidth={2} /></span
+          <button
+            class="glass-fab haptic-heavy"
+            on:click={addNew}
+            title="Add password"
           >
-        </button>
-      </div>
+            <span
+              style="display: flex; align-items: center; justify-content: center;"
+              ><Plus size={24} strokeWidth={2} /></span
+            >
+          </button>
+        </div>
+      {/if}
     </div>
 
     <AddEditForm onSave={saveItem} />
