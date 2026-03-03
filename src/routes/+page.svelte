@@ -36,6 +36,7 @@
   import { logAppInit, suppressExtensionErrors } from "$lib/logger";
   import { NativeApp } from "$lib/native";
   import GuideContent from "$lib/components/GuideContent.svelte";
+  import { language } from "$lib/language";
   import {
     LayoutGrid,
     Mail,
@@ -57,6 +58,7 @@
     LockKeyhole,
     SearchX,
     ShieldAlert,
+    Languages,
   } from "lucide-svelte";
 
   export let data;
@@ -940,6 +942,19 @@
                 /></span
               >
             </button>
+            <button
+              class="glass-btn haptic-light"
+              style="padding: 0.625rem 0.875rem; border-radius: 12px; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 0.375rem; font-weight: 600; font-size: 0.875rem;"
+              on:click={() => language.toggle()}
+              title="Switch language"
+            >
+              <span
+                style="display: flex; align-items: center; justify-content: center;"
+              >
+                <Languages size={18} strokeWidth={1.5} />
+              </span>
+              <span>{$language === 'en' ? 'EN' : 'VI'}</span>
+            </button>
             {#if $biometricEnabled}
               <button
                 class="glass-btn-primary"
@@ -1041,7 +1056,7 @@
       <div style="max-width: 800px; margin: 0 auto; width: 100%;">
         {#if $categoryFilter === "guide"}
           <!-- Show Guide Content -->
-          <GuideContent />
+          <GuideContent lang={$language} />
         {:else if filteredItems.length === 0}
           <div
             style="text-align: center; padding: 3rem 1rem;"
