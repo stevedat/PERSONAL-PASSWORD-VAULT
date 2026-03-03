@@ -661,9 +661,9 @@
     white-space: nowrap;
     transition: all 0.2s;
     cursor: pointer;
-    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border: 1.5px solid rgba(0, 0, 0, 0.3);
     background: transparent;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(0, 0, 0, 0.8);
     min-height: 40px;
   }
 
@@ -778,6 +778,18 @@
     background: rgba(107, 114, 128, 0.45);
     color: #9ca3af;
     border-color: rgba(107, 114, 128, 0.7);
+  }
+
+  .filter-chip.active.filter-guide {
+    background: rgba(139, 92, 246, 0.35);
+    color: #7c3aed;
+    border-color: rgba(139, 92, 246, 0.6);
+  }
+
+  .dark .filter-chip.active.filter-guide {
+    background: rgba(139, 92, 246, 0.45);
+    color: #a78bfa;
+    border-color: rgba(139, 92, 246, 0.7);
   }
 }
 
