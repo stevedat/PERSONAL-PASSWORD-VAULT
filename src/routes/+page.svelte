@@ -632,45 +632,61 @@
   }
 
   async function importVault() {
+    if (import.meta.env.DEV) console.log("[Main] Opening file picker for import");
     fileInput.click();
   }
 
   /** @param {Event & { currentTarget: EventTarget & HTMLInputElement }} event */
   async function handleFileImport(event) {
     const file = event.currentTarget.files && event.currentTarget.files[0];
-    if (!file) return;
+    if (!file) {
+      if (import.meta.env.DEV) console.log("[Main] No file selected");
+      return;
+    }
 
-    if (import.meta.env.DEV) console.log("[Main] Import initiated:", file.name);
+    if (import.meta.env.DEV) console.log("[Main] Import initiated:", {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert("Tệp quá lớn. Kích thước tối đa là 10MB");
+      alert("File too large. Maximum size is 10MB / Tệp quá lớn. Kích thước tối đa là 10MB");
       fileInput.value = "";
       return;
     }
 
     // Validate file extension
     if (!file.name.toLowerCase().endsWith(".vault")) {
-      alert("Định dạng tệp không hợp lệ. Chỉ chấp nhận tệp .vault");
+      alert("Invalid file format. Only .vault files are accepted / Định dạng tệp không hợp lệ. Chỉ chấp nhận tệp .vault");
       fileInput.value = "";
       return;
     }
 
     // Validate file first
+    if (import.meta.env.DEV) console.log("[Main] Validating vault file...");
     const validation = await RestoreManager.validateVaultFile(file);
     if (!validation.valid) {
       console.error("[Main] Import validation failed:", validation.error);
-      alert(`Nhập thất bại: ${validation.error}`);
+      alert(`Import failed / Nhập thất bại: ${validation.error}`);
       fileInput.value = "";
       return;
     }
 
     if (import.meta.env.DEV) console.log("[Main] File validation passed");
 
-    const masterPassword = prompt("Enter master password for the vault file:");
-    if (!masterPassword) return;
+    // Prompt for vault file password
+    const masterPassword = prompt("Enter master password for the vault file / Nhập mật khẩu chính cho tệp vault:");
+    if (!masterPassword) {
+      if (import.meta.env.DEV) console.log("[Main] Import cancelled by user");
+      fileInput.value = "";
+      return;
+    }
 
     try {
+      if (import.meta.env.DEV) console.log("[Main] Starting import process...");
+      
       const result = await RestoreManager.importVault(
         file,
         masterPassword,
@@ -686,11 +702,16 @@
         if (import.meta.env.DEV)
           console.log("[Main] No cached password, prompting for save");
         const savePassword = prompt(
-          "Enter master password to save merged vault:",
+          "Enter master password to save merged vault / Nhập mật khẩu chính để lưu vault đã hợp nhất:",
         );
-        if (!savePassword) return;
+        if (!savePassword) {
+          if (import.meta.env.DEV) console.log("[Main] Save cancelled by user");
+          fileInput.value = "";
+          return;
+        }
 
         try {
+          if (import.meta.env.DEV) console.log("[Main] Saving merged vault...");
           await StorageEngine.saveVault(result.items, savePassword);
           sessionStorage.setItem("pv_master_key", savePassword);
 
@@ -698,6 +719,7 @@
           if (AutoBackupService.getConfig().enabled) {
             try {
               await AutoBackupService.createBackup(result.items, savePassword);
+              if (import.meta.env.DEV) console.log("[Main] Auto-backup created");
             } catch (backupError) {
               console.error(
                 "[Main] Auto-backup failed (non-critical):",
@@ -707,7 +729,8 @@
           }
         } catch (error) {
           console.error("[Main] Save failed:", error);
-          alert("Failed to save merged vault: Invalid master password");
+          alert("Failed to save merged vault: Invalid master password / Lưu vault thất bại: Mật khẩu không đúng");
+          fileInput.value = "";
           return;
         }
       } else {
@@ -723,6 +746,7 @@
                 result.items,
                 currentMasterPassword,
               );
+              if (import.meta.env.DEV) console.log("[Main] Auto-backup created");
             } catch (backupError) {
               console.error(
                 "[Main] Auto-backup failed (non-critical):",
@@ -734,9 +758,13 @@
           console.error("[Main] Save failed with cached password:", error);
           sessionStorage.removeItem("pv_master_key");
           const savePassword = prompt(
-            "Master password expired. Enter password to save:",
+            "Master password expired. Enter password to save / Mật khẩu đã hết hạn. Nhập mật khẩu để lưu:",
           );
-          if (!savePassword) return;
+          if (!savePassword) {
+            if (import.meta.env.DEV) console.log("[Main] Save cancelled by user");
+            fileInput.value = "";
+            return;
+          }
 
           try {
             await StorageEngine.saveVault(result.items, savePassword);
@@ -749,6 +777,7 @@
                   result.items,
                   savePassword,
                 );
+                if (import.meta.env.DEV) console.log("[Main] Auto-backup created");
               } catch (backupError) {
                 console.error(
                   "[Main] Auto-backup failed (non-critical):",
@@ -758,22 +787,35 @@
             }
           } catch (error) {
             console.error("[Main] Save failed after password refresh:", error);
-            alert("Failed to save merged vault: Invalid master password");
+            alert("Failed to save merged vault: Invalid master password / Lưu vault thất bại: Mật khẩu không đúng");
+            fileInput.value = "";
             return;
           }
         }
       }
 
+      // Update vault items
       vaultItems.set(result.items);
-      showSuccessMessage(
-        `Import successful: ${result.stats.newCount} new, ${result.stats.updatedCount} updated, ${result.stats.unchangedCount} unchanged`,
-      );
+      
+      // Show success message with stats
+      const successMsg = `Import successful / Nhập thành công: ${result.stats.newCount} new/mới, ${result.stats.updatedCount} updated/cập nhật, ${result.stats.unchangedCount} unchanged/không đổi`;
+      showSuccessMessage(successMsg);
+      
       if (import.meta.env.DEV)
         console.log("[Main] Import complete, vault updated");
     } catch (e) {
       const error = /** @type {Error} */ (e);
       console.error("[Main] Import failed:", error);
-      alert(`Import failed: ${error.message}`);
+      
+      // User-friendly error messages
+      let errorMsg = error.message;
+      if (errorMsg.includes("decrypt")) {
+        errorMsg = "Wrong password or corrupted file / Sai mật khẩu hoặc tệp bị hỏng";
+      } else if (errorMsg.includes("Invalid")) {
+        errorMsg = "Invalid vault file format / Định dạng tệp vault không hợp lệ";
+      }
+      
+      alert(`Import failed / Nhập thất bại: ${errorMsg}`);
     }
 
     // Reset file input
@@ -871,6 +913,15 @@
     }
   });
   function loadBmc(node) {
+    // Skip Buy Me a Coffee in Electron (document.write not supported)
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    if (isElectron) {
+      if (import.meta.env.DEV) {
+        console.log('[BMC] Skipped in Electron environment');
+      }
+      return;
+    }
+    
     const script = document.createElement("script");
     script.setAttribute(
       "src",

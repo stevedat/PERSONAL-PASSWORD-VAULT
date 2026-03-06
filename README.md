@@ -18,6 +18,13 @@ All backups are encrypted with AES-256-GCM and include SHA-256 checksums for int
 
 ## ✨ Features
 
+### 🖥️ Cross-Platform
+- **Web App (PWA)** - Install on any device via browser
+- **Desktop App** - Native macOS and Windows applications
+- **Mobile App** - Native iOS and Android via Capacitor
+- **Offline-first** - Works without internet on all platforms
+- **Sync-free** - Your data stays on your device
+
 ### 🔐 Security
 - **AES-256-GCM encryption** with WebCrypto API
 - **PBKDF2 key derivation** (600,000 iterations)
@@ -64,10 +71,36 @@ All backups are encrypted with AES-256-GCM and include SHA-256 checksums for int
 
 ## 🚀 Quick Start
 
-### Installation
+### Web App (PWA)
 ```bash
 npm install
 npm run dev
+```
+
+### Desktop App (macOS/Windows)
+```bash
+# Development
+npm run electron:dev
+
+# Build for macOS
+npm run electron:build:mac
+
+# Build for Windows
+npm run electron:build:win
+
+# Build for both
+npm run electron:build:all
+```
+
+### Mobile App (iOS/Android)
+```bash
+# Sync and open in Xcode/Android Studio
+npm run native:ios
+npm run native:android
+
+# Or run directly on device
+npm run native:run:ios
+npm run native:run:android
 ```
 
 ### Build for Production
@@ -81,6 +114,41 @@ npm run preview
 # Static files will be in /build directory
 # Deploy to any static hosting (Netlify, Vercel, GitHub Pages, etc.)
 ```
+
+## 📱 Installation
+
+### Web App (PWA)
+1. Open https://your-domain.com in any browser
+2. Click "Install" or "Add to Home Screen"
+3. App runs offline after first visit
+
+### Desktop App
+
+#### macOS
+1. Download from [Releases](https://github.com/stevedat/PERSONAL-PASSWORD-VAULT/releases)
+   - `PocketVault-1.0.0-arm64.dmg` (Apple Silicon)
+   - `PocketVault-1.0.0.dmg` (Intel Mac)
+2. Open DMG and drag to Applications
+3. Right-click → Open (first time only)
+
+#### Windows
+1. Download from [Releases](https://github.com/stevedat/PERSONAL-PASSWORD-VAULT/releases)
+   - `PocketVault Setup 1.0.0.exe` (Installer)
+   - `PocketVault 1.0.0.exe` (Portable)
+2. Run installer or portable executable
+3. Launch PocketVault
+
+### Mobile App
+
+#### iOS
+1. Open in Safari
+2. Tap Share → Add to Home Screen
+3. Or build native app: `npm run native:ios`
+
+#### Android
+1. Open in Chrome
+2. Tap "Install" banner
+3. Or build native app: `npm run native:android`
 
 ## 📖 Usage
 
