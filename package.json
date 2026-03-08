@@ -3,21 +3,37 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite dev --host",
+    "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "clean": "rm -rf .svelte-kit build",
-    "rebuild": "npm run clean && npm run build"
+    "rebuild": "npm run clean && npm run build",
+    "native:sync": "npm run build && npx cap sync",
+    "native:ios": "npm run native:sync && npx cap open ios",
+    "native:android": "npm run native:sync && npx cap open android",
+    "native:run:ios": "npm run native:sync && npx cap run ios",
+    "native:run:android": "npm run native:sync && npx cap run android",
+    "electron": "npm run build && electron .",
+    "electron:dev": "electron .",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:win": "npm run build && electron-builder --win",
+    "electron:build:all": "npm run build && electron-builder --mac --win"
   },
   "devDependencies": {
-    "@sveltejs/adapter-static": "^3.0.10",
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/ios": "^8.1.0",
+    "@sveltejs/adapter-static": "^3.0.5",
     "@sveltejs/kit": "^2.8.0",
     "@sveltejs/vite-plugin-svelte": "^3.1.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.1.18",
     "autoprefixer": "^10.4.23",
+    "electron": "^40.8.0",
+    "electron-builder": "^26.8.1",
     "postcss": "^8.5.6",
     "svelte": "^4.2.19",
     "svelte-check": "^4.0.0",
@@ -26,8 +42,101 @@
     "vite": "^5.4.0"
   },
   "type": "module",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.pocketvault.app",
+    "productName": "PocketVault",
+    "directories": {
+      "buildResources": "electron/resources",
+      "output": "dist-electron"
+    },
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "electron/resources/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": "electron/entitlements.mac.plist"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "title": "PocketVault ${version}",
+      "backgroundColor": "#0f172a"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/resources/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PocketVault"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "electron/resources/icon.png"
+    }
+  },
   "dependencies": {
-    "@types/crypto-js": "^4.2.2",
-    "crypto-js": "^4.2.0"
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/core": "^8.1.0",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
+    "lucide-svelte": "^0.575.0",
+    "mime-types": "^3.0.2"
   }
 }

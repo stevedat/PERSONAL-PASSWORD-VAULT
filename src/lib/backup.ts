@@ -46,10 +46,12 @@ export class BackupManager {
     masterPassword: string,
     options: Partial<ExportOptions> = {}
   ): Promise<ExportResult> {
-    console.log('[BackupManager] Starting export...', {
-      itemCount: items.length,
-      options
-    });
+    if (import.meta.env.DEV) {
+      console.log('[BackupManager] Starting export...', {
+        itemCount: items.length,
+        options
+      });
+    }
     
     const opts: ExportOptions = {
       format: 'standard',
@@ -60,9 +62,9 @@ export class BackupManager {
     
     try {
       // Encrypt vault
-      console.log('[BackupManager] Encrypting vault...');
+      if (import.meta.env.DEV) console.log('[BackupManager] Encrypting vault...');
       const encryptedVault = await CryptoEngine.encrypt(items, masterPassword);
-      console.log('[BackupManager] Encryption complete');
+      if (import.meta.env.DEV) console.log('[BackupManager] Encryption complete');
       
       // Convert to base64
       const data = this.arrayBufferToBase64(encryptedVault.data);
@@ -70,9 +72,9 @@ export class BackupManager {
       const salt = this.arrayBufferToBase64(encryptedVault.salt);
       
       // Calculate checksum
-      console.log('[BackupManager] Calculating checksum...');
+      if (import.meta.env.DEV) console.log('[BackupManager] Calculating checksum...');
       const checksum = await this.calculateChecksum(data);
-      console.log('[BackupManager] Checksum:', checksum.substring(0, 16) + '...');
+      if (import.meta.env.DEV) console.log('[BackupManager] Checksum:', checksum.substring(0, 16) + '...');
       
       // Create export file
       const exportFile: VaultExportFile = {
@@ -87,12 +89,14 @@ export class BackupManager {
         checksum
       };
       
-      console.log('[BackupManager] Export file created:', {
-        version: exportFile.version,
-        platform: exportFile.platform,
-        itemCount: exportFile.itemCount,
-        created: exportFile.created
-      });
+      if (import.meta.env.DEV) {
+        console.log('[BackupManager] Export file created:', {
+          version: exportFile.version,
+          platform: exportFile.platform,
+          itemCount: exportFile.itemCount,
+          created: exportFile.created
+        });
+      }
       
       // Create blob
       const blob = new Blob([JSON.stringify(exportFile, null, 2)], {
@@ -101,24 +105,26 @@ export class BackupManager {
       
       // Generate filename
       const filename = this.generateFileName();
-      console.log('[BackupManager] Generated filename:', filename);
+      if (import.meta.env.DEV) console.log('[BackupManager] Generated filename:', filename);
       
       // Test backup if requested
       if (opts.testAfterExport) {
-        console.log('[BackupManager] Verifying backup...');
+        if (import.meta.env.DEV) console.log('[BackupManager] Verifying backup...');
         const verification = await this.verifyBackup(blob, masterPassword);
         if (!verification.valid) {
           console.error('[BackupManager] Verification failed:', verification.error);
           throw new Error(verification.error || 'Backup verification failed');
         }
-        console.log('[BackupManager] Verification successful');
+        if (import.meta.env.DEV) console.log('[BackupManager] Verification successful');
       }
       
-      console.log('[BackupManager] Export complete:', {
-        filename,
-        size: blob.size,
-        sizeKB: (blob.size / 1024).toFixed(2) + 'KB'
-      });
+      if (import.meta.env.DEV) {
+        console.log('[BackupManager] Export complete:', {
+          filename,
+          size: blob.size,
+          sizeKB: (blob.size / 1024).toFixed(2) + 'KB'
+        });
+      }
       
       return {
         success: true,
@@ -140,7 +146,7 @@ export class BackupManager {
     items: VaultItem[],
     masterPassword: string
   ): Promise<Blob> {
-    console.log('[BackupManager] Quick export started for', items.length, 'items');
+    if (import.meta.env.DEV) console.log('[BackupManager] Quick export started for', items.length, 'items');
     
     // Use setTimeout to yield control back to UI
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -178,7 +184,7 @@ export class BackupManager {
       type: 'application/json'
     });
     
-    console.log('[BackupManager] Quick export complete:', blob.size, 'bytes');
+    if (import.meta.env.DEV) console.log('[BackupManager] Quick export complete:', blob.size, 'bytes');
     
     return blob;
   }
@@ -190,22 +196,24 @@ export class BackupManager {
     file: Blob,
     masterPassword: string
   ): Promise<VerificationResult> {
-    console.log('[BackupManager] Verifying backup file...');
+    if (import.meta.env.DEV) console.log('[BackupManager] Verifying backup file...');
     
     try {
       const text = await file.text();
       const exportFile: VaultExportFile = JSON.parse(text);
       
-      console.log('[BackupManager] Parsed export file:', {
-        app: exportFile.app,
-        version: exportFile.version,
-        itemCount: exportFile.itemCount,
-        created: exportFile.created
-      });
+      if (import.meta.env.DEV) {
+        console.log('[BackupManager] Parsed export file:', {
+          app: exportFile.app,
+          version: exportFile.version,
+          itemCount: exportFile.itemCount,
+          created: exportFile.created
+        });
+      }
       
       // Validate format
       if (!exportFile.app || exportFile.app !== this.APP_NAME) {
-        console.error('[BackupManager] Invalid app name:', exportFile.app);
+        if (import.meta.env.DEV) console.error('[BackupManager] Invalid app name:', exportFile.app);
         return {
           valid: false,
           error: 'Invalid vault file format'
@@ -213,22 +221,24 @@ export class BackupManager {
       }
       
       // Verify checksum
-      console.log('[BackupManager] Verifying checksum...');
+      if (import.meta.env.DEV) console.log('[BackupManager] Verifying checksum...');
       const calculatedChecksum = await this.calculateChecksum(exportFile.data);
       if (calculatedChecksum !== exportFile.checksum) {
-        console.error('[BackupManager] Checksum mismatch:', {
-          expected: exportFile.checksum.substring(0, 16) + '...',
-          calculated: calculatedChecksum.substring(0, 16) + '...'
-        });
+        if (import.meta.env.DEV) {
+          console.error('[BackupManager] Checksum mismatch:', {
+            expected: exportFile.checksum.substring(0, 16) + '...',
+            calculated: calculatedChecksum.substring(0, 16) + '...'
+          });
+        }
         return {
           valid: false,
           error: 'File integrity check failed (checksum mismatch)'
         };
       }
-      console.log('[BackupManager] Checksum verified');
+      if (import.meta.env.DEV) console.log('[BackupManager] Checksum verified');
       
       // Try to decrypt
-      console.log('[BackupManager] Attempting decryption...');
+      if (import.meta.env.DEV) console.log('[BackupManager] Attempting decryption...');
       const encryptedVault: EncryptedVault = {
         data: this.base64ToArrayBuffer(exportFile.data),
         iv: this.base64ToArrayBuffer(exportFile.iv),
@@ -236,7 +246,7 @@ export class BackupManager {
       };
       
       const items = await CryptoEngine.decrypt(encryptedVault, masterPassword);
-      console.log('[BackupManager] Decryption successful, items:', items.length);
+      if (import.meta.env.DEV) console.log('[BackupManager] Decryption successful, items:', items.length);
       
       return {
         valid: true,

@@ -41,51 +41,94 @@ export class RestoreManager {
     password: string,
     existingItems: VaultItem[] = []
   ): Promise<ImportResult> {
-    console.log('[RestoreManager] Starting import...', {
-      fileName: file.name,
-      fileSize: file.size,
-      existingItemCount: existingItems.length
-    });
+    if (import.meta.env.DEV) {
+      console.log('[RestoreManager] Starting import...', {
+        fileName: file.name,
+        fileSize: file.size,
+        existingItemCount: existingItems.length
+      });
+    }
     
     try {
       // Validate file
-      console.log('[RestoreManager] Validating file...');
+      if (import.meta.env.DEV) console.log('[RestoreManager] Validating file...');
       const validation = await this.validateVaultFile(file);
       if (!validation.valid) {
         console.error('[RestoreManager] Validation failed:', validation.error);
         throw new Error(validation.error || 'Invalid vault file');
       }
-      console.log('[RestoreManager] File validation passed');
+      if (import.meta.env.DEV) console.log('[RestoreManager] File validation passed');
       
       // Read and parse file
       const text = await file.text();
-      const exportFile: VaultExportFile = JSON.parse(text);
+      if (!text || text.trim().length === 0) {
+        throw new Error('File is empty');
+      }
       
-      console.log('[RestoreManager] Parsed file:', {
-        version: exportFile.version,
-        platform: exportFile.platform,
-        itemCount: exportFile.itemCount,
-        created: exportFile.created
-      });
+      let exportFile: VaultExportFile;
+      try {
+        exportFile = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[RestoreManager] JSON parse error:', parseError);
+        throw new Error('Invalid JSON format in vault file');
+      }
+      
+      if (import.meta.env.DEV) {
+        console.log('[RestoreManager] Parsed file:', {
+          version: exportFile.version,
+          platform: exportFile.platform,
+          itemCount: exportFile.itemCount,
+          created: exportFile.created
+        });
+      }
+      
+      // Validate parsed data
+      if (!exportFile.data || !exportFile.iv || !exportFile.salt) {
+        throw new Error('Missing encryption data in vault file');
+      }
       
       // Decrypt vault
-      console.log('[RestoreManager] Decrypting vault...');
-      const encryptedVault: EncryptedVault = {
-        data: this.base64ToArrayBuffer(exportFile.data),
-        iv: this.base64ToArrayBuffer(exportFile.iv),
-        salt: this.base64ToArrayBuffer(exportFile.salt)
-      };
+      if (import.meta.env.DEV) console.log('[RestoreManager] Decrypting vault...');
+      let encryptedVault: EncryptedVault;
+      try {
+        encryptedVault = {
+          data: this.base64ToArrayBuffer(exportFile.data),
+          iv: this.base64ToArrayBuffer(exportFile.iv),
+          salt: this.base64ToArrayBuffer(exportFile.salt)
+        };
+      } catch (decodeError) {
+        console.error('[RestoreManager] Base64 decode error:', decodeError);
+        throw new Error('Invalid encryption data format');
+      }
       
-      const importedItems = await CryptoEngine.decrypt(encryptedVault, password);
-      console.log('[RestoreManager] Decryption complete, items:', importedItems.length);
+      let importedItems: VaultItem[];
+      try {
+        importedItems = await CryptoEngine.decrypt(encryptedVault, password);
+      } catch (decryptError) {
+        console.error('[RestoreManager] Decryption error:', decryptError);
+        throw new Error('Wrong password or corrupted vault file');
+      }
+      
+      if (!Array.isArray(importedItems)) {
+        throw new Error('Invalid vault data structure');
+      }
+      
+      if (import.meta.env.DEV) console.log('[RestoreManager] Decryption complete, items:', importedItems.length);
+      
+      // Validate imported items
+      for (const item of importedItems) {
+        if (!item.id || !item.title) {
+          throw new Error('Invalid item structure in vault');
+        }
+      }
       
       // Merge with existing items
-      console.log('[RestoreManager] Merging vaults...');
+      if (import.meta.env.DEV) console.log('[RestoreManager] Merging vaults...');
       const preview = this.previewMerge(importedItems, existingItems);
-      console.log('[RestoreManager] Merge preview:', preview.stats);
+      if (import.meta.env.DEV) console.log('[RestoreManager] Merge preview:', preview.stats);
       
       const mergedItems = this.applyMerge(preview);
-      console.log('[RestoreManager] Merge complete, total items:', mergedItems.length);
+      if (import.meta.env.DEV) console.log('[RestoreManager] Merge complete, total items:', mergedItems.length);
       
       return {
         success: true,
@@ -95,7 +138,7 @@ export class RestoreManager {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[RestoreManager] Import failed:', error);
-      throw new Error(`Import failed: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
   }
   
@@ -103,12 +146,27 @@ export class RestoreManager {
    * Validate vault file format
    */
   static async validateVaultFile(file: File): Promise<ValidationResult> {
-    console.log('[RestoreManager] Validating file:', file.name);
+    if (import.meta.env.DEV) console.log('[RestoreManager] Validating file:', file.name);
     
     try {
+      // Check file size
+      if (file.size === 0) {
+        return {
+          valid: false,
+          error: 'File is empty'
+        };
+      }
+      
+      if (file.size > 10 * 1024 * 1024) {
+        return {
+          valid: false,
+          error: 'File too large (max 10MB)'
+        };
+      }
+      
       // Check file extension
       if (!file.name.endsWith('.vault')) {
-        console.error('[RestoreManager] Invalid file extension:', file.name);
+        if (import.meta.env.DEV) console.error('[RestoreManager] Invalid file extension:', file.name);
         return {
           valid: false,
           error: 'Invalid file extension. Expected .vault file'
@@ -116,14 +174,40 @@ export class RestoreManager {
       }
       
       // Read and parse
-      const text = await file.text();
-      const exportFile = JSON.parse(text);
+      let text: string;
+      try {
+        text = await file.text();
+      } catch (readError) {
+        console.error('[RestoreManager] File read error:', readError);
+        return {
+          valid: false,
+          error: 'Cannot read file'
+        };
+      }
       
-      console.log('[RestoreManager] File parsed successfully');
+      if (!text || text.trim().length === 0) {
+        return {
+          valid: false,
+          error: 'File is empty'
+        };
+      }
+      
+      let exportFile: any;
+      try {
+        exportFile = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[RestoreManager] JSON parse error:', parseError);
+        return {
+          valid: false,
+          error: 'Invalid JSON format'
+        };
+      }
+      
+      if (import.meta.env.DEV) console.log('[RestoreManager] File parsed successfully');
       
       // Check required fields
       if (!exportFile.app || exportFile.app !== this.APP_NAME) {
-        console.error('[RestoreManager] Invalid app name:', exportFile.app);
+        if (import.meta.env.DEV) console.error('[RestoreManager] Invalid app name:', exportFile.app);
         return {
           valid: false,
           error: 'Not a valid PocketVault file'
@@ -131,36 +215,60 @@ export class RestoreManager {
       }
       
       if (!exportFile.version || !this.SUPPORTED_VERSIONS.includes(exportFile.version)) {
-        console.error('[RestoreManager] Unsupported version:', exportFile.version);
+        if (import.meta.env.DEV) console.error('[RestoreManager] Unsupported version:', exportFile.version);
         return {
           valid: false,
           error: `Unsupported version: ${exportFile.version}. Supported: ${this.SUPPORTED_VERSIONS.join(', ')}`
         };
       }
       
-      if (!exportFile.data || !exportFile.iv || !exportFile.salt) {
-        console.error('[RestoreManager] Missing encryption data');
+      if (!exportFile.data || typeof exportFile.data !== 'string') {
+        if (import.meta.env.DEV) console.error('[RestoreManager] Missing or invalid data field');
         return {
           valid: false,
-          error: 'Missing required encryption data'
+          error: 'Missing or invalid encryption data'
+        };
+      }
+      
+      if (!exportFile.iv || typeof exportFile.iv !== 'string') {
+        if (import.meta.env.DEV) console.error('[RestoreManager] Missing or invalid IV');
+        return {
+          valid: false,
+          error: 'Missing or invalid encryption IV'
+        };
+      }
+      
+      if (!exportFile.salt || typeof exportFile.salt !== 'string') {
+        if (import.meta.env.DEV) console.error('[RestoreManager] Missing or invalid salt');
+        return {
+          valid: false,
+          error: 'Missing or invalid encryption salt'
         };
       }
       
       // Verify checksum if present
       if (exportFile.checksum) {
-        console.log('[RestoreManager] Verifying checksum...');
-        const calculatedChecksum = await this.calculateChecksum(exportFile.data);
-        if (calculatedChecksum !== exportFile.checksum) {
-          console.error('[RestoreManager] Checksum mismatch');
+        if (import.meta.env.DEV) console.log('[RestoreManager] Verifying checksum...');
+        try {
+          const calculatedChecksum = await this.calculateChecksum(exportFile.data);
+          if (calculatedChecksum !== exportFile.checksum) {
+            if (import.meta.env.DEV) console.error('[RestoreManager] Checksum mismatch');
+            return {
+              valid: false,
+              error: 'File integrity check failed. File may be corrupted'
+            };
+          }
+          if (import.meta.env.DEV) console.log('[RestoreManager] Checksum verified');
+        } catch (checksumError) {
+          console.error('[RestoreManager] Checksum calculation error:', checksumError);
           return {
             valid: false,
-            error: 'File integrity check failed. File may be corrupted'
+            error: 'Cannot verify file integrity'
           };
         }
-        console.log('[RestoreManager] Checksum verified');
       }
       
-      console.log('[RestoreManager] Validation successful');
+      if (import.meta.env.DEV) console.log('[RestoreManager] Validation successful');
       return {
         valid: true,
         format: 'standard',

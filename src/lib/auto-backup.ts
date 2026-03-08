@@ -66,7 +66,7 @@ export class AutoBackupService {
   }
   
   /**
-   * Create auto-backup
+   * Create auto-backup with better error handling
    */
   static async createBackup(items: VaultItem[], masterPassword: string): Promise<void> {
     const config = this.getConfig();
@@ -78,73 +78,103 @@ export class AutoBackupService {
     if (import.meta.env.DEV) console.log('[AutoBackup] Creating backup for', items.length, 'items');
     
     try {
-      const db = await this.openDB();
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Auto-backup timeout after 10 seconds')), 10000)
+      );
       
-      // Encrypt vault
-      const encryptedVault = await CryptoEngine.encrypt(items, masterPassword);
+      const backupPromise = this.performBackup(items, masterPassword, config);
       
-      // Convert to base64 for storage
-      const vault = {
-        data: this.arrayBufferToBase64(encryptedVault.data),
-        iv: this.arrayBufferToBase64(encryptedVault.iv),
-        salt: this.arrayBufferToBase64(encryptedVault.salt)
-      };
+      await Promise.race([backupPromise, timeoutPromise]);
       
-      // Create backup entry
-      const backup: AutoBackupEntry = {
-        id: this.generateId(),
-        timestamp: Date.now(),
-        vault,
-        itemCount: items.length,
-        size: JSON.stringify(vault).length
-      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[AutoBackup] Backup creation failed:', errorMessage);
       
-      if (import.meta.env.DEV) {
-        console.log('[AutoBackup] Backup created:', {
-          id: backup.id,
-          itemCount: backup.itemCount,
-          size: backup.size,
-          sizeKB: (backup.size / 1024).toFixed(2) + 'KB'
-        });
-      }
-      
-      // Save backup
-      await new Promise<void>((resolve, reject) => {
+      // Don't throw - auto-backup failure should not break the main operation
+      // Just log the error and continue
+    }
+  }
+  
+  /**
+   * Perform the actual backup operation
+   */
+  private static async performBackup(items: VaultItem[], masterPassword: string, config: AutoBackupConfig): Promise<void> {
+    const db = await this.openDB();
+    
+    // Encrypt vault
+    const encryptedVault = await CryptoEngine.encrypt(items, masterPassword);
+    
+    // Convert to base64 for storage
+    const vault = {
+      data: this.arrayBufferToBase64(encryptedVault.data as ArrayBuffer),
+      iv: this.arrayBufferToBase64(encryptedVault.iv as ArrayBuffer),
+      salt: this.arrayBufferToBase64(encryptedVault.salt as ArrayBuffer)
+    };
+    
+    // Create backup entry
+    const backup: AutoBackupEntry = {
+      id: this.generateId(),
+      timestamp: Date.now(),
+      vault,
+      itemCount: items.length,
+      size: JSON.stringify(vault).length
+    };
+    
+    if (import.meta.env.DEV) {
+      console.log('[AutoBackup] Backup created:', {
+        id: backup.id,
+        itemCount: backup.itemCount,
+        size: backup.size,
+        sizeKB: (backup.size / 1024).toFixed(2) + 'KB'
+      });
+    }
+    
+    // Save backup with enhanced error handling
+    await new Promise<void>((resolve, reject) => {
+      try {
         const tx = db.transaction([this.STORE_NAME], 'readwrite');
         const store = tx.objectStore(this.STORE_NAME);
+        
+        // Set up all event handlers before making the request
+        tx.oncomplete = () => {
+          if (import.meta.env.DEV) console.log('[AutoBackup] Transaction completed successfully');
+          resolve();
+        };
+        
+        tx.onerror = (event) => {
+          console.error('[AutoBackup] Transaction failed:', tx.error || event);
+          reject(tx.error || new Error('Transaction failed'));
+        };
+        
+        tx.onabort = (event) => {
+          console.error('[AutoBackup] Transaction aborted:', event);
+          reject(new Error('Transaction aborted'));
+        };
+        
         const request = store.put(backup);
         
         request.onsuccess = () => {
           if (import.meta.env.DEV) console.log('[AutoBackup] Put operation successful');
-          resolve();
-        };
-        request.onerror = () => {
-          console.error('[AutoBackup] Put operation failed:', request.error);
-          reject(request.error);
+          // Don't resolve here - wait for transaction to complete
         };
         
-        tx.oncomplete = () => {
-          if (import.meta.env.DEV) console.log('[AutoBackup] Transaction completed');
+        request.onerror = (event) => {
+          console.error('[AutoBackup] Put operation failed:', request.error || event);
+          reject(request.error || new Error('Put operation failed'));
         };
-        tx.onerror = () => {
-          console.error('[AutoBackup] Transaction failed:', tx.error);
-          reject(tx.error);
-        };
-        tx.onabort = () => {
-          console.error('[AutoBackup] Transaction aborted');
-          reject(new Error('Transaction aborted'));
-        };
-      });
-      
-      if (import.meta.env.DEV) console.log('[AutoBackup] Backup saved to IndexedDB');
-      
-      // Rotate if needed
-      if (config.autoRotate) {
-        await this.rotateBackups();
+        
+      } catch (syncError) {
+        console.error('[AutoBackup] Synchronous error in transaction setup:', syncError);
+        reject(syncError);
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[AutoBackup] Backup creation failed:', errorMessage, error);
+    });
+    
+    if (import.meta.env.DEV) console.log('[AutoBackup] Backup saved to IndexedDB');
+    
+    // Rotate if needed
+    if (config.autoRotate) {
+      await this.rotateBackups();
     }
   }
   
@@ -321,7 +351,7 @@ export class AutoBackupService {
    */
   private static getDefaultConfig(): AutoBackupConfig {
     return {
-      enabled: false, // Disabled by default due to IndexedDB issues
+      enabled: true, // Enable by default as requested
       maxBackups: this.DEFAULT_MAX_BACKUPS,
       autoRotate: true
     };
