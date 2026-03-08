@@ -11,8 +11,10 @@ export interface VaultItem {
 }
 
 export interface EncryptedVault {
-  iv: string;               // Base64 encoded IV
+  iv?: string;               // Base64 encoded IV
   salt: string;             // Base64 encoded salt
-  data: string;             // Base64 encoded encrypted data
-  version: number;
+  data?: string;             // Base64 encoded encrypted data
+  version?: number;
+  keyHash: string;
+  items: { nonce: string; ciphertext: string; }[];
 }

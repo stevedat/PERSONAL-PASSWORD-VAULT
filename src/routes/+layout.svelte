@@ -4,6 +4,8 @@
   import { onMount } from 'svelte';
   import { initializeHapticFeedback } from '$lib/haptic';
   
+  export let data;
+
   onMount(() => {
     // Load theme preference
     const savedTheme = localStorage.getItem('theme');

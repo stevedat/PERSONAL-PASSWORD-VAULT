@@ -1,5 +1,5 @@
 <script>
-  import { CryptoEngine } from '../crypto';
+  import { CryptoEngine } from '../crypto.client';
   import { showAddForm, editingItem } from '../stores';
   import { StorageEngine } from '../storage';
 
@@ -64,8 +64,6 @@
         note = '';
         category = 'other';
       }
-    } else if (!$showAddForm && !$editingItem) {
-      addModeInitialized = false;
     }
   }
 
@@ -280,7 +278,7 @@
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
   <div class="verify-backdrop" on:click={cancelVerify} role="dialog" aria-modal="true" aria-labelledby="verify-title">
-    <div class="verify-popup glass" on:click|stopPropagation role="document">
+    <button class="verify-popup glass" on:click|stopPropagation role="document">
       <div class="verify-header">
         <div class="verify-icon">🔐</div>
         <h3 id="verify-title" class="verify-title text-glass">Verify Master Password</h3>
@@ -302,7 +300,7 @@
           {isVerifying ? 'Verifying...' : 'Verify'}
         </button>
       </div>
-    </div>
+    </button>
   </div>
 {/if}
 
