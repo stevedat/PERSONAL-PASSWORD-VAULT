@@ -74,7 +74,9 @@
         <section>
             <h2>{isVi ? "5. Liên Hệ" : "5. Contact"}</h2>
             <p>
-                {isVi ? "Email: stevedat@live.com" : "Email: stevedat@live.com"}
+                {isVi
+                    ? "Email: eduflows.app@gmail.com"
+                    : "Email: eduflows.app@gmail.com"}
             </p>
         </section>
     </div>
