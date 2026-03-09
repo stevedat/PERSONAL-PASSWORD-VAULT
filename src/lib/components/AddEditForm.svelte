@@ -243,12 +243,11 @@
 </script>
 
 {#if $showAddForm || $editingItem}
-  <button
+  <div
     class="modal-backdrop"
     on:click|self={cancel}
     on:keydown={(e) => e.key === "Escape" && cancel()}
     aria-label="Close modal"
-    type="button"
   >
     <div class="glass-modal" role="document" tabindex="-1">
       <div
@@ -452,17 +451,16 @@
         </div>
       </form>
     </div>
-  </button>
+  </div>
 {/if}
 
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
-  <button
+  <div
     class="verify-backdrop"
     on:click|self={cancelVerify}
     on:keydown={(e) => e.key === "Escape" && cancelVerify()}
     aria-label="Close verification popup"
-    type="button"
   >
     <div class="verify-popup glass" role="document" tabindex="-1">
       <div class="verify-header">
@@ -517,7 +515,7 @@
         </button>
       </div>
     </div>
-  </button>
+  </div>
 {/if}
 
 <style>

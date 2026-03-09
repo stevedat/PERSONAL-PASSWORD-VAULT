@@ -1,7 +1,26 @@
 
 import type { VaultItem, EncryptedVault } from './types';
-import { Crypto } from './crypto';
-import { lib } from 'crypto-js';
+import { lib, AES, enc, PBKDF2 } from 'crypto-js';
+
+class Crypto {
+  private key: any;
+
+  init(masterPassword: string, salt: string): string {
+    const key = PBKDF2(masterPassword, salt, { keySize: 256 / 32, iterations: 1000 });
+    this.key = key;
+    return key.toString();
+  }
+
+  encrypt(plaintext: string, nonce: string): string {
+    const encrypted = AES.encrypt(plaintext, this.key, { iv: enc.Hex.parse(nonce) });
+    return encrypted.toString();
+  }
+
+  decrypt(ciphertext: string, nonce: string): string {
+    const decrypted = AES.decrypt(ciphertext, this.key, { iv: enc.Hex.parse(nonce) });
+    return decrypted.toString(enc.Utf8);
+  }
+}
 
 // This class performs cryptographic operations directly on the main thread.
 export class CryptoEngine {

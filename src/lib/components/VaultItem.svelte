@@ -311,12 +311,11 @@
 
 <!-- Master Password Verification Popup -->
 {#if showVerifyPopup}
-  <button
+  <div
     class="verify-backdrop"
     on:click|self={cancelVerify}
     on:keydown={(e) => e.key === "Escape" && cancelVerify()}
     aria-label="Close verification popup"
-    type="button"
   >
     <div
       class="verify-popup glass"
@@ -375,7 +374,7 @@
         </button>
       </div>
     </div>
-  </button>
+  </div>
 {/if}
 
 <style>
