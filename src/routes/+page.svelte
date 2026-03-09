@@ -136,24 +136,6 @@
   $: categoryFilters = [
     { value: "all", label: "All", icon: LayoutGrid, count: $vaultItems.length },
     {
-      value: "guide",
-      label: isVi ? "Hướng dẫn" : "Guide",
-      icon: BookOpen,
-      count: 0,
-    },
-    {
-      value: "privacy",
-      label: isVi ? "Bảo mật" : "Privacy",
-      icon: ShieldCheck,
-      count: 0,
-    },
-    {
-      value: "terms",
-      label: isVi ? "Điều khoản" : "Terms",
-      icon: FileText,
-      count: 0,
-    },
-    {
       value: "login",
       label: "Login",
       icon: Key,
@@ -210,9 +192,21 @@
     },
     {
       value: "guide",
-      label: "Guide",
+      label: isVi ? "Hướng dẫn" : "Guide",
       icon: BookOpen,
-      count: 0, // Guide không có count
+      count: 0,
+    },
+    {
+      value: "privacy",
+      label: isVi ? "Bảo mật" : "Privacy",
+      icon: ShieldCheck,
+      count: 0,
+    },
+    {
+      value: "terms",
+      label: isVi ? "Điều khoản" : "Terms",
+      icon: FileText,
+      count: 0,
     },
   ];
 
@@ -235,7 +229,12 @@
     let items = $vaultItems;
 
     // Filter by category
-    if ($categoryFilter !== "all") {
+    if (
+      $categoryFilter !== "all" &&
+      $categoryFilter !== "guide" &&
+      $categoryFilter !== "privacy" &&
+      $categoryFilter !== "terms"
+    ) {
       items = items.filter(
         (item) => (item.category || "other") === $categoryFilter,
       );
