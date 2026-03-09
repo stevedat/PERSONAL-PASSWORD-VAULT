@@ -39,28 +39,59 @@
   import { language } from "$lib/language";
   import {
     LayoutGrid,
-    Mail,
-    Landmark,
-    Smartphone,
+    Search,
+    Plus,
+    Clock,
+    Shield,
+    Key,
+    User,
+    Settings,
+    Import,
+    Export,
+    Menu,
+    X,
+    MessageSquare,
+    Eye,
+    EyeOff,
+    Check,
+    CreditCard,
     Globe,
-    Briefcase,
-    Gamepad2,
-    Folder,
+    ExternalLink,
+    Lock,
+    Trash2,
+    Copy,
+    RefreshCw,
+    Maximize2,
+    CheckCircle2,
+    AlertCircle,
+    Star,
+    ChevronRight,
+    ArrowUpDown,
+    Smartphone,
+    Monitor,
+    Share2,
     BookOpen,
+    Languages,
+    ShieldCheck,
+    FileText,
+    ShieldAlert,
     Sun,
     Moon,
     ScanFace,
     Fingerprint,
     Upload,
     Download,
-    Lock,
-    Plus,
     LockKeyhole,
     SearchX,
-    ShieldAlert,
-    Languages,
     Coffee,
+    Mail,
+    Landmark,
+    Briefcase,
+    Gamepad2,
+    Folder,
   } from "lucide-svelte";
+  import PrivacyContent from "$lib/components/PrivacyContent.svelte";
+  import TermsContent from "$lib/components/TermsContent.svelte";
 
   /** @type {any} */
   export let data = undefined;
@@ -100,8 +131,34 @@
     }
   }
 
+  $: isVi = $language === "vi";
+
   $: categoryFilters = [
     { value: "all", label: "All", icon: LayoutGrid, count: $vaultItems.length },
+    {
+      value: "guide",
+      label: isVi ? "Hướng dẫn" : "Guide",
+      icon: BookOpen,
+      count: 0,
+    },
+    {
+      value: "privacy",
+      label: isVi ? "Bảo mật" : "Privacy",
+      icon: ShieldCheck,
+      count: 0,
+    },
+    {
+      value: "terms",
+      label: isVi ? "Điều khoản" : "Terms",
+      icon: FileText,
+      count: 0,
+    },
+    {
+      value: "login",
+      label: "Login",
+      icon: Key,
+      count: $vaultItems.filter((i) => i.category === "login").length,
+    },
     {
       value: "email",
       label: "Email",
@@ -1069,6 +1126,10 @@
         {#if $categoryFilter === "guide"}
           <!-- Show Guide Content -->
           <GuideContent lang={$language} />
+        {:else if $categoryFilter === "privacy"}
+          <PrivacyContent lang={$language} />
+        {:else if $categoryFilter === "terms"}
+          <TermsContent lang={$language} />
         {:else if filteredItems.length === 0}
           <div
             style="text-align: center; padding: 3rem 1rem;"

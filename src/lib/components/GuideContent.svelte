@@ -465,12 +465,6 @@
           : "AES-256-GCM encryption | PBKDF2 600k iterations | 100% Client-side"}
       </p>
 
-      <div class="legal-links">
-        <a href="/privacy">{isVi ? "Chính Sách Bảo Mật" : "Privacy Policy"}</a>
-        <span class="separator">•</span>
-        <a href="/terms">{isVi ? "Điều Khoản Sử Dụng" : "Terms of Service"}</a>
-      </div>
-
       <div class="creator-info">
         <h3>{isVi ? "Người Tạo App" : "App Creator"}</h3>
         <p class="creator-name">Đạt Trần</p>
@@ -1030,37 +1024,6 @@
       margin-top: 1.5rem;
       padding-top: 1.5rem;
     }
-
-    .legal-links {
-      margin-top: 1rem;
-      gap: 1rem;
-    }
-  }
-
-  .legal-links {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-  }
-
-  .legal-links a {
-    color: #3b82f6;
-    text-decoration: none;
-    font-weight: 500;
-    transition: opacity 0.2s;
-  }
-
-  .legal-links a:hover {
-    opacity: 0.8;
-    text-decoration: underline;
-  }
-
-  .separator {
-    color: var(--text-secondary);
-    opacity: 0.5;
   }
 
   /* Extra small mobile */
