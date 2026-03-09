@@ -36,6 +36,10 @@ export class CryptoEngine {
     });
   }
 
+  static generateId(): string {
+    return lib.WordArray.random(128 / 8).toString();
+  }
+
   static async encrypt(items: VaultItem[], password: string): Promise<string> {
     const salt = lib.WordArray.random(128 / 8);
     const key = this.deriveKey(password, salt);
