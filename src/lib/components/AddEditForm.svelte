@@ -87,7 +87,6 @@
       addModeInitialized = true;
 
       if (title || username || password || note || category !== "other") {
-        if (import.meta.env.DEV) console.log("[AddEditForm] Resetting fields");
         title = "";
         username = "";
         password = "";
@@ -128,7 +127,6 @@
     try {
       await navigator.clipboard.writeText(text);
       // Optionally, provide user feedback
-      if (import.meta.env.DEV) console.log(`${field} copied to clipboard!`);
     } catch (err) {
       console.error("Failed to copy:", err);
     }

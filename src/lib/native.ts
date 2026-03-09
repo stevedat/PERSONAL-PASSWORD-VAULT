@@ -3,12 +3,12 @@
  * Handles iOS and Android specific features
  */
 
-import { App } from '@capacitor/app';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { SplashScreen } from '@capacitor/splash-screen';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-import { Capacitor } from '@capacitor/core';
+import { App } from "@capacitor/app";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { SplashScreen } from "@capacitor/splash-screen";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+import { Capacitor } from "@capacitor/core";
 
 export class NativeApp {
   private static initialized = false;
@@ -46,9 +46,9 @@ export class NativeApp {
       this.setupAppListeners();
 
       this.initialized = true;
-      console.log('[Native] App initialized successfully');
+      console.log("[Native] App initialized successfully");
     } catch (error) {
-      console.error('[Native] Initialization error:', error);
+      console.error("[Native] Initialization error:", error);
     }
   }
 
@@ -60,9 +60,9 @@ export class NativeApp {
 
     try {
       await StatusBar.setStyle({ style: Style.Dark });
-      await StatusBar.setBackgroundColor({ color: '#1a1a2e' });
+      await StatusBar.setBackgroundColor({ color: "#1a1a2e" });
     } catch (error) {
-      console.error('[Native] StatusBar setup error:', error);
+      console.error("[Native] StatusBar setup error:", error);
     }
   }
 
@@ -71,9 +71,12 @@ export class NativeApp {
    */
   private static setupAppListeners(): void {
     // Listen for app state changes
-    App.addListener('appStateChange', ({ isActive }) => {
-      console.log('[Native] App state changed:', isActive ? 'active' : 'background');
-      
+    App.addListener("appStateChange", ({ isActive }) => {
+      console.log(
+        "[Native] App state changed:",
+        isActive ? "active" : "background",
+      );
+
       // Lock app when going to background (security feature)
       if (!isActive) {
         this.lockApp();
@@ -81,7 +84,7 @@ export class NativeApp {
     });
 
     // Listen for back button (Android)
-    App.addListener('backButton', ({ canGoBack }) => {
+    App.addListener("backButton", ({ canGoBack }) => {
       if (!canGoBack) {
         App.exitApp();
       } else {
@@ -95,8 +98,8 @@ export class NativeApp {
    */
   private static lockApp(): void {
     // Clear cached master password for security
-    sessionStorage.removeItem('pv_master_key');
-    console.log('[Native] App locked');
+    sessionStorage.removeItem("pv_master_key");
+    console.log("[Native] App locked");
   }
 
   /**
@@ -104,10 +107,10 @@ export class NativeApp {
    */
   static async exportToFile(
     filename: string,
-    data: Blob
+    data: Blob,
   ): Promise<{ success: boolean; path?: string; error?: string }> {
     if (!this.isNative()) {
-      return { success: false, error: 'Not running as native app' };
+      return { success: false, error: "Not running as native app" };
     }
 
     try {
@@ -119,21 +122,22 @@ export class NativeApp {
         path: filename,
         data: base64Data,
         directory: Directory.Documents,
-        recursive: true
+        recursive: true,
       });
 
-      console.log('[Native] File exported:', result.uri);
+      console.log("[Native] File exported:", result.uri);
 
       return {
         success: true,
-        path: result.uri
+        path: result.uri,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[Native] Export error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("[Native] Export error:", error);
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -141,30 +145,33 @@ export class NativeApp {
   /**
    * Import vault file from native filesystem
    */
-  static async importFromFile(path: string): Promise<{ success: boolean; data?: Blob; error?: string }> {
+  static async importFromFile(
+    path: string,
+  ): Promise<{ success: boolean; data?: Blob; error?: string }> {
     if (!this.isNative()) {
-      return { success: false, error: 'Not running as native app' };
+      return { success: false, error: "Not running as native app" };
     }
 
     try {
       const result = await Filesystem.readFile({
         path,
-        directory: Directory.Documents
+        directory: Directory.Documents,
       });
 
       // Convert base64 to blob
-      const blob = this.base64ToBlob(result.data as string, 'application/json');
+      const blob = this.base64ToBlob(result.data as string, "application/json");
 
       return {
         success: true,
-        data: blob
+        data: blob,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[Native] Import error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("[Native] Import error:", error);
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -172,37 +179,41 @@ export class NativeApp {
   /**
    * Share vault file using native share dialog
    */
-  static async shareFile(filename: string, data: Blob): Promise<{ success: boolean; error?: string }> {
+  static async shareFile(
+    filename: string,
+    data: Blob,
+  ): Promise<{ success: boolean; error?: string }> {
     if (!this.isNative()) {
-      return { success: false, error: 'Not running as native app' };
+      return { success: false, error: "Not running as native app" };
     }
 
     try {
       // First save to temp location
       const base64Data = await this.blobToBase64(data);
-      
+
       const result = await Filesystem.writeFile({
         path: filename,
         data: base64Data,
         directory: Directory.Cache,
-        recursive: true
+        recursive: true,
       });
 
       // Share the file
       await Share.share({
-        title: 'PocketVault Backup',
-        text: 'Share your encrypted vault backup',
+        title: "PocketVault Backup",
+        text: "Share your encrypted vault backup",
         url: result.uri,
-        dialogTitle: 'Share Backup File'
+        dialogTitle: "Share Backup File",
       });
 
       return { success: true };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[Native] Share error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("[Native] Share error:", error);
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -218,10 +229,10 @@ export class NativeApp {
   }> {
     if (!this.isNative()) {
       return {
-        name: 'PocketVault',
-        id: 'com.pocketvault.app',
-        version: '1.0.0',
-        build: '1'
+        name: "PocketVault",
+        id: "com.pocketvault.app",
+        version: "1.0.0",
+        build: "1",
       };
     }
 
@@ -230,7 +241,7 @@ export class NativeApp {
       name: info.name,
       id: info.id,
       version: info.version,
-      build: info.build
+      build: info.build,
     };
   }
 
@@ -243,7 +254,7 @@ export class NativeApp {
       reader.onloadend = () => {
         const base64 = reader.result as string;
         // Remove data URL prefix
-        const base64Data = base64.split(',')[1];
+        const base64Data = base64.split(",")[1];
         resolve(base64Data);
       };
       reader.onerror = reject;
@@ -257,11 +268,11 @@ export class NativeApp {
   private static base64ToBlob(base64: string, mimeType: string): Blob {
     const byteCharacters = atob(base64);
     const byteNumbers = new Array(byteCharacters.length);
-    
+
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
-    
+
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: mimeType });
   }
@@ -274,6 +285,6 @@ export class NativeApp {
 
     // Capacitor handles most permissions automatically
     // Add specific permission requests here if needed
-    console.log('[Native] Permissions checked');
+    console.log("[Native] Permissions checked");
   }
 }

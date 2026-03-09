@@ -1,27 +1,26 @@
-
 import type { VaultItem, EncryptedVault } from './types';
 import { lib, AES, enc, PBKDF2 } from 'crypto-js';
 
 // Helper to convert WordArray to ArrayBuffer
 function wordArrayToArrayBuffer(wordArray: lib.WordArray): ArrayBuffer {
-    const len = wordArray.sigBytes;
-    const ab = new ArrayBuffer(len);
-    const ua = new Uint8Array(ab);
-    for (let i = 0; i < len; i++) {
-        ua[i] = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
-    }
-    return ab;
+  const len = wordArray.sigBytes;
+  const ab = new ArrayBuffer(len);
+  const ua = new Uint8Array(ab);
+  for (let i = 0; i < len; i++) {
+    ua[i] = (wordArray.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+  }
+  return ab;
 }
 
 // Helper to convert ArrayBuffer to WordArray
 function arrayBufferToWordArray(arrayBuffer: ArrayBuffer): lib.WordArray {
-    const u8a = new Uint8Array(arrayBuffer);
-    const len = u8a.length;
-    const words: number[] = [];
-    for (let i = 0; i < len; i++) {
-        words[i >>> 2] |= u8a[i] << (24 - (i % 4) * 8);
-    }
-    return lib.WordArray.create(words, len);
+  const u8a = new Uint8Array(arrayBuffer);
+  const len = u8a.length;
+  const words: number[] = [];
+  for (let i = 0; i < len; i++) {
+    words[i >>> 2] |= u8a[i] << (24 - (i % 4) * 8);
+  }
+  return lib.WordArray.create(words, len);
 }
 
 // This class performs cryptographic operations directly on the main thread.
@@ -53,19 +52,19 @@ export class CryptoEngine {
     };
 
     return JSON.stringify(encryptedVault, (k, v) => {
-        if (v instanceof ArrayBuffer) {
-            return { type: 'Buffer', data: Array.from(new Uint8Array(v)) };
-        }
-        return v;
+      if (v instanceof ArrayBuffer) {
+        return { type: 'Buffer', data: Array.from(new Uint8Array(v)) };
+      }
+      return v;
     });
   }
 
   static async decrypt(encryptedVaultJSON: string, password: string): Promise<VaultItem[]> {
     const encryptedVault: EncryptedVault = JSON.parse(encryptedVaultJSON, (k, v) => {
-        if (v && v.type === 'Buffer') {
-            return new Uint8Array(v.data).buffer;
-        }
-        return v;
+      if (v && v.type === 'Buffer') {
+        return new Uint8Array(v.data).buffer;
+      }
+      return v;
     });
 
     const salt = arrayBufferToWordArray(encryptedVault.salt);

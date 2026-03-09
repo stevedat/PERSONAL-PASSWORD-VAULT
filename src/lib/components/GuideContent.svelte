@@ -1,17 +1,26 @@
 <script>
-  import { BookOpen, Download, Upload, Shield, Smartphone, HardDrive } from "lucide-svelte";
-  
-  export let lang = 'en';
-  
-  $: isVi = lang === 'vi';
+  import {
+    BookOpen,
+    Download,
+    Upload,
+    Shield,
+    Smartphone,
+    HardDrive,
+  } from "lucide-svelte";
+
+  export let lang = "en";
+
+  $: isVi = lang === "vi";
 </script>
 
 <div class="guide-container">
   <div class="guide-header">
     <BookOpen size={48} class="guide-icon" />
-    <h1>{isVi ? 'Hướng Dẫn Sử Dụng PocketVault' : 'PocketVault User Guide'}</h1>
+    <h1>{isVi ? "Hướng Dẫn Sử Dụng PocketVault" : "PocketVault User Guide"}</h1>
     <p class="guide-subtitle">
-      {isVi ? 'Cách sao lưu và khôi phục mật khẩu an toàn' : 'How to backup and restore your passwords safely'}
+      {isVi
+        ? "Cách sao lưu và khôi phục mật khẩu an toàn"
+        : "How to backup and restore your passwords safely"}
     </p>
   </div>
 
@@ -20,11 +29,11 @@
     <section class="guide-section">
       <div class="section-header">
         <Download size={32} />
-        <h2>{isVi ? '1. Cách Sao Lưu (Backup)' : '1. How to Backup'}</h2>
+        <h2>{isVi ? "1. Cách Sao Lưu (Backup)" : "1. How to Backup"}</h2>
       </div>
       <div class="section-content">
-        <h3>{isVi ? 'Tại sao cần backup?' : 'Why backup?'}</h3>
-        <p>{isVi ? 'Backup giúp bạn:' : 'Backup helps you:'}</p>
+        <h3>{isVi ? "Tại sao cần backup?" : "Why backup?"}</h3>
+        <p>{isVi ? "Backup giúp bạn:" : "Backup helps you:"}</p>
         <ul>
           {#if isVi}
             <li>✅ Bảo vệ dữ liệu khi mất thiết bị</li>
@@ -39,17 +48,29 @@
           {/if}
         </ul>
 
-        <h3>{isVi ? 'Cách thực hiện:' : 'How to do it:'}</h3>
+        <h3>{isVi ? "Cách thực hiện:" : "How to do it:"}</h3>
         <ol>
           {#if isVi}
-            <li>Nhấn nút <strong>"Export Vault"</strong> ở góc trên bên phải</li>
+            <li>
+              Nhấn nút <strong>"Export Vault"</strong> ở góc trên bên phải
+            </li>
             <li>Nhập Master Password để xác nhận</li>
-            <li>File backup sẽ được tải xuống với tên: <code>pocketvault-backup-YYYY-MM-DD.vault</code></li>
+            <li>
+              File backup sẽ được tải xuống với tên: <code
+                >pocketvault-backup-YYYY-MM-DD.vault</code
+              >
+            </li>
             <li>File được mã hóa AES-256-GCM - an toàn tuyệt đối!</li>
           {:else}
-            <li>Click <strong>"Export Vault"</strong> button in top right corner</li>
+            <li>
+              Click <strong>"Export Vault"</strong> button in top right corner
+            </li>
             <li>Enter Master Password to confirm</li>
-            <li>Backup file will be downloaded as: <code>pocketvault-backup-YYYY-MM-DD.vault</code></li>
+            <li>
+              Backup file will be downloaded as: <code
+                >pocketvault-backup-YYYY-MM-DD.vault</code
+              >
+            </li>
             <li>File is encrypted with AES-256-GCM - absolutely secure!</li>
           {/if}
         </ol>
@@ -57,10 +78,10 @@
         <div class="tip-box success">
           <Shield size={20} />
           <div>
-            <strong>{isVi ? 'Mẹo:' : 'Tip:'}</strong>
-            {isVi 
-              ? 'App tự động tạo backup sau mỗi lần thêm/sửa mật khẩu. Bạn có thể tìm thấy trong phần Auto-Backup (nếu đã bật).'
-              : 'App automatically creates backup after each add/edit. You can find them in Auto-Backup section (if enabled).'}
+            <strong>{isVi ? "Mẹo:" : "Tip:"}</strong>
+            {isVi
+              ? "App tự động tạo backup sau mỗi lần thêm/sửa mật khẩu. Bạn có thể tìm thấy trong phần Auto-Backup (nếu đã bật)."
+              : "App automatically creates backup after each add/edit. You can find them in Auto-Backup section (if enabled)."}
           </div>
         </div>
       </div>
@@ -70,10 +91,10 @@
     <section class="guide-section">
       <div class="section-header">
         <Upload size={32} />
-        <h2>{isVi ? '2. Cách Khôi Phục (Restore)' : '2. How to Restore'}</h2>
+        <h2>{isVi ? "2. Cách Khôi Phục (Restore)" : "2. How to Restore"}</h2>
       </div>
       <div class="section-content">
-        <h3>{isVi ? 'Khi nào cần restore?' : 'When to restore?'}</h3>
+        <h3>{isVi ? "Khi nào cần restore?" : "When to restore?"}</h3>
         <ul>
           {#if isVi}
             <li>📱 Chuyển sang máy mới</li>
@@ -88,23 +109,29 @@
           {/if}
         </ul>
 
-        <h3>{isVi ? 'Cách thực hiện:' : 'How to do it:'}</h3>
+        <h3>{isVi ? "Cách thực hiện:" : "How to do it:"}</h3>
         <ol>
           {#if isVi}
-            <li>Nhấn nút <strong>"Import Vault"</strong> ở góc trên bên phải</li>
+            <li>
+              Nhấn nút <strong>"Import Vault"</strong> ở góc trên bên phải
+            </li>
             <li>Chọn file backup (.vault)</li>
             <li>Nhập Master Password của file backup</li>
-            <li>Chọn cách gộp dữ liệu:
+            <li>
+              Chọn cách gộp dữ liệu:
               <ul>
                 <li><strong>Merge:</strong> Gộp với mật khẩu hiện tại</li>
                 <li><strong>Replace:</strong> Thay thế hoàn toàn</li>
               </ul>
             </li>
           {:else}
-            <li>Click <strong>"Import Vault"</strong> button in top right corner</li>
+            <li>
+              Click <strong>"Import Vault"</strong> button in top right corner
+            </li>
             <li>Select backup file (.vault)</li>
             <li>Enter Master Password of the backup file</li>
-            <li>Choose merge method:
+            <li>
+              Choose merge method:
               <ul>
                 <li><strong>Merge:</strong> Combine with current passwords</li>
                 <li><strong>Replace:</strong> Replace completely</li>
@@ -116,8 +143,8 @@
         <div class="tip-box warning">
           <Shield size={20} />
           <div>
-            <strong>{isVi ? 'Lưu ý:' : 'Note:'}</strong>
-            {isVi 
+            <strong>{isVi ? "Lưu ý:" : "Note:"}</strong>
+            {isVi
               ? 'Nếu chọn "Replace", tất cả mật khẩu hiện tại sẽ bị xóa. Hãy backup trước khi thực hiện!'
               : 'If you choose "Replace", all current passwords will be deleted. Please backup first!'}
           </div>
@@ -129,13 +156,17 @@
     <section class="guide-section">
       <div class="section-header">
         <HardDrive size={32} />
-        <h2>{isVi ? '3. Nơi Lưu Backup An Toàn' : '3. Safe Backup Storage'}</h2>
+        <h2>{isVi ? "3. Nơi Lưu Backup An Toàn" : "3. Safe Backup Storage"}</h2>
       </div>
       <div class="section-content">
-        <h3>{isVi ? 'Khuyến nghị lưu trữ:' : 'Storage recommendations:'}</h3>
+        <h3>{isVi ? "Khuyến nghị lưu trữ:" : "Storage recommendations:"}</h3>
 
         <div class="storage-option">
-          <h4>{isVi ? '🔒 Tốt nhất: USB/Ổ cứng ngoài' : '🔒 Best: USB/External Drive'}</h4>
+          <h4>
+            {isVi
+              ? "🔒 Tốt nhất: USB/Ổ cứng ngoài"
+              : "🔒 Best: USB/External Drive"}
+          </h4>
           <ul>
             {#if isVi}
               <li>✅ Offline hoàn toàn - không bị hack</li>
@@ -152,7 +183,11 @@
         </div>
 
         <div class="storage-option">
-          <h4>{isVi ? '☁️ Tốt: Cloud Storage (mã hóa)' : '☁️ Good: Cloud Storage (encrypted)'}</h4>
+          <h4>
+            {isVi
+              ? "☁️ Tốt: Cloud Storage (mã hóa)"
+              : "☁️ Good: Cloud Storage (encrypted)"}
+          </h4>
           <ul>
             {#if isVi}
               <li>✅ Truy cập mọi lúc mọi nơi</li>
@@ -166,11 +201,21 @@
               <li>⚠️ Requires internet</li>
             {/if}
           </ul>
-          <p><em>{isVi ? 'Gợi ý: Google Drive, iCloud, Dropbox, OneDrive' : 'Suggestions: Google Drive, iCloud, Dropbox, OneDrive'}</em></p>
+          <p>
+            <em
+              >{isVi
+                ? "Gợi ý: Google Drive, iCloud, Dropbox, OneDrive"
+                : "Suggestions: Google Drive, iCloud, Dropbox, OneDrive"}</em
+            >
+          </p>
         </div>
 
         <div class="storage-option">
-          <h4>{isVi ? '📧 Khả dụng: Email cho chính mình' : '📧 Usable: Email to yourself'}</h4>
+          <h4>
+            {isVi
+              ? "📧 Khả dụng: Email cho chính mình"
+              : "📧 Usable: Email to yourself"}
+          </h4>
           <ul>
             {#if isVi}
               <li>✅ Dễ dàng và nhanh chóng</li>
@@ -189,7 +234,7 @@
         <div class="tip-box info">
           <Shield size={20} />
           <div>
-            <strong>{isVi ? 'Chiến lược 3-2-1:' : '3-2-1 Strategy:'}</strong>
+            <strong>{isVi ? "Chiến lược 3-2-1:" : "3-2-1 Strategy:"}</strong>
             <ul>
               {#if isVi}
                 <li>3 bản backup</li>
@@ -210,18 +255,38 @@
     <section class="guide-section">
       <div class="section-header">
         <Shield size={32} />
-        <h2>{isVi ? '4. Bảo Mật Backup' : '4. Backup Security'}</h2>
+        <h2>{isVi ? "4. Bảo Mật Backup" : "4. Backup Security"}</h2>
       </div>
       <div class="section-content">
-        <h3>{isVi ? 'File backup của bạn được bảo vệ bởi:' : 'Your backup file is protected by:'}</h3>
+        <h3>
+          {isVi
+            ? "File backup của bạn được bảo vệ bởi:"
+            : "Your backup file is protected by:"}
+        </h3>
         <ul>
-          <li>🔐 <strong>AES-256-GCM:</strong> {isVi ? 'Mã hóa quân sự, không thể bẻ khóa' : 'Military-grade encryption, unbreakable'}</li>
-          <li>🔑 <strong>PBKDF2:</strong> {isVi ? '600,000 vòng lặp - chống brute force' : '600,000 iterations - prevents brute force'}</li>
-          <li>✅ <strong>Checksum:</strong> {isVi ? 'Phát hiện file bị sửa đổi' : 'Detects file tampering'}</li>
-          <li>🔒 <strong>Zero-cloud:</strong> {isVi ? 'Không lưu trên server nào' : 'Not stored on any server'}</li>
+          <li>
+            🔐 <strong>AES-256-GCM:</strong>
+            {isVi
+              ? "Mã hóa quân sự, không thể bẻ khóa"
+              : "Military-grade encryption, unbreakable"}
+          </li>
+          <li>
+            🔑 <strong>PBKDF2:</strong>
+            {isVi
+              ? "600,000 vòng lặp - chống brute force"
+              : "600,000 iterations - prevents brute force"}
+          </li>
+          <li>
+            ✅ <strong>Checksum:</strong>
+            {isVi ? "Phát hiện file bị sửa đổi" : "Detects file tampering"}
+          </li>
+          <li>
+            🔒 <strong>Zero-cloud:</strong>
+            {isVi ? "Không lưu trên server nào" : "Not stored on any server"}
+          </li>
         </ul>
 
-        <h3>{isVi ? 'Master Password mạnh:' : 'Strong Master Password:'}</h3>
+        <h3>{isVi ? "Master Password mạnh:" : "Strong Master Password:"}</h3>
         <ul>
           {#if isVi}
             <li>✅ Tối thiểu 12 ký tự</li>
@@ -239,10 +304,18 @@
         <div class="tip-box success">
           <Shield size={20} />
           <div>
-            <strong>{isVi ? 'Ví dụ Master Password tốt:' : 'Good Master Password example:'}</strong>
+            <strong
+              >{isVi
+                ? "Ví dụ Master Password tốt:"
+                : "Good Master Password example:"}</strong
+            >
             <code>My$ecur3P@ssw0rd!2024</code>
-            <br>
-            <em>{isVi ? 'Dễ nhớ nhưng rất khó đoán!' : 'Easy to remember but very hard to guess!'}</em>
+            <br />
+            <em
+              >{isVi
+                ? "Dễ nhớ nhưng rất khó đoán!"
+                : "Easy to remember but very hard to guess!"}</em
+            >
           </div>
         </div>
       </div>
@@ -252,12 +325,13 @@
     <section class="guide-section">
       <div class="section-header">
         <Smartphone size={32} />
-        <h2>{isVi ? '5. Chuyển Sang Máy Mới' : '5. Transfer to New Device'}</h2>
+        <h2>{isVi ? "5. Chuyển Sang Máy Mới" : "5. Transfer to New Device"}</h2>
       </div>
       <div class="section-content">
-        <h3>{isVi ? 'Quy trình chuyển máy:' : 'Transfer process:'}</h3>
+        <h3>{isVi ? "Quy trình chuyển máy:" : "Transfer process:"}</h3>
         <ol>
-          <li><strong>{isVi ? 'Trên máy cũ:' : 'On old device:'}</strong>
+          <li>
+            <strong>{isVi ? "Trên máy cũ:" : "On old device:"}</strong>
             <ul>
               {#if isVi}
                 <li>Export vault ra file backup</li>
@@ -270,7 +344,8 @@
               {/if}
             </ul>
           </li>
-          <li><strong>{isVi ? 'Trên máy mới:' : 'On new device:'}</strong>
+          <li>
+            <strong>{isVi ? "Trên máy mới:" : "On new device:"}</strong>
             <ul>
               {#if isVi}
                 <li>Cài đặt PocketVault</li>
@@ -292,10 +367,10 @@
         <div class="tip-box info">
           <Smartphone size={20} />
           <div>
-            <strong>{isVi ? 'Lưu ý:' : 'Note:'}</strong>
-            {isVi 
-              ? 'Nếu dùng native app (iOS/Android), bạn có thể dùng tính năng Share để gửi file backup qua AirDrop, Bluetooth, hoặc các app khác.'
-              : 'If using native app (iOS/Android), you can use Share feature to send backup file via AirDrop, Bluetooth, or other apps.'}
+            <strong>{isVi ? "Lưu ý:" : "Note:"}</strong>
+            {isVi
+              ? "Nếu dùng native app (iOS/Android), bạn có thể dùng tính năng Share để gửi file backup qua AirDrop, Bluetooth, hoặc các app khác."
+              : "If using native app (iOS/Android), you can use Share feature to send backup file via AirDrop, Bluetooth, or other apps."}
           </div>
         </div>
       </div>
@@ -305,51 +380,73 @@
     <section class="guide-section">
       <div class="section-header">
         <BookOpen size={32} />
-        <h2>{isVi ? '6. Câu Hỏi Thường Gặp' : '6. Frequently Asked Questions'}</h2>
+        <h2>
+          {isVi ? "6. Câu Hỏi Thường Gặp" : "6. Frequently Asked Questions"}
+        </h2>
       </div>
       <div class="section-content">
         <div class="faq-item">
-          <h4>{isVi ? '❓ Tôi quên Master Password thì sao?' : '❓ What if I forget Master Password?'}</h4>
+          <h4>
+            {isVi
+              ? "❓ Tôi quên Master Password thì sao?"
+              : "❓ What if I forget Master Password?"}
+          </h4>
           <p>
-            {isVi 
-              ? 'Rất tiếc, không có cách nào khôi phục. Đây là thiết kế bảo mật - không ai có thể truy cập vault của bạn, kể cả chúng tôi. Hãy ghi nhớ Master Password cẩn thận!'
+            {isVi
+              ? "Rất tiếc, không có cách nào khôi phục. Đây là thiết kế bảo mật - không ai có thể truy cập vault của bạn, kể cả chúng tôi. Hãy ghi nhớ Master Password cẩn thận!"
               : "Unfortunately, there's no way to recover. This is a security design - no one can access your vault, not even us. Please remember your Master Password carefully!"}
           </p>
         </div>
 
         <div class="faq-item">
-          <h4>{isVi ? '❓ File backup có an toàn không?' : '❓ Is backup file safe?'}</h4>
+          <h4>
+            {isVi
+              ? "❓ File backup có an toàn không?"
+              : "❓ Is backup file safe?"}
+          </h4>
           <p>
-            {isVi 
-              ? 'Có! File được mã hóa AES-256-GCM với Master Password của bạn. Ngay cả khi ai đó lấy được file, họ không thể đọc được nội dung nếu không có Master Password.'
-              : 'Yes! File is encrypted with AES-256-GCM using your Master Password. Even if someone gets the file, they cannot read the content without Master Password.'}
+            {isVi
+              ? "Có! File được mã hóa AES-256-GCM với Master Password của bạn. Ngay cả khi ai đó lấy được file, họ không thể đọc được nội dung nếu không có Master Password."
+              : "Yes! File is encrypted with AES-256-GCM using your Master Password. Even if someone gets the file, they cannot read the content without Master Password."}
           </p>
         </div>
 
         <div class="faq-item">
-          <h4>{isVi ? '❓ Tôi nên backup bao lâu một lần?' : '❓ How often should I backup?'}</h4>
+          <h4>
+            {isVi
+              ? "❓ Tôi nên backup bao lâu một lần?"
+              : "❓ How often should I backup?"}
+          </h4>
           <p>
-            {isVi 
-              ? 'App tự động tạo backup sau mỗi thay đổi. Nhưng bạn nên export thủ công ít nhất 1 tháng/lần và lưu ở nơi an toàn.'
-              : 'App automatically creates backup after each change. But you should manually export at least once a month and store it safely.'}
+            {isVi
+              ? "App tự động tạo backup sau mỗi thay đổi. Nhưng bạn nên export thủ công ít nhất 1 tháng/lần và lưu ở nơi an toàn."
+              : "App automatically creates backup after each change. But you should manually export at least once a month and store it safely."}
           </p>
         </div>
 
         <div class="faq-item">
-          <h4>{isVi ? '❓ Tôi có thể dùng cùng vault trên nhiều thiết bị?' : '❓ Can I use same vault on multiple devices?'}</h4>
+          <h4>
+            {isVi
+              ? "❓ Tôi có thể dùng cùng vault trên nhiều thiết bị?"
+              : "❓ Can I use same vault on multiple devices?"}
+          </h4>
           <p>
-            {isVi 
+            {isVi
               ? "Có! Export từ thiết bị này và import vào thiết bị khác. Tuy nhiên, các thay đổi không tự động đồng bộ - bạn cần export/import thủ công khi có cập nhật."
               : "Yes! Export from one device and import to another. However, changes don't auto-sync - you need to manually export/import when updated."}
           </p>
         </div>
 
         <div class="faq-item">
-          <h4>{isVi ? '❓ File backup có hết hạn không?' : '❓ Does backup file expire?'}</h4>
+          <h4>
+            {isVi
+              ? "❓ File backup có hết hạn không?"
+              : "❓ Does backup file expire?"}
+          </h4>
           <p>
-            {isVi 
-              ? 'Không! File backup có thể dùng mãi mãi, miễn là bạn nhớ Master Password.'
-              : 'No! Backup file can be used forever, as long as you remember the Master Password.'}
+            {isVi
+              ? "Không! File backup có thể dùng mãi mãi, miễn là bạn nhớ Master Password."
+              : "No! Backup file can be used forever, as long as you remember the Master Password."}
           </p>
         </div>
       </div>
@@ -359,44 +456,64 @@
     <div class="guide-footer">
       <Shield size={24} />
       <p>
-        <strong>PocketVault</strong> - {isVi ? 'Quản lý mật khẩu an toàn, offline, zero-cloud.' : 'Secure password manager, offline, zero-cloud.'}
-        <br>
-        {isVi ? 'Mã hóa AES-256-GCM | PBKDF2 600k iterations | 100% Client-side' : 'AES-256-GCM encryption | PBKDF2 600k iterations | 100% Client-side'}
+        <strong>PocketVault</strong> - {isVi
+          ? "Quản lý mật khẩu an toàn, offline, zero-cloud."
+          : "Secure password manager, offline, zero-cloud."}
+        <br />
+        {isVi
+          ? "Mã hóa AES-256-GCM | PBKDF2 600k iterations | 100% Client-side"
+          : "AES-256-GCM encryption | PBKDF2 600k iterations | 100% Client-side"}
       </p>
-      
+
+      <div class="legal-links">
+        <a href="/privacy">{isVi ? "Chính Sách Bảo Mật" : "Privacy Policy"}</a>
+        <span class="separator">•</span>
+        <a href="/terms">{isVi ? "Điều Khoản Sử Dụng" : "Terms of Service"}</a>
+      </div>
+
       <div class="creator-info">
-        <h3>{isVi ? 'Người Tạo App' : 'App Creator'}</h3>
+        <h3>{isVi ? "Người Tạo App" : "App Creator"}</h3>
         <p class="creator-name">Đạt Trần</p>
         <div class="creator-links">
-          <a 
-            href="https://www.linkedin.com/in/stevedat/" 
-            target="_blank" 
+          <a
+            href="https://www.linkedin.com/in/stevedat/"
+            target="_blank"
             rel="noopener noreferrer"
             class="creator-link"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+              <path
+                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+              />
             </svg>
             LinkedIn
           </a>
-          <a 
-            href="mailto:eduflows.app@gmail.com" 
-            class="creator-link"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
+          <a href="mailto:eduflows.app@gmail.com" class="creator-link">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+              />
+              <polyline points="22,6 12,13 2,6" />
             </svg>
             Email
           </a>
-          <a 
-            href="https://github.com/stevedat/PERSONAL-PASSWORD-VAULT" 
-            target="_blank" 
+          <a
+            href="https://github.com/stevedat/PERSONAL-PASSWORD-VAULT"
+            target="_blank"
             rel="noopener noreferrer"
             class="creator-link"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+              />
             </svg>
             GitHub
           </a>
@@ -429,14 +546,13 @@
     text-align: center;
     margin-bottom: 3rem;
     padding: 2rem;
-    background: linear-gradient(135deg, rgba(74, 158, 255, 0.1), rgba(138, 43, 226, 0.1));
+    background: linear-gradient(
+      135deg,
+      rgba(74, 158, 255, 0.1),
+      rgba(138, 43, 226, 0.1)
+    );
     border-radius: 16px;
     border: 1px solid rgba(74, 158, 255, 0.2);
-  }
-
-  .guide-icon {
-    color: var(--primary);
-    margin-bottom: 1rem;
   }
 
   .guide-header h1 {
@@ -455,10 +571,6 @@
     color: rgba(0, 0, 0, 0.7);
   }
 
-  .dark .guide-subtitle {
-    color: rgba(255, 255, 255, 0.8);
-  }
-
   .guide-content {
     display: flex;
     flex-direction: column;
@@ -470,7 +582,9 @@
     border-radius: 12px;
     padding: 2rem;
     border: 1px solid var(--border-color);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .guide-section:hover {
@@ -556,7 +670,7 @@
     background: rgba(74, 158, 255, 0.15);
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
-    font-family: 'Courier New', monospace;
+    font-family: "Courier New", monospace;
     font-size: 0.9em;
     color: #2563eb;
     font-weight: 500;
@@ -791,10 +905,6 @@
     margin: 0.5rem 0 1rem 0;
   }
 
-  .dark .creator-name {
-    color: #6eb6ff;
-  }
-
   .creator-links {
     display: flex;
     justify-content: center;
@@ -816,21 +926,12 @@
     transition: all 0.2s ease;
   }
 
-  .dark .creator-link {
-    color: #6eb6ff;
-  }
-
   .creator-link:hover {
     background: rgba(74, 158, 255, 0.25);
     border-color: #2563eb;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
     color: #1e40af;
-  }
-
-  .dark .creator-link:hover {
-    border-color: #6eb6ff;
-    color: #8ec9ff;
   }
 
   .creator-link:active {
@@ -929,6 +1030,37 @@
       margin-top: 1.5rem;
       padding-top: 1.5rem;
     }
+
+    .legal-links {
+      margin-top: 1rem;
+      gap: 1rem;
+    }
+  }
+
+  .legal-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .legal-links a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+
+  .legal-links a:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  .separator {
+    color: var(--text-secondary);
+    opacity: 0.5;
   }
 
   /* Extra small mobile */

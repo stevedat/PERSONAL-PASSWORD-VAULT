@@ -1,35 +1,37 @@
 <script>
-  export let type = 'export'; // 'export' or 'import'
+  export let type = "export"; // 'export' or 'import'
   export let show = false;
   export let onClose = () => {}; // Callback to close tooltip
-  
+
+  /** @type {Object<string, { icon: string; title: string; steps: string[]; security: string }>} */
   const content = {
     export: {
-      icon: '📤',
-      title: 'Export Backup',
+      icon: "📤",
+      title: "Export Backup",
       steps: [
-        'Creates encrypted backup file',
-        'Save to iCloud/Google Drive',
-        'File is AES-256 encrypted',
-        'Only you can decrypt it'
+        "Creates encrypted backup file",
+        "Save to iCloud/Google Drive",
+        "File is AES-256 encrypted",
+        "Only you can decrypt it",
       ],
-      security: '🔒 Military-grade encryption'
+      security: "🔒 Military-grade encryption",
     },
     import: {
-      icon: '📥',
-      title: 'Import Backup',
+      icon: "📥",
+      title: "Import Backup",
       steps: [
-        'Select your .vault file',
-        'Enter master password',
-        'Choose merge or replace',
-        'Data restored securely'
+        "Select your .vault file",
+        "Enter master password",
+        "Choose merge or replace",
+        "Data restored securely",
       ],
-      security: '✅ Verified & decrypted'
-    }
+      security: "✅ Verified & decrypted",
+    },
   };
-  
+
   $: info = content[type];
-  
+
+  /** @param {MouseEvent} event */
   function handleClick(event) {
     // Close tooltip when clicked
     event.stopPropagation();
@@ -45,7 +47,7 @@
       <span class="tooltip-icon">{info.icon}</span>
       <h4 class="tooltip-title text-glass">{info.title}</h4>
     </div>
-    
+
     <ul class="tooltip-steps">
       {#each info.steps as step, i}
         <li class="tooltip-step text-glass-secondary">
@@ -54,11 +56,11 @@
         </li>
       {/each}
     </ul>
-    
+
     <div class="tooltip-security">
       <span class="security-badge">{info.security}</span>
     </div>
-    
+
     <div class="tooltip-hint">
       <span style="font-size: 0.6875rem; opacity: 0.6;">Tap to close</span>
     </div>

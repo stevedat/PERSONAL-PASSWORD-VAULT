@@ -11,13 +11,13 @@
     window.console.warn = function () {};
     window.console.error = function () {};
     window.console.debug = function () {};
-    window.console.group = function () {};
-    window.console.groupEnd = function () {};
   }
 
-  export let data;
-  export let form;
-  export let params = {};
+  /** @type {any} */
+  export let data = undefined;
+  /** @type {any} */
+  export let params = undefined;
+  $: (void data, params);
 
   onMount(() => {
     // Load theme preference

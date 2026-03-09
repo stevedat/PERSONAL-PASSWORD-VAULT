@@ -1,8 +1,8 @@
-import type { VaultItem, EncryptedVault } from './crypto';
-import { CryptoEngine } from './crypto';
+import type { VaultItem, EncryptedVault } from "./crypto";
+import { CryptoEngine } from "./crypto";
 
 export interface ExportOptions {
-  format: 'standard' | 'json';
+  format: "standard" | "json";
   includeMetadata: boolean;
   testAfterExport: boolean;
 }
@@ -35,47 +35,36 @@ export interface VaultExportFile {
 }
 
 export class BackupManager {
-  private static readonly APP_NAME = 'PocketVault';
+  private static readonly APP_NAME = "PocketVault";
   private static readonly VERSION = 1;
-  
+
   /**
    * Export vault with enhanced metadata and security
    */
   static async exportVault(
     items: VaultItem[],
     masterPassword: string,
-    options: Partial<ExportOptions> = {}
+    options: Partial<ExportOptions> = {},
   ): Promise<ExportResult> {
-    if (import.meta.env.DEV) {
-      console.log('[BackupManager] Starting export...', {
-        itemCount: items.length,
-        options
-      });
-    }
-    
     const opts: ExportOptions = {
-      format: 'standard',
+      format: "standard",
       includeMetadata: true,
       testAfterExport: false,
-      ...options
+      ...options,
     };
-    
+
     try {
       // Encrypt vault
-      if (import.meta.env.DEV) console.log('[BackupManager] Encrypting vault...');
       const encryptedVault = await CryptoEngine.encrypt(items, masterPassword);
-      if (import.meta.env.DEV) console.log('[BackupManager] Encryption complete');
-      
+
       // Convert to base64
       const data = this.arrayBufferToBase64(encryptedVault.data);
       const iv = this.arrayBufferToBase64(encryptedVault.iv);
       const salt = this.arrayBufferToBase64(encryptedVault.salt);
-      
+
       // Calculate checksum
-      if (import.meta.env.DEV) console.log('[BackupManager] Calculating checksum...');
       const checksum = await this.calculateChecksum(data);
-      if (import.meta.env.DEV) console.log('[BackupManager] Checksum:', checksum.substring(0, 16) + '...');
-      
+
       // Create export file
       const exportFile: VaultExportFile = {
         version: this.VERSION,
@@ -86,88 +75,68 @@ export class BackupManager {
         data,
         iv,
         salt,
-        checksum
+        checksum,
       };
-      
-      if (import.meta.env.DEV) {
-        console.log('[BackupManager] Export file created:', {
-          version: exportFile.version,
-          platform: exportFile.platform,
-          itemCount: exportFile.itemCount,
-          created: exportFile.created
-        });
-      }
-      
+
       // Create blob
       const blob = new Blob([JSON.stringify(exportFile, null, 2)], {
-        type: 'application/json'
+        type: "application/json",
       });
-      
+
       // Generate filename
       const filename = this.generateFileName();
-      if (import.meta.env.DEV) console.log('[BackupManager] Generated filename:', filename);
-      
+
       // Test backup if requested
       if (opts.testAfterExport) {
-        if (import.meta.env.DEV) console.log('[BackupManager] Verifying backup...');
         const verification = await this.verifyBackup(blob, masterPassword);
         if (!verification.valid) {
-          console.error('[BackupManager] Verification failed:', verification.error);
-          throw new Error(verification.error || 'Backup verification failed');
+          console.error(
+            "[BackupManager] Verification failed:",
+            verification.error,
+          );
+          throw new Error(verification.error || "Backup verification failed");
         }
-        if (import.meta.env.DEV) console.log('[BackupManager] Verification successful');
       }
-      
-      if (import.meta.env.DEV) {
-        console.log('[BackupManager] Export complete:', {
-          filename,
-          size: blob.size,
-          sizeKB: (blob.size / 1024).toFixed(2) + 'KB'
-        });
-      }
-      
+
       return {
         success: true,
         filename,
         size: blob.size,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[BackupManager] Export failed:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("[BackupManager] Export failed:", error);
       throw new Error(`Export failed: ${errorMessage}`);
     }
   }
-  
+
   /**
    * Quick export with default options - Non-blocking version
    */
   static async quickExport(
     items: VaultItem[],
-    masterPassword: string
+    masterPassword: string,
   ): Promise<Blob> {
-    if (import.meta.env.DEV) console.log('[BackupManager] Quick export started for', items.length, 'items');
-    
     // Use setTimeout to yield control back to UI
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     const encryptedVault = await CryptoEngine.encrypt(items, masterPassword);
-    
-    // Yield control again after encryption
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
+
+    // Yield control before checksum calculation
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Convert to base64
     const data = this.arrayBufferToBase64(encryptedVault.data);
     const iv = this.arrayBufferToBase64(encryptedVault.iv);
     const salt = this.arrayBufferToBase64(encryptedVault.salt);
-    
-    // Yield control before checksum calculation
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
+
     const checksum = await this.calculateChecksum(data);
-    
+
     // Yield control before final serialization
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     const exportFile: VaultExportFile = {
       version: this.VERSION,
       app: this.APP_NAME,
@@ -177,169 +146,151 @@ export class BackupManager {
       data,
       iv,
       salt,
-      checksum
+      checksum,
     };
-    
+
     const blob = new Blob([JSON.stringify(exportFile, null, 2)], {
-      type: 'application/json'
+      type: "application/json",
     });
-    
-    if (import.meta.env.DEV) console.log('[BackupManager] Quick export complete:', blob.size, 'bytes');
-    
+
     return blob;
   }
-  
+
   /**
    * Verify backup file integrity
    */
   static async verifyBackup(
     file: Blob,
-    masterPassword: string
+    masterPassword: string,
   ): Promise<VerificationResult> {
-    if (import.meta.env.DEV) console.log('[BackupManager] Verifying backup file...');
-    
     try {
       const text = await file.text();
       const exportFile: VaultExportFile = JSON.parse(text);
-      
-      if (import.meta.env.DEV) {
-        console.log('[BackupManager] Parsed export file:', {
-          app: exportFile.app,
-          version: exportFile.version,
-          itemCount: exportFile.itemCount,
-          created: exportFile.created
-        });
-      }
-      
+
       // Validate format
       if (!exportFile.app || exportFile.app !== this.APP_NAME) {
-        if (import.meta.env.DEV) console.error('[BackupManager] Invalid app name:', exportFile.app);
         return {
           valid: false,
-          error: 'Invalid vault file format'
+          error: "Invalid vault file format",
         };
       }
-      
+
       // Verify checksum
-      if (import.meta.env.DEV) console.log('[BackupManager] Verifying checksum...');
       const calculatedChecksum = await this.calculateChecksum(exportFile.data);
       if (calculatedChecksum !== exportFile.checksum) {
-        if (import.meta.env.DEV) {
-          console.error('[BackupManager] Checksum mismatch:', {
-            expected: exportFile.checksum.substring(0, 16) + '...',
-            calculated: calculatedChecksum.substring(0, 16) + '...'
-          });
-        }
         return {
           valid: false,
-          error: 'File integrity check failed (checksum mismatch)'
+          error: "File integrity check failed (checksum mismatch)",
         };
       }
-      if (import.meta.env.DEV) console.log('[BackupManager] Checksum verified');
-      
+
       // Try to decrypt
-      if (import.meta.env.DEV) console.log('[BackupManager] Attempting decryption...');
       const encryptedVault: EncryptedVault = {
         data: this.base64ToArrayBuffer(exportFile.data),
         iv: this.base64ToArrayBuffer(exportFile.iv),
-        salt: this.base64ToArrayBuffer(exportFile.salt)
+        salt: this.base64ToArrayBuffer(exportFile.salt),
       };
-      
+
       const items = await CryptoEngine.decrypt(encryptedVault, masterPassword);
-      if (import.meta.env.DEV) console.log('[BackupManager] Decryption successful, items:', items.length);
-      
+
       return {
         valid: true,
         itemCount: items.length,
-        version: exportFile.version
+        version: exportFile.version,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[BackupManager] Verification error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("[BackupManager] Verification error:", error);
       return {
         valid: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
-  
+
   /**
    * Generate timestamped filename
    */
   static generateFileName(): string {
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toISOString().split("T")[0];
     return `pocketvault-backup-${date}.vault`;
   }
-  
+
   /**
    * Trigger browser download
    */
   static triggerDownload(blob: Blob, filename: string): void {
-    if (typeof window === 'undefined') return;
-    
+    if (typeof window === "undefined") return;
+
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   }
-  
+
   /**
    * Calculate SHA-256 checksum
    */
   private static async calculateChecksum(data: string): Promise<string> {
-    if (typeof window === 'undefined') return '';
-    
+    if (typeof window === "undefined") return "";
+
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(data);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
+    const hashArray = new Uint8Array(hashBuffer);
+
+    let hex = "";
+    for (let i = 0; i < hashArray.length; i++) {
+      hex += hashArray[i].toString(16).padStart(2, "0");
+    }
+    return hex;
   }
-  
+
   /**
    * Detect platform
    */
   private static detectPlatform(): string {
-    if (typeof window === 'undefined') return 'unknown';
-    
+    if (typeof window === "undefined") return "unknown";
+
     const ua = navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(ua)) return 'ios';
-    if (/android/.test(ua)) return 'android';
-    return 'desktop';
+    if (/iphone|ipad|ipod/.test(ua)) return "ios";
+    if (/android/.test(ua)) return "android";
+    return "desktop";
   }
-  
+
   /**
    * Convert ArrayBuffer to base64 - Non-blocking version
    */
   private static arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
-    
+    const len = bytes.byteLength;
+
     // For small buffers, use the fast method
-    if (bytes.byteLength < 1024 * 1024) { // Less than 1MB
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) {
+    if (len < 1024 * 1024) {
+      let binary = "";
+      for (let i = 0; i < len; i++) {
         binary += String.fromCharCode(bytes[i]);
       }
       return btoa(binary);
     }
-    
-    // For larger buffers, use chunked processing (though this is still sync)
-    // In a real implementation, we'd use a Web Worker here
+
+    // For larger buffers, use chunked processing to avoid stack overflow
     const chunkSize = 8192;
-    let binary = '';
-    
-    for (let i = 0; i < bytes.byteLength; i += chunkSize) {
-      const chunk = bytes.slice(i, i + chunkSize);
+    let binary = "";
+
+    for (let i = 0; i < len; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
       for (let j = 0; j < chunk.length; j++) {
         binary += String.fromCharCode(chunk[j]);
       }
     }
-    
+
     return btoa(binary);
   }
-  
+
   /**
    * Convert base64 to ArrayBuffer
    */

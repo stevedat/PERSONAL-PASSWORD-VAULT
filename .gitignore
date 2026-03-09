@@ -1,1 +1,12 @@
 .vercel
+node_modules
+.DS_Store
+.svelte-kit
+build/
+dist-electron/
+android/.idea/
+android/app/build/
+ios/App/build/
+electron/resources/icon.icns
+electron/resources/icon.ico
+electron/resources/icon.png

@@ -1,18 +1,18 @@
-import type { EncryptedVault, VaultItem } from './crypto';
-import { CryptoEngine } from './crypto';
-import { BackupManager } from './backup';
-import { RestoreManager } from './restore';
+import type { EncryptedVault, VaultItem } from "./crypto";
+import { CryptoEngine } from "./crypto";
+import { BackupManager } from "./backup";
+import { RestoreManager } from "./restore";
 
-const DB_NAME = 'PocketVaultDB';
+const DB_NAME = "PocketVaultDB";
 const DB_VERSION = 1;
-const STORE_NAME = 'vault';
+const STORE_NAME = "vault";
 
 export class StorageEngine {
   private static db: IDBDatabase | null = null;
 
   private static async openDB(): Promise<IDBDatabase> {
-    if (typeof window === 'undefined') {
-      throw new Error('Ứng dụng chỉ hoạt động trên trình duyệt');
+    if (typeof window === "undefined") {
+      throw new Error("Ứng dụng chỉ hoạt động trên trình duyệt");
     }
 
     if (this.db) return this.db;
@@ -35,46 +35,50 @@ export class StorageEngine {
     });
   }
 
-  static async saveVault(items: VaultItem[], masterPassword: string): Promise<void> {
-    if (import.meta.env.DEV) console.log('[Storage] Save started, items:', items.length);
+  static async saveVault(
+    items: VaultItem[],
+    masterPassword: string,
+  ): Promise<void> {
     const startTime = Date.now();
 
     // Add timeout to prevent hanging
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Save timeout after 10 seconds')), 10000)
+      setTimeout(
+        () => reject(new Error("Save timeout after 10 seconds")),
+        10000,
+      ),
     );
 
     const saveOperation = (async () => {
       const db = await this.openDB();
       const encryptedVault = await CryptoEngine.encrypt(items, masterPassword);
 
-      // Convert ArrayBuffers to base64 for storage
+      // Store as raw ArrayBuffers for efficiency, fallback to base64 for legacy compatibility
       const storageData = {
-        data: this.arrayBufferToBase64(encryptedVault.data),
-        iv: this.arrayBufferToBase64(encryptedVault.iv),
-        salt: this.arrayBufferToBase64(encryptedVault.salt),
-        timestamp: Date.now() // Add timestamp for debugging
+        data: encryptedVault.data,
+        iv: encryptedVault.iv,
+        salt: encryptedVault.salt,
+        timestamp: Date.now(),
       };
 
       return new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const transaction = db.transaction([STORE_NAME], "readwrite");
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.put(storageData, 'vault');
+        const request = store.put(storageData, "vault");
 
         // Handle transaction completion
         transaction.oncomplete = () => {
-          if (import.meta.env.DEV) console.log('[Storage] Save completed in', Date.now() - startTime, 'ms');
           resolve();
         };
 
         transaction.onerror = () => {
-          console.error('[Storage] Transaction error:', transaction.error);
-          reject(transaction.error || new Error('Transaction failed'));
+          console.error("[Storage] Transaction error:", transaction.error);
+          reject(transaction.error || new Error("Transaction failed"));
         };
 
         transaction.onabort = () => {
-          console.error('[Storage] Transaction aborted');
-          reject(new Error('Transaction aborted'));
+          console.error("[Storage] Transaction aborted");
+          reject(new Error("Transaction aborted"));
         };
 
         request.onsuccess = () => {
@@ -82,8 +86,8 @@ export class StorageEngine {
         };
 
         request.onerror = () => {
-          console.error('[Storage] Request error:', request.error);
-          reject(request.error || new Error('Put request failed'));
+          console.error("[Storage] Request error:", request.error);
+          reject(request.error || new Error("Put request failed"));
         };
       });
     })();
@@ -91,58 +95,67 @@ export class StorageEngine {
     try {
       await Promise.race([saveOperation, timeout]);
     } catch (error) {
-      console.error('[Storage] Save failed:', error);
+      console.error("[Storage] Save failed:", error);
       throw error;
     }
   }
 
   static async loadVault(masterPassword: string): Promise<VaultItem[]> {
-    if (import.meta.env.DEV) console.log('[Storage] Load started');
     const startTime = Date.now();
 
     // Add timeout to prevent hanging
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Load timeout after 10 seconds')), 10000)
+      setTimeout(
+        () => reject(new Error("Load timeout after 10 seconds")),
+        10000,
+      ),
     );
 
     const loadOperation = (async () => {
       const db = await this.openDB();
 
       return new Promise<VaultItem[]>((resolve, reject) => {
-        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const transaction = db.transaction([STORE_NAME], "readonly");
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.get('vault');
+        const request = store.get("vault");
 
         transaction.onerror = () => {
-          console.error('[Storage] Transaction error:', transaction.error);
+          console.error("[Storage] Transaction error:", transaction.error);
           reject(transaction.error);
         };
 
         request.onerror = () => {
-          console.error('[Storage] Request error:', request.error);
+          console.error("[Storage] Request error:", request.error);
           reject(request.error);
         };
 
         request.onsuccess = async () => {
           if (!request.result) {
-            if (import.meta.env.DEV) console.log('[Storage] No vault found');
             resolve([]);
             return;
           }
 
           try {
-            // Convert base64 back to ArrayBuffers
-            const encryptedVault: EncryptedVault = {
-              data: this.base64ToArrayBuffer(request.result.data),
-              iv: this.base64ToArrayBuffer(request.result.iv),
-              salt: this.base64ToArrayBuffer(request.result.salt)
-            };
+            // Handle both legacy Base64 strings and new ArrayBuffers
+            const data = typeof request.result.data === "string"
+              ? this.base64ToArrayBuffer(request.result.data)
+              : request.result.data;
+            const iv = typeof request.result.iv === "string"
+              ? this.base64ToArrayBuffer(request.result.iv)
+              : request.result.iv;
+            const salt = typeof request.result.salt === "string"
+              ? this.base64ToArrayBuffer(request.result.salt)
+              : request.result.salt;
 
-            const items = await CryptoEngine.decrypt(encryptedVault, masterPassword);
-            if (import.meta.env.DEV) console.log('[Storage] Load completed in', Date.now() - startTime, 'ms, items:', items.length);
+            const encryptedVault: EncryptedVault = { data, iv, salt };
+
+            const items = await CryptoEngine.decrypt(
+              encryptedVault,
+              masterPassword,
+            );
             resolve(items);
           } catch (error) {
-            console.error('[Storage] Decrypt error:', error);
+            console.error("[Storage] Decrypt error:", error);
             reject(error);
           }
         };
@@ -152,20 +165,20 @@ export class StorageEngine {
     try {
       return await Promise.race([loadOperation, timeout]);
     } catch (error) {
-      console.error('[Storage] Load failed:', error);
+      console.error("[Storage] Load failed:", error);
       throw error;
     }
   }
 
   static async hasVault(): Promise<boolean> {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === "undefined") return false;
 
     const db = await this.openDB();
 
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const transaction = db.transaction([STORE_NAME], "readonly");
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.get('vault');
+      const request = store.get("vault");
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(!!request.result);
@@ -177,15 +190,19 @@ export class StorageEngine {
     return BackupManager.quickExport(items, masterPassword);
   }
 
-  static async importVault(file: File, masterPassword: string): Promise<VaultItem[]> {
+  static async importVault(
+    file: File,
+    masterPassword: string,
+  ): Promise<VaultItem[]> {
     const result = await RestoreManager.importVault(file, masterPassword, []);
     return result.items;
   }
 
   private static arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
+    let binary = "";
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
