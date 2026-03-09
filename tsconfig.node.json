@@ -1,9 +1,16 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "target": "ESNext"
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["src/**/*.ts", "vite.config.ts", "svelte.config.js"],
+  "exclude": ["node_modules/**", ".svelte-kit/**"]
 }

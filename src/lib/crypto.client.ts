@@ -27,62 +27,62 @@ function arrayBufferToWordArray(arrayBuffer: ArrayBuffer): lib.WordArray {
 // This class performs cryptographic operations directly on the main thread.
 export class CryptoEngine {
   private static readonly KEY_SIZE = 256 / 32; // 256 bits
-  private static readonly ITERATIONS = 1000;
+  private static readonly ITERATIONS = 600000;
 
   private static deriveKey(password: string, salt: lib.WordArray): lib.WordArray {
     return PBKDF2(password, salt, {
-        keySize: this.KEY_SIZE,
-        iterations: this.ITERATIONS
+      keySize: this.KEY_SIZE,
+      iterations: this.ITERATIONS
     });
   }
 
-  static async encrypt(data: VaultItem[], masterPassword: string): Promise<EncryptedVault> {
-    const plaintext = JSON.stringify(data);
-    const salt = lib.WordArray.random(128 / 8); // 128-bit salt
+  static async encrypt(items: VaultItem[], password: string): Promise<string> {
+    const salt = lib.WordArray.random(128 / 8);
+    const key = this.deriveKey(password, salt);
+    const iv = lib.WordArray.random(128 / 8);
 
-    const key = this.deriveKey(masterPassword, salt);
-
-    const iv = lib.WordArray.random(128 / 8); // 128-bit IV
-    const encrypted = AES.encrypt(plaintext, key, { iv: iv });
-    
-    // The encrypted.ciphertext is a WordArray. Convert to ArrayBuffer
-    const dataBuffer = wordArrayToArrayBuffer(encrypted.ciphertext);
-
-    return {
-      data: dataBuffer,
-      iv: wordArrayToArrayBuffer(iv),
+    const encrypted = AES.encrypt(JSON.stringify(items), key, { iv });
+    const encryptedVault: EncryptedVault = {
+      data: wordArrayToArrayBuffer(encrypted.ciphertext),
       salt: wordArrayToArrayBuffer(salt),
-      version: 2
+      iv: wordArrayToArrayBuffer(iv)
     };
+
+    return JSON.stringify(encryptedVault, (k, v) => {
+        if (v instanceof ArrayBuffer) {
+            return { type: 'Buffer', data: Array.from(new Uint8Array(v)) };
+        }
+        return v;
+    });
   }
 
-  static async decrypt(encryptedVault: EncryptedVault, masterPassword: string): Promise<VaultItem[]> {
+  static async decrypt(encryptedVaultJSON: string, password: string): Promise<VaultItem[]> {
+    const encryptedVault: EncryptedVault = JSON.parse(encryptedVaultJSON, (k, v) => {
+        if (v && v.type === 'Buffer') {
+            return new Uint8Array(v.data).buffer;
+        }
+        return v;
+    });
+
     const salt = arrayBufferToWordArray(encryptedVault.salt);
     const iv = arrayBufferToWordArray(encryptedVault.iv);
-    
-    const key = this.deriveKey(masterPassword, salt);
+    const key = this.deriveKey(password, salt);
+    const ciphertext = arrayBufferToWordArray(encryptedVault.data);
 
-    const cipherParams = lib.CipherParams.create({
-        ciphertext: arrayBufferToWordArray(encryptedVault.data)
-    });
-
-    try {
-        const decrypted = AES.decrypt(cipherParams, key, { iv: iv });
-        const plaintext = decrypted.toString(enc.Utf8);
-
-        if (!plaintext) {
-            throw new Error('Decryption failed: empty plaintext');
-        }
-
-        const items = JSON.parse(plaintext);
-        return items;
-    } catch (e) {
-        console.error("Decryption error, likely wrong password", e);
-        throw new Error('Invalid master password or corrupted data.');
+    const decrypted = AES.decrypt({ ciphertext: ciphertext } as lib.CipherParams, key, { iv });
+    const decryptedText = decrypted.toString(enc.Utf8);
+    if (!decryptedText) {
+      throw new Error('Decryption failed. Invalid password?');
     }
+    return JSON.parse(decryptedText);
   }
 
-  static generateId(): string {
-    return crypto.randomUUID();
+  static async verifyPassword(encryptedVault: string, password: string): Promise<boolean> {
+    try {
+      await this.decrypt(encryptedVault, password);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }
