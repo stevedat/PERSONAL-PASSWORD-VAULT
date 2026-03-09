@@ -23,9 +23,9 @@
     "electron:build:all": "npm run build && electron-builder --mac --win"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.1.0",
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/ios": "^8.1.0",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
     "@sveltejs/adapter-vercel": "^5.4.0",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.53.4",
@@ -132,12 +132,12 @@
     }
   },
   "dependencies": {
-    "@capacitor/app": "^8.0.1",
-    "@capacitor/core": "^8.1.0",
-    "@capacitor/filesystem": "^8.1.2",
-    "@capacitor/share": "^8.0.1",
-    "@capacitor/splash-screen": "^8.0.1",
-    "@capacitor/status-bar": "^8.0.1",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/filesystem": "^6.0.0",
+    "@capacitor/share": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
     "crypto-js": "^4.2.0",
     "lucide-svelte": "^0.575.0",
     "mime-types": "^3.0.2"

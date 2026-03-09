@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="./favicon.svg" />
+	<link rel="apple-touch-icon" href="./icon.svg" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+	<!-- Security Headers (Note: Some headers like X-Frame-Options should be set via server config) -->
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:* http://127.0.0.1:*; 
+		               script-src 'self' 'unsafe-inline' http://localhost:* http://127.0.0.1:*; 
+		               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+		               font-src 'self' https://fonts.gstatic.com;
+		               img-src 'self' data: blob:; 
+		               connect-src 'self' http://localhost:* http://127.0.0.1:*; 
+		               base-uri 'self'; 
+		               form-action 'self'">
+	<meta http-equiv="X-Content-Type-Options" content="nosniff">
+	<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+	<meta name="referrer" content="no-referrer">
+
+	<meta name="theme-color" content="#1a1f2e" media="(prefers-color-scheme: dark)" />
+	<meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="description" content="Secure offline password manager" />
+	<link rel="manifest" href="/manifest.json" />
+	<title>PocketVault</title>
+	<link href="./_app/immutable/entry/start.qtkJOD4R.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/BAwlKPIm.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/D2ZqyTCt.js" rel="modulepreload">
+		<link href="./_app/immutable/entry/app.R12N0H2n.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/D9rXnPce.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/cXiGhmoZ.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/77rr9voM.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CVN8ntQu.js" rel="modulepreload">
+		
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">
+			<script>
+				{
+					__sveltekit_du1vxv = {
+						base: new URL(".", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.qtkJOD4R.js"),
+						import("./_app/immutable/entry/app.R12N0H2n.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
+	<script>
+		// Global error handler
+		window.addEventListener('error', (event) => {
+			console.error('[Global Error]', {
+				message: event.message,
+				filename: event.filename,
+				lineno: event.lineno,
+				colno: event.colno,
+				error: event.error
+			});
+		});
+
+		// Unhandled promise rejections
+		window.addEventListener('unhandledrejection', (event) => {
+			console.error('[Unhandled Rejection]', event.reason);
+			event.preventDefault(); // Prevent default error handling
+		});
+
+		// Service Worker registration with error handling
+		// Skip service worker in Electron (not supported with custom protocols)
+		const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+		if ('serviceWorker' in navigator && !isElectron) {
+			navigator.serviceWorker.register('/sw.js')
+				.then((registration) => {
+					console.log('[SW] Registered successfully');
+				})
+				.catch((error) => {
+					console.error('[SW] Registration failed:', error);
+				});
+		} else if (isElectron) {
+			console.log('[SW] Skipped in Electron environment');
+		}
+
+		// Performance monitoring - detect freezes
+		let lastCheck = Date.now();
+		let freezeCount = 0;
+
+		setInterval(() => {
+			const now = Date.now();
+			const delta = now - lastCheck;
+
+			// Only report if tab is visible and delta is significant
+			// This prevents false positives during browser background throttling
+			if (delta > 2000 && !document.hidden) {
+				freezeCount++;
+				console.warn('[FREEZE DETECTED]', {
+					duration: delta + 'ms',
+					count: freezeCount,
+					timestamp: new Date().toISOString()
+				});
+			}
+
+			lastCheck = now;
+		}, 500);
+	</script>
+</body>
+
+</html>
