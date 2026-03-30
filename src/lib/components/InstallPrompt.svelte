@@ -1,69 +1,72 @@
 <script>
-  import { onMount } from 'svelte';
-  import { browser } from '$app/environment';
-  
+  import { onMount } from "svelte";
+  import { browser } from "$app/environment";
+
   let showPrompt = false;
+  /** @type {any} */
   let deferredPrompt = null;
   let isIOS = false;
   let isStandalone = false;
-  
+
   onMount(() => {
     if (!browser) return;
-    
+
     // Check if already installed (standalone mode)
-    isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                   window.navigator.standalone === true;
-    
+    isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      /** @type {any} */ (window.navigator).standalone === true;
+
     // Check if iOS
-    isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    
+    isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
+
     // Check if user already dismissed the prompt
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    
+    const dismissed = localStorage.getItem("pwa-install-dismissed");
+
     // Only show if not installed and not dismissed
     if (!isStandalone && !dismissed) {
       // For iOS, show custom prompt
       if (isIOS) {
         showPrompt = true;
       }
-      
+
       // For Android/Desktop, capture the beforeinstallprompt event
-      window.addEventListener('beforeinstallprompt', (e) => {
+      window.addEventListener("beforeinstallprompt", (e) => {
         e.preventDefault();
         deferredPrompt = e;
         showPrompt = true;
       });
     }
   });
-  
+
   async function handleInstall() {
     if (isIOS) {
       // iOS doesn't support programmatic install, just show instructions
       return;
     }
-    
+
     if (!deferredPrompt) {
       return;
     }
-    
+
     // Show the install prompt
     deferredPrompt.prompt();
-    
+
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
+
+    if (outcome === "accepted") {
+      console.log("User accepted the install prompt");
     }
-    
+
     // Clear the deferredPrompt
     deferredPrompt = null;
     showPrompt = false;
   }
-  
+
   function dismissPrompt() {
     showPrompt = false;
-    localStorage.setItem('pwa-install-dismissed', 'true');
+    localStorage.setItem("pwa-install-dismissed", "true");
   }
 </script>
 
@@ -84,17 +87,17 @@
         {/if}
       </div>
     </div>
-    
+
     <div class="prompt-actions">
-      <button 
-        class="prompt-btn prompt-btn-dismiss glass-btn haptic-light" 
+      <button
+        class="prompt-btn prompt-btn-dismiss glass-btn haptic-light"
         on:click={dismissPrompt}
       >
         Not now
       </button>
       {#if !isIOS}
-        <button 
-          class="prompt-btn prompt-btn-install glass-btn-primary haptic-medium" 
+        <button
+          class="prompt-btn prompt-btn-install glass-btn-primary haptic-medium"
           on:click={handleInstall}
         >
           Install

@@ -1,40 +1,45 @@
 <script>
-  import { onMount } from 'svelte';
-  import { browser } from '$app/environment';
-  
+  import { onMount } from "svelte";
+  import { browser } from "$app/environment";
+
   let showUpdateBanner = false;
-  let updateVersion = '';
+  let updateVersion = "";
   let isUpdating = false;
-  
+
   onMount(() => {
     if (!browser) return;
-    
+
     // Check if service worker is supported
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       // Listen for service worker updates
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'SW_UPDATED') {
-          console.log('[UpdateNotification] New version available:', event.data.version);
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data && event.data.type === "SW_UPDATED") {
+          console.log(
+            "[UpdateNotification] New version available:",
+            event.data.version,
+          );
           updateVersion = event.data.version;
           showUpdateBanner = true;
         }
       });
-      
+
       // Check for updates on page load
       navigator.serviceWorker.ready.then((registration) => {
         // Check for updates every 60 seconds
         setInterval(() => {
-          console.log('[UpdateNotification] Checking for updates...');
+          console.log("[UpdateNotification] Checking for updates...");
           registration.update();
         }, 60000);
-        
+
         // Check immediately
         registration.update();
       });
-      
+
       // Listen for controller change (new SW activated)
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[UpdateNotification] Controller changed, new version active');
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        console.log(
+          "[UpdateNotification] Controller changed, new version active",
+        );
         if (!showUpdateBanner) {
           // If banner not shown yet, show it now
           showUpdateBanner = true;
@@ -42,29 +47,29 @@
       });
     }
   });
-  
+
   function reloadApp() {
     isUpdating = true;
-    console.log('[UpdateNotification] Reloading app to apply updates...');
-    
+    console.log("[UpdateNotification] Reloading app to apply updates...");
+
     // Clear any cached data if needed
-    if ('caches' in window) {
+    if ("caches" in window) {
       caches.keys().then((names) => {
         names.forEach((name) => {
-          console.log('[UpdateNotification] Clearing cache:', name);
+          console.log("[UpdateNotification] Clearing cache:", name);
         });
       });
     }
-    
+
     // Reload the page
     setTimeout(() => {
       window.location.reload();
     }, 500);
   }
-  
+
   function dismissUpdate() {
     showUpdateBanner = false;
-    console.log('[UpdateNotification] Update dismissed');
+    console.log("[UpdateNotification] Update dismissed");
   }
 </script>
 
@@ -83,21 +88,21 @@
         </p>
       </div>
     </div>
-    
+
     <div class="update-actions">
-      <button 
-        class="update-btn update-btn-dismiss glass-btn haptic-light" 
+      <button
+        class="update-btn update-btn-dismiss glass-btn haptic-light"
         on:click={dismissUpdate}
         disabled={isUpdating}
       >
         Later
       </button>
-      <button 
-        class="update-btn update-btn-reload glass-btn-primary haptic-medium" 
+      <button
+        class="update-btn update-btn-reload glass-btn-primary haptic-medium"
         on:click={reloadApp}
         disabled={isUpdating}
       >
-        {isUpdating ? 'Updating...' : 'Update Now'}
+        {isUpdating ? "Updating..." : "Update Now"}
       </button>
     </div>
   </div>
@@ -212,7 +217,8 @@
   }
 
   @keyframes bounce {
-    0%, 100% {
+    0%,
+    100% {
       transform: translateY(0);
     }
     50% {

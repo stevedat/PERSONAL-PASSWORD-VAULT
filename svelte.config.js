@@ -1,19 +1,21 @@
-import adapter from '@sveltejs/adapter-static';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import adapter from '@sveltejs/adapter-vercel';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	kit: {
-		adapter: adapter({
-			pages: 'build',
-			assets: 'build',
-			fallback: 'index.html',
-			precompress: false,
-			strict: true
-		}),
-		serviceWorker: {
-			register: false
-		}
-	}
+  preprocess: vitePreprocess(),
+  kit: {
+    adapter: adapter({
+      runtime: 'nodejs20.x'
+    }),
+    alias: {
+      $lib: 'src/lib',
+      '$lib/*': 'src/lib/*'
+    }
+  },
+  vitePlugin: {
+    inspector: true,
+  },
 };
 
 export default config;

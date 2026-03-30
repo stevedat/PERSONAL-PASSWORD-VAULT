@@ -7,14 +7,10 @@
   "background_color": "#1a1a1a",
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
-  "categories": ["productivity", "utilities", "security"],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
+  "categories": [
+    "productivity",
+    "utilities",
+    "security"
   ],
   "icons": [
     {
