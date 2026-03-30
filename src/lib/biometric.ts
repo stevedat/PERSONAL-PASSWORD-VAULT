@@ -1,23 +1,38 @@
+import { Capacitor } from '@capacitor/core';
+import { NativeBiometric, BiometryType } from 'capacitor-native-biometric';
+
 /**
- * Biometric Authentication Engine for iOS PWA
+ * Biometric Authentication Engine for Android/iOS (Native) and Web PWA
  * Supports FaceID, TouchID, and device PIN
  */
-
 export class BiometricAuth {
   static isSupported() {
     if (typeof window === 'undefined') return false;
+    if (Capacitor.isNativePlatform()) return true;
     return 'credentials' in navigator && 'create' in navigator.credentials;
   }
 
   static async isAvailable() {
-    if (typeof window === 'undefined' || !this.isSupported()) return false;
+    if (typeof window === 'undefined') return false;
+    
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const result = await NativeBiometric.isAvailable();
+        return result.isAvailable;
+      } catch (error) {
+        console.error('Native Biometric check failed:', error);
+        return false;
+      }
+    }
+
+    if (!this.isSupported()) return false;
     
     try {
       // Check if WebAuthn is available
       const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
       return available;
     } catch (error) {
-      console.log('Biometric check failed:', error);
+      console.log('Web Biometric check failed:', error);
       return false;
     }
   }
@@ -25,6 +40,24 @@ export class BiometricAuth {
   static async register(username = 'pocketvault-user') {
     if (typeof window === 'undefined' || !await this.isAvailable()) {
       throw new Error('Biometric authentication not available');
+    }
+
+    if (Capacitor.isNativePlatform()) {
+      // For native, we just need to verify it works
+      try {
+        await NativeBiometric.verifyIdentity({
+          reason: "Kích hoạt xác thực sinh trắc học cho PocketVault",
+          title: "Xác thực sinh trắc học",
+          subtitle: "Vui lòng xác thực bản thân",
+          description: "Sử dụng vân tay hoặc khuôn mặt để bảo vệ dữ liệu của bạn"
+        });
+        
+        localStorage.setItem('pv_biometric_enabled', 'true');
+        return { success: true };
+      } catch (error) {
+        console.error('Native Biometric registration failed:', error);
+        throw new Error('Xác thực thất bại');
+      }
     }
 
     const challenge = crypto.getRandomValues(new Uint8Array(32));
@@ -47,13 +80,15 @@ export class BiometricAuth {
         userVerification: "required"
       },
       timeout: 60000,
-      attestation: "direct"
+      attestation: "direct" as AttestationConveyancePreference
     };
 
     try {
       const credential = await navigator.credentials.create({
         publicKey: publicKeyCredentialCreationOptions
-      });
+      }) as PublicKeyCredential;
+
+      if (!credential) throw new Error('Biometric registration failed');
 
       // Store credential ID for future authentication
       const credentialId = Array.from(new Uint8Array(credential.rawId))
@@ -79,6 +114,21 @@ export class BiometricAuth {
       throw new Error('Biometric authentication not available on server');
     }
     
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await NativeBiometric.verifyIdentity({
+          reason: "Truy cập kho mật khẩu của bạn",
+          title: "Xác thực",
+          subtitle: "PocketVault",
+          description: "Vui lòng quét để mở khóa"
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Native Biometric authentication failed:', error);
+        throw new Error('Xác thực không thành công');
+      }
+    }
+
     const credentialId = localStorage.getItem('pv_biometric_id');
     if (!credentialId || !await this.isAvailable()) {
       throw new Error('Biometric authentication not set up');
@@ -93,9 +143,9 @@ export class BiometricAuth {
       challenge,
       allowCredentials: [{
         id: credentialIdBuffer,
-        type: 'public-key',
+        type: 'public-key' as const,
       }],
-      userVerification: 'required',
+      userVerification: 'required' as UserVerificationRequirement,
       timeout: 60000,
     };
 
@@ -125,12 +175,25 @@ export class BiometricAuth {
     localStorage.removeItem('pv_biometric_enabled');
   }
 
-  static getBiometricType() {
+  static async getBiometricType() {
     if (typeof window === 'undefined') return 'Biometric';
-    // Detect device type for UI display
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const available = await NativeBiometric.isAvailable();
+        if (available.biometryType === BiometryType.FACE_ID) return 'FaceID';
+        if (available.biometryType === BiometryType.TOUCH_ID) return 'TouchID';
+        if (available.biometryType === BiometryType.FINGERPRINT) return 'Fingerprint';
+        if (available.biometryType === BiometryType.FACE_AUTHENTICATION) return 'FaceID';
+        return 'Biometric';
+      } catch (e) {
+        return 'Biometric';
+      }
+    }
+
+    // Detect device type for UI display in Web/PWA
     const userAgent = navigator.userAgent;
     if (/iPhone|iPad|iPod/.test(userAgent)) {
-      // Check for FaceID vs TouchID based on device model
       if (/iPhone1[0-9]|iPad/.test(userAgent)) {
         return 'FaceID';
       }
