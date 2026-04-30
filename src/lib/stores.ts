@@ -1,7 +1,8 @@
 import { writable, get } from "svelte/store";
-import { browser } from "$app/environment";
+import { browser, dev } from "$app/environment";
 import type { VaultItem } from "./types";
 import type { ReminderType } from "./reminders";
+import type { SyncStatus } from "./sync-engine";
 
 // --- Basic Stores ---
 export const isUnlocked = writable(false);
@@ -14,6 +15,10 @@ export const editingItem = writable<VaultItem | null>(null);
 export const biometricEnabled = writable(false);
 export const appState = writable("active"); // 'active', 'background', 'locked'
 export const showReminder = writable<ReminderType | null>(null);
+export const cloudSyncStatus = writable<SyncStatus>({
+  lastSync: browser ? parseInt(localStorage.getItem('pv_last_sync') || '0', 10) || null : null,
+  status: 'idle'
+});
 
 // --- App State and Auto-Lock ---
 
@@ -23,13 +28,13 @@ export const isCriticalOperation = writable(false);
 export function startCriticalOperation() {
   isCriticalOperation.set(true);
   clearTimeout(lockTimer); // Pause auto-lock during critical op
-  if (import.meta.env.DEV) console.log("[stores] Critical operation STARTED");
+  if (dev) console.log("[stores] Critical operation STARTED");
 }
 
 export function endCriticalOperation() {
   isCriticalOperation.set(false);
   resetAutoLock(); // Resume auto-lock
-  if (import.meta.env.DEV) console.log("[stores] Critical operation ENDED");
+  if (dev) console.log("[stores] Critical operation ENDED");
 }
 
 // Helper to get current state
@@ -51,12 +56,12 @@ let lastActivity = Date.now();
 export function lock(reason = "manual") {
   // Prevent locking during critical operations (like saving)
   if (get(isCriticalOperation)) {
-    if (import.meta.env.DEV)
+    if (dev)
       console.log("[stores] Lock prevented by critical operation");
     return;
   }
 
-  if (import.meta.env.DEV) console.log(`[stores] Locking vault (reason: ${reason})`);
+  if (dev) console.log(`[stores] Locking vault (reason: ${reason})`);
 
   isUnlocked.set(false);
   vaultItems.set([]);

@@ -25,62 +25,129 @@ function arrayBufferToWordArray(arrayBuffer: ArrayBuffer): lib.WordArray {
 
 // This class performs cryptographic operations directly on the main thread.
 export class CryptoEngine {
-  private static readonly KEY_SIZE = 256 / 32; // 256 bits
+  private static readonly KEY_SIZE = 256 / 32; // 256 bits (for crypto-js)
+  private static readonly KEY_LENGTH = 256; // bits (for WebCrypto)
   private static readonly ITERATIONS = 600000;
 
-  private static deriveKey(password: string, salt: lib.WordArray): lib.WordArray {
-    return PBKDF2(password, salt, {
+  // Modern WebCrypto Key Derivation
+  private static async deriveWebCryptoKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+    const encoder = new TextEncoder();
+    const passwordKey = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(password),
+      "PBKDF2",
+      false,
+      ["deriveKey", "deriveBits"]
+    );
+
+    return crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt: salt,
+        iterations: this.ITERATIONS,
+        hash: "SHA-256",
+      },
+      passwordKey,
+      { name: "AES-GCM", length: this.KEY_LENGTH },
+      false,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  // Legacy Crypto-JS Key Derivation (for backward compatibility during decryption)
+  private static async deriveLegacyKey(password: string, salt: ArrayBuffer): Promise<lib.WordArray> {
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      try {
+        const encoder = new TextEncoder();
+        const passwordKey = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(password),
+          "PBKDF2",
+          false,
+          ["deriveBits"]
+        );
+        const bits = await crypto.subtle.deriveBits(
+          {
+            name: "PBKDF2",
+            salt: salt,
+            iterations: this.ITERATIONS,
+            hash: "SHA-256",
+          },
+          passwordKey,
+          this.KEY_SIZE * 32
+        );
+        return arrayBufferToWordArray(bits);
+      } catch (e) {
+        console.warn("WebCrypto PBKDF2 failed, falling back to crypto-js", e);
+      }
+    }
+    
+    return PBKDF2(password, arrayBufferToWordArray(salt), {
       keySize: this.KEY_SIZE,
       iterations: this.ITERATIONS
     });
   }
 
   static generateId(): string {
-    return lib.WordArray.random(128 / 8).toString();
+    return crypto.randomUUID();
   }
 
-  static async encrypt(items: VaultItem[], password: string): Promise<string> {
-    const salt = lib.WordArray.random(128 / 8);
-    const key = this.deriveKey(password, salt);
-    const iv = lib.WordArray.random(128 / 8);
+  static async encrypt(items: VaultItem[], password: string): Promise<EncryptedVault> {
+    // We now use pure WebCrypto AES-GCM (Version 2)
+    const salt = crypto.getRandomValues(new Uint8Array(32));
+    const iv = crypto.getRandomValues(new Uint8Array(12)); // GCM standard IV length
+    
+    const key = await this.deriveWebCryptoKey(password, salt);
+    
+    const encoder = new TextEncoder();
+    const encodedData = encoder.encode(JSON.stringify(items));
+    
+    const encryptedData = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      encodedData
+    );
 
-    const encrypted = AES.encrypt(JSON.stringify(items), key, { iv });
-    const encryptedVault: EncryptedVault = {
-      data: wordArrayToArrayBuffer(encrypted.ciphertext),
-      salt: wordArrayToArrayBuffer(salt),
-      iv: wordArrayToArrayBuffer(iv)
+    return {
+      data: encryptedData,
+      salt: salt.buffer,
+      iv: iv.buffer,
+      version: 2
     };
-
-    return JSON.stringify(encryptedVault, (k, v) => {
-      if (v instanceof ArrayBuffer) {
-        return { type: 'Buffer', data: Array.from(new Uint8Array(v)) };
-      }
-      return v;
-    });
   }
 
-  static async decrypt(encryptedVaultJSON: string, password: string): Promise<VaultItem[]> {
-    const encryptedVault: EncryptedVault = JSON.parse(encryptedVaultJSON, (k, v) => {
-      if (v && v.type === 'Buffer') {
-        return new Uint8Array(v.data).buffer;
+  static async decrypt(encryptedVault: EncryptedVault, password: string): Promise<VaultItem[]> {
+    if (encryptedVault.version === 2) {
+      // V2: Pure WebCrypto AES-GCM
+      const salt = new Uint8Array(encryptedVault.salt);
+      const iv = new Uint8Array(encryptedVault.iv);
+      const key = await this.deriveWebCryptoKey(password, salt);
+      
+      const decryptedData = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        key,
+        encryptedVault.data
+      );
+      
+      const decoder = new TextDecoder();
+      return JSON.parse(decoder.decode(decryptedData));
+    } else {
+      // Legacy V1: crypto-js AES-CBC
+      const key = await this.deriveLegacyKey(password, encryptedVault.salt);
+      const ciphertext = arrayBufferToWordArray(encryptedVault.data);
+      const iv = arrayBufferToWordArray(encryptedVault.iv);
+
+      const decrypted = AES.decrypt({ ciphertext: ciphertext } as lib.CipherParams, key, { iv });
+      const decryptedText = decrypted.toString(enc.Utf8);
+      
+      if (!decryptedText) {
+        throw new Error('Decryption failed. Invalid password?');
       }
-      return v;
-    });
-
-    const salt = arrayBufferToWordArray(encryptedVault.salt);
-    const iv = arrayBufferToWordArray(encryptedVault.iv);
-    const key = this.deriveKey(password, salt);
-    const ciphertext = arrayBufferToWordArray(encryptedVault.data);
-
-    const decrypted = AES.decrypt({ ciphertext: ciphertext } as lib.CipherParams, key, { iv });
-    const decryptedText = decrypted.toString(enc.Utf8);
-    if (!decryptedText) {
-      throw new Error('Decryption failed. Invalid password?');
+      return JSON.parse(decryptedText);
     }
-    return JSON.parse(decryptedText);
   }
 
-  static async verifyPassword(encryptedVault: string, password: string): Promise<boolean> {
+  static async verifyPassword(encryptedVault: EncryptedVault, password: string): Promise<boolean> {
     try {
       await this.decrypt(encryptedVault, password);
       return true;

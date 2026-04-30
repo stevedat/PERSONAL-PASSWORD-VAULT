@@ -10,3 +10,8 @@ ios/App/build/
 electron/resources/icon.icns
 electron/resources/icon.ico
 electron/resources/icon.png
+
+# Environment variables
+.env
+.env.local
+.env.*.local

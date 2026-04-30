@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { NativeBiometric, BiometryType } from 'capacitor-native-biometric';
+import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
 
 /**
  * Biometric Authentication Engine for Android/iOS (Native) and Web PWA
@@ -169,10 +170,38 @@ export class BiometricAuth {
     return localStorage.getItem('pv_biometric_enabled') === 'true';
   }
 
-  static disable() {
+  static async disable() {
     if (typeof window === 'undefined') return;
     localStorage.removeItem('pv_biometric_id');
     localStorage.removeItem('pv_biometric_enabled');
+    
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await SecureStoragePlugin.remove({ key: 'pv_master_key' });
+      } catch (e) {
+        console.error('Failed to remove master key from secure storage', e);
+      }
+    }
+  }
+
+  static async setSecureMasterKey(password: string) {
+    if (!Capacitor.isNativePlatform()) return;
+    try {
+      await SecureStoragePlugin.set({ key: 'pv_master_key', value: password });
+    } catch (e) {
+      console.error('Failed to save master key to secure storage', e);
+    }
+  }
+
+  static async getSecureMasterKey(): Promise<string | null> {
+    if (!Capacitor.isNativePlatform()) return null;
+    try {
+      const result = await SecureStoragePlugin.get({ key: 'pv_master_key' });
+      return result.value;
+    } catch (e) {
+      console.error('Failed to get master key from secure storage', e);
+      return null;
+    }
   }
 
   static async getBiometricType() {

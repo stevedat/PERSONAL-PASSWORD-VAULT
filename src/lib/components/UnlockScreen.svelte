@@ -86,10 +86,11 @@
     try {
       await BiometricAuth.authenticate();
 
-      // Biometric auth successful, but we still need master password for decryption
-      // In a real implementation, you'd store an encrypted master key
-      // For now, we'll prompt for password after biometric success
-      const savedPassword = sessionStorage.getItem("pv_temp_password");
+      let savedPassword = sessionStorage.getItem("pv_temp_password");
+      if (!savedPassword) {
+        savedPassword = await BiometricAuth.getSecureMasterKey();
+      }
+
       if (savedPassword) {
         masterPassword = savedPassword;
         await unlock();
@@ -114,9 +115,10 @@
       await BiometricAuth.register();
       biometricEnabled.set(true);
 
-      // Temporarily store password for future biometric unlocks
-      // In production, you'd encrypt this with a device-specific key
+      // Temporarily store password for future biometric unlocks (Web PWA)
       sessionStorage.setItem("pv_temp_password", masterPassword);
+      // Securely store it in Native Keychain/Keystore
+      await BiometricAuth.setSecureMasterKey(masterPassword);
 
       showBiometricSetup = false;
       await unlock();

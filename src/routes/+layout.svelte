@@ -5,6 +5,7 @@
   import { initializeHapticFeedback } from '$lib/haptic';
   import { Capacitor } from '@capacitor/core';
   import { App } from '@capacitor/app';
+  import DialogManager from '$lib/components/DialogManager.svelte';
 
   onMount(async () => {
     // Load theme preference
@@ -55,6 +56,7 @@
 
 <main class="min-h-screen transition-all duration-300 pb-safe-offset-4">
   <slot />
+  <DialogManager />
 </main>
 
 <style>

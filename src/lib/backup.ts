@@ -36,7 +36,7 @@ export interface VaultExportFile {
 
 export class BackupManager {
   private static readonly APP_NAME = "PocketVault";
-  private static readonly VERSION = 1;
+  private static readonly VERSION = 2;
 
   /**
    * Export vault with enhanced metadata and security
@@ -67,7 +67,7 @@ export class BackupManager {
 
       // Create export file
       const exportFile: VaultExportFile = {
-        version: this.VERSION,
+        version: encryptedVault.version || this.VERSION,
         app: this.APP_NAME,
         created: new Date().toISOString(),
         platform: this.detectPlatform(),
@@ -138,7 +138,7 @@ export class BackupManager {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const exportFile: VaultExportFile = {
-      version: this.VERSION,
+      version: encryptedVault.version || this.VERSION,
       app: this.APP_NAME,
       created: new Date().toISOString(),
       platform: this.detectPlatform(),
@@ -189,6 +189,7 @@ export class BackupManager {
         data: this.base64ToArrayBuffer(exportFile.data),
         iv: this.base64ToArrayBuffer(exportFile.iv),
         salt: this.base64ToArrayBuffer(exportFile.salt),
+        version: exportFile.version
       };
 
       const items = await CryptoEngine.decrypt(encryptedVault, masterPassword);

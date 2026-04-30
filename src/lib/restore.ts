@@ -31,7 +31,7 @@ export interface ValidationResult {
 
 export class RestoreManager {
   private static readonly APP_NAME = "PocketVault";
-  private static readonly SUPPORTED_VERSIONS = [1];
+  private static readonly SUPPORTED_VERSIONS = [1, 2];
 
   /**
    * Import vault from file
@@ -75,6 +75,7 @@ export class RestoreManager {
           data: this.base64ToArrayBuffer(exportFile.data),
           iv: this.base64ToArrayBuffer(exportFile.iv),
           salt: this.base64ToArrayBuffer(exportFile.salt),
+          version: exportFile.version
         };
       } catch (decodeError) {
         console.error("[RestoreManager] Base64 decode error:", decodeError);

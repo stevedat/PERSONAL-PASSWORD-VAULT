@@ -25,8 +25,11 @@
     initializeActivityTracking,
     cleanup,
     startCriticalOperation,
+
     endCriticalOperation,
+    cloudSyncStatus,
   } from "$lib/stores";
+  import { SyncEngine } from "$lib/sync-engine";
   import { CryptoEngine } from "$lib/crypto";
   import { BiometricAuth } from "$lib/biometric";
   import { BackupManager } from "$lib/backup";
@@ -37,6 +40,8 @@
   import { NativeApp } from "$lib/native";
   import GuideContent from "$lib/components/GuideContent.svelte";
   import { language } from "$lib/language";
+  import { checkAndStartTour } from "$lib/tourStore";
+  import { Dialog } from "$lib/dialogStore";
   import {
     LayoutGrid,
     Search,
@@ -46,8 +51,6 @@
     Key,
     User,
     Settings,
-    Import,
-    Export,
     Menu,
     X,
     MessageSquare,
@@ -89,9 +92,15 @@
     Briefcase,
     Gamepad2,
     Folder,
+    Cloud,
+    CloudOff,
+    CloudCog
   } from "lucide-svelte";
   import PrivacyContent from "$lib/components/PrivacyContent.svelte";
   import TermsContent from "$lib/components/TermsContent.svelte";
+  import CloudSyncModal from "$lib/components/CloudSyncModal.svelte";
+
+  let showCloudSync = false;
 
   /** @type {any} */
   export let data = undefined;
@@ -108,6 +117,7 @@
   let showExportTooltip = false;
   let showImportTooltip = false;
   let globalHandlerAttached = false;
+  let biometricType = "Biometric";
 
   const handleGlobalClick = () => {
     showExportTooltip = false;
@@ -897,20 +907,82 @@
     darkMode.update((d) => !d);
   }
 
-  function toggleBiometric() {
+  async function toggleBiometric() {
     if ($biometricEnabled) {
-      BiometricAuth.disable();
+      await BiometricAuth.disable();
       biometricEnabled.set(false);
     } else {
-      // Would trigger biometric setup flow
-      alert("Biometric setup would be triggered here");
+      const password = await Dialog.prompt("Xác thực", "Vui lòng nhập mật khẩu chính (Master Password) để kích hoạt sinh trắc học", "", "password");
+      if (password) {
+        try {
+          // Verify password by attempting to load the vault
+          await StorageEngine.loadVault(password);
+          
+          await BiometricAuth.register();
+          await BiometricAuth.setSecureMasterKey(password);
+          biometricEnabled.set(true);
+          await Dialog.alert("Thành công", "Đã bật xác thực sinh trắc học");
+        } catch (e) {
+          await Dialog.alert("Lỗi", "Mật khẩu không đúng hoặc thiết lập bị hủy");
+        }
+      }
     }
+  }
+
+  async function handleCloudSync() {
+    const isAuth = await SyncEngine.isAuthenticated();
+    if (!isAuth) {
+      // Show cloud sync login modal instead of alert
+      showCloudSync = true;
+      return;
+    }
+
+    // Already authenticated — trigger sync
+    await performCloudSync();
+  }
+
+  async function performCloudSync() {
+    let password = sessionStorage.getItem("pv_master_key");
+    if (!password) {
+      password = await Dialog.prompt("Xác thực", "Nhập Master Password để mã hóa/giải mã và đồng bộ", "", "password");
+      if (!password) return;
+      try {
+        await StorageEngine.loadVault(password);
+      } catch (e) {
+        await Dialog.alert("Lỗi", "Mật khẩu không đúng");
+        return;
+      }
+    }
+
+    try {
+      cloudSyncStatus.update(s => ({ ...s, status: 'syncing' }));
+      const mergedItems = await SyncEngine.pullAndMerge(password);
+      vaultItems.set(mergedItems);
+      cloudSyncStatus.update(s => ({ ...s, status: 'idle', lastSync: Date.now() }));
+      successMessage = "Đồng bộ đám mây thành công!";
+      clearTimeout(successTimeout);
+      successTimeout = setTimeout(() => (successMessage = ""), 3000);
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : "Unknown error";
+      console.error(e);
+      cloudSyncStatus.update(s => ({ ...s, status: 'error', error: errMsg }));
+      await Dialog.alert("Lỗi Đồng Bộ", "Không thể đồng bộ: " + errMsg);
+    }
+  }
+
+  async function onCloudAuthenticated() {
+    // After login, auto-trigger sync
+    showCloudSync = false;
+    await performCloudSync();
   }
 
   // Initialize enhanced monitoring and activity tracking
   onMount(async () => {
     // Initialize native app features (iOS/Android)
     await NativeApp.initialize();
+    
+    // Fetch biometric type
+    biometricType = await BiometricAuth.getBiometricType();
 
     // Initialize logging
     logAppInit();
@@ -1034,7 +1106,7 @@
                   style="display: flex; align-items: center; justify-content: center;"
                 >
                   <svelte:component
-                    this={BiometricAuth.getBiometricType() === "FaceID"
+                    this={biometricType === "FaceID"
                       ? ScanFace
                       : Fingerprint}
                     size={20}
@@ -1043,6 +1115,22 @@
                 </span>
               </button>
             {/if}
+            <button
+              class="glass-btn haptic-light"
+              style="padding: 0.625rem; border-radius: 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; position: relative;"
+              on:click={handleCloudSync}
+              title={$cloudSyncStatus.status === 'syncing' ? 'Syncing...' : 'Cloud Sync'}
+            >
+              <span style="display: flex; align-items: center; justify-content: center;">
+                {#if $cloudSyncStatus.status === 'syncing'}
+                  <div class="glass-spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>
+                {:else if $cloudSyncStatus.status === 'error'}
+                  <CloudOff size={20} strokeWidth={1.5} color="#ef4444" />
+                {:else}
+                  <Cloud size={20} strokeWidth={1.5} color={$cloudSyncStatus.lastSync ? "#3b82f6" : "currentColor"} />
+                {/if}
+              </span>
+            </button>
             <div style="position: relative;">
               <button
                 class="glass-btn haptic-light"
@@ -1527,3 +1615,5 @@
     transform: scale(0.94);
   }
 </style>
+
+<CloudSyncModal bind:show={showCloudSync} on:authenticated={onCloudAuthenticated} />

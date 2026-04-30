@@ -2,6 +2,7 @@
   import { ReminderSystem } from "../reminders";
   import { showReminder } from "../stores";
   import { tick } from "svelte";
+  import { Dialog } from "../dialogStore";
 
   /** @type {import('../reminders').ReminderType | null} */
   export let reminderType = null;
@@ -19,8 +20,8 @@
     showReminder.set(null);
   }
 
-  function handleNever() {
-    if (confirm("Are you sure you want to disable backup reminders?")) {
+  async function handleNever() {
+    if (await Dialog.confirm("Tắt Nhắc nhở", "Bạn có chắc chắn muốn tắt thông báo nhắc nhở sao lưu không?")) {
       ReminderSystem.dismissReminder("never");
       showReminder.set(null);
     }

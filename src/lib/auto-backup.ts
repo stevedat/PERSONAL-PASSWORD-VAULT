@@ -21,6 +21,7 @@ export interface AutoBackupEntry {
     data: string;
     iv: string;
     salt: string;
+    version?: number;
   };
   itemCount: number;
   size: number;
@@ -119,6 +120,7 @@ export class AutoBackupService {
       data: this.arrayBufferToBase64(encryptedVault.data as ArrayBuffer),
       iv: this.arrayBufferToBase64(encryptedVault.iv as ArrayBuffer),
       salt: this.arrayBufferToBase64(encryptedVault.salt as ArrayBuffer),
+      version: encryptedVault.version
     };
 
     // Create backup entry
@@ -247,6 +249,7 @@ export class AutoBackupService {
               data: this.base64ToArrayBuffer(entry.vault.data),
               iv: this.base64ToArrayBuffer(entry.vault.iv),
               salt: this.base64ToArrayBuffer(entry.vault.salt),
+              version: entry.vault.version
             };
 
             // Decrypt
