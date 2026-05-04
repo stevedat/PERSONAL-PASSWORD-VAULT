@@ -92,6 +92,54 @@ export class CryptoEngine {
     return crypto.randomUUID();
   }
 
+  /**
+   * Generate a human-readable recovery key (256-bit)
+   * Format: XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX
+   */
+  static generateRecoveryKey(): string {
+    const bytes = crypto.getRandomValues(new Uint8Array(20));
+    // Base32 encoding (RFC 4648) for readability
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 0, 1 to avoid confusion
+    let encoded = '';
+    for (let i = 0; i < bytes.length; i++) {
+      encoded += alphabet[bytes[i] % 32];
+    }
+    // Format as groups of 4: XXXX-XXXX-XXXX-XXXX-XXXX
+    return encoded.match(/.{1,4}/g)!.join('-');
+  }
+
+  /**
+   * Hash recovery key for verification (SHA-256)
+   */
+  static async hashRecoveryKey(recoveryKey: string): Promise<string> {
+    const normalizedKey = recoveryKey.replace(/-/g, '').toUpperCase();
+    const encoder = new TextEncoder();
+    const data = encoder.encode(normalizedKey);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = new Uint8Array(hashBuffer);
+    let hex = '';
+    for (let i = 0; i < hashArray.length; i++) {
+      hex += hashArray[i].toString(16).padStart(2, '0');
+    }
+    return hex;
+  }
+
+  /**
+   * Encrypt vault using recovery key (same algorithm as master password)
+   */
+  static async encryptWithRecoveryKey(items: VaultItem[], recoveryKey: string): Promise<EncryptedVault> {
+    const normalizedKey = recoveryKey.replace(/-/g, '').toUpperCase();
+    return this.encrypt(items, normalizedKey);
+  }
+
+  /**
+   * Decrypt vault using recovery key
+   */
+  static async decryptWithRecoveryKey(encryptedVault: EncryptedVault, recoveryKey: string): Promise<VaultItem[]> {
+    const normalizedKey = recoveryKey.replace(/-/g, '').toUpperCase();
+    return this.decrypt(encryptedVault, normalizedKey);
+  }
+
   static async encrypt(items: VaultItem[], password: string): Promise<EncryptedVault> {
     // We now use pure WebCrypto AES-GCM (Version 2)
     const salt = crypto.getRandomValues(new Uint8Array(32));

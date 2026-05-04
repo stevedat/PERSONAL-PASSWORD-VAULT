@@ -59,11 +59,15 @@
 </script>
 
 {#if $Dialog}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="dialog-backdrop"
     transition:fade={{ duration: 200 }}
     on:click={handleCancel}
   >
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="dialog-content glass"
       transition:fly={{ y: 20, duration: 300 }}

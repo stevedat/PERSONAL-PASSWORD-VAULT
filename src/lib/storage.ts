@@ -46,7 +46,49 @@ export class StorageEngine {
     return adapter.hasVault();
   }
 
-  // Backup and Restore methods can remain here or move to BackupManager
+  // --- Recovery Key Methods ---
+
+  static async saveRecoveryData(
+    items: VaultItem[],
+    recoveryKey: string,
+    passwordHint?: string
+  ): Promise<void> {
+    const adapter = await this.getAdapter();
+    if (adapter instanceof IndexedDBAdapter) {
+      await adapter.saveRecoveryData(items, recoveryKey, passwordHint);
+    }
+  }
+
+  static async getRecoveryData(): Promise<{
+    recoveryKeyHash: string;
+    passwordHint: string | null;
+    vault: { data: ArrayBuffer; iv: ArrayBuffer; salt: ArrayBuffer; version?: number };
+    timestamp: number;
+  } | null> {
+    const adapter = await this.getAdapter();
+    if (adapter instanceof IndexedDBAdapter) {
+      return adapter.getRecoveryData();
+    }
+    return null;
+  }
+
+  static async hasRecoveryData(): Promise<boolean> {
+    const adapter = await this.getAdapter();
+    if (adapter instanceof IndexedDBAdapter) {
+      return adapter.hasRecoveryData();
+    }
+    return false;
+  }
+
+  static async recoverVault(recoveryKey: string, newMasterPassword: string): Promise<VaultItem[]> {
+    const adapter = await this.getAdapter();
+    if (adapter instanceof IndexedDBAdapter) {
+      return adapter.recoverVault(recoveryKey, newMasterPassword);
+    }
+    throw new Error("Recovery not supported on this platform");
+  }
+
+  // Backup and Restore methods
   static async exportVault(masterPassword: string): Promise<Blob> {
     const { BackupManager } = await import("./backup");
     const items = await this.loadVault(masterPassword);
@@ -59,3 +101,4 @@ export class StorageEngine {
     return result.items;
   }
 }
+

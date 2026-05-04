@@ -1,5 +1,6 @@
 import type { VaultItem, EncryptedVault } from "./crypto";
 import { CryptoEngine } from "./crypto";
+import { DB_NAME, DB_VERSION, handleDBUpgrade } from "./indexeddb-adapter";
 
 export interface AutoBackup {
   id: string;
@@ -28,7 +29,6 @@ export interface AutoBackupEntry {
 }
 
 export class AutoBackupService {
-  private static readonly DB_NAME = "PocketVaultDB";
   private static readonly STORE_NAME = "auto-backups";
   private static readonly CONFIG_KEY = "pv_autobackup_config";
   private static readonly DEFAULT_MAX_BACKUPS = 3;
@@ -36,7 +36,7 @@ export class AutoBackupService {
   private static db: IDBDatabase | null = null;
 
   /**
-   * Initialize auto-backup database
+   * Initialize auto-backup database (uses shared DB version + upgrade handler)
    */
   private static async openDB(): Promise<IDBDatabase> {
     if (typeof window === "undefined") {
@@ -46,7 +46,7 @@ export class AutoBackupService {
     if (this.db) return this.db;
 
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.DB_NAME, 2);
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
@@ -56,14 +56,7 @@ export class AutoBackupService {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-
-        // Create auto-backups store if it doesn't exist
-        if (!db.objectStoreNames.contains(this.STORE_NAME)) {
-          const store = db.createObjectStore(this.STORE_NAME, {
-            keyPath: "id",
-          });
-          store.createIndex("timestamp", "timestamp", { unique: false });
-        }
+        handleDBUpgrade(db);
       };
     });
   }

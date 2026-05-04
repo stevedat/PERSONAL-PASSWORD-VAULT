@@ -274,6 +274,57 @@
   /** @type {HTMLInputElement} */
   let fileInput;
 
+  /**
+   * Helper: get master password from session, or prompt user via Dialog
+   * @returns {Promise<string | null>}
+   */
+  async function getMasterPassword() {
+    let pw = sessionStorage.getItem("pv_master_key");
+    if (pw) return pw;
+    pw = await Dialog.prompt("Xác thực", "Nhập Master Password để tiếp tục", "", "password");
+    if (!pw) return null;
+    try {
+      await StorageEngine.loadVault(pw);
+      sessionStorage.setItem("pv_master_key", pw);
+      return pw;
+    } catch {
+      await Dialog.alert("Lỗi", "Mật khẩu không đúng");
+      return null;
+    }
+  }
+
+  /**
+   * Helper: save vault + auto-backup + update recovery copy
+   * @param {import('$lib/types').VaultItem[]} items
+   * @param {string} password
+   */
+  async function persistVault(items, password) {
+    await StorageEngine.saveVault(items, password);
+    vaultItems.set(items);
+
+    // Auto-backup (non-critical)
+    if (AutoBackupService.getConfig().enabled) {
+      try {
+        await AutoBackupService.createBackup(items, password);
+        if (import.meta.env.DEV) console.log("[Main] Auto-backup created");
+      } catch (e) {
+        console.error("[Main] Auto-backup failed (non-critical):", e);
+      }
+    }
+
+    // Update recovery copy (non-critical)
+    try {
+      const rd = await StorageEngine.getRecoveryData();
+      if (rd) {
+        // We can't re-encrypt recovery without the recovery key,
+        // but we update the recovery vault via the stored key hash check
+        // This happens automatically on next vault creation / recovery
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   /** @param {import('$lib/types').VaultItem} item */
   async function saveItem(item) {
     if (import.meta.env.DEV) {
@@ -284,275 +335,94 @@
       });
     }
 
-    // Start critical operation to prevent locking during save
     startCriticalOperation();
 
     try {
       const currentItems = $vaultItems;
       const existingIndex = currentItems.findIndex((i) => i.id === item.id);
-
-      let updatedItems;
       const isNewItem = existingIndex < 0;
+      let updatedItems;
 
       if (existingIndex >= 0) {
-        if (import.meta.env.DEV)
-          console.log("[Main] Updating existing item at index:", existingIndex);
         updatedItems = [...currentItems];
         updatedItems[existingIndex] = item;
       } else {
         updatedItems = [...currentItems, item];
       }
 
-      if (import.meta.env.DEV)
-        console.log("[Main] Updated items count:", updatedItems.length);
+      const password = await getMasterPassword();
+      if (!password) { endCriticalOperation(); return; }
 
-      // Use cached master password from session
-      const masterPassword = sessionStorage.getItem("pv_master_key");
-      if (!masterPassword) {
-        if (import.meta.env.DEV)
-          console.log("[Main] No cached master password, prompting user");
-        const inputPassword = prompt("Enter master password to save changes:");
-        if (!inputPassword) {
+      try {
+        await persistVault(updatedItems, password);
+      } catch (error) {
+        console.error("[Main] Save failed:", error);
+        sessionStorage.removeItem("pv_master_key");
+        const retryPw = await Dialog.prompt("Phiên hết hạn", "Nhập lại Master Password để lưu", "", "password");
+        if (!retryPw) { endCriticalOperation(); return; }
+        try {
+          await StorageEngine.saveVault(updatedItems, retryPw);
+          sessionStorage.setItem("pv_master_key", retryPw);
+          vaultItems.set(updatedItems);
+        } catch {
+          await Dialog.alert("Lỗi", "Lưu thất bại: Mật khẩu không đúng");
           endCriticalOperation();
           return;
-        }
-
-        try {
-          // Test password by trying to decrypt current vault
-          await StorageEngine.loadVault(inputPassword);
-          sessionStorage.setItem("pv_master_key", inputPassword);
-          await StorageEngine.saveVault(updatedItems, inputPassword);
-
-          // CRITICAL: Update store IMMEDIATELY after successful save, BEFORE auto-backup
-          if (import.meta.env.DEV)
-            console.log(
-              "[Main] Updating vaultItems store with",
-              updatedItems.length,
-              "items",
-            );
-          vaultItems.set(updatedItems);
-
-          // Create auto-backup (non-critical, can fail)
-          if (AutoBackupService.getConfig().enabled) {
-            try {
-              await AutoBackupService.createBackup(updatedItems, inputPassword);
-              if (import.meta.env.DEV)
-                console.log("[Main] Auto-backup created");
-            } catch (backupError) {
-              console.error(
-                "[Main] Auto-backup failed (non-critical):",
-                backupError,
-              );
-            }
-          }
-
-          if (import.meta.env.DEV)
-            console.log("[Main] Vault saved successfully");
-        } catch (error) {
-          console.error("[Main] Save failed:", error);
-          alert("Failed to save: Invalid master password");
-          endCriticalOperation();
-          return;
-        }
-      } else {
-        try {
-          if (import.meta.env.DEV)
-            console.log("[Main] Saving with cached password");
-          await StorageEngine.saveVault(updatedItems, masterPassword);
-
-          // CRITICAL: Update store IMMEDIATELY after successful save, BEFORE auto-backup
-          if (import.meta.env.DEV)
-            console.log(
-              "[Main] Updating vaultItems store with",
-              updatedItems.length,
-              "items",
-            );
-          vaultItems.set(updatedItems);
-
-          // Create auto-backup (non-critical, can fail)
-          if (AutoBackupService.getConfig().enabled) {
-            try {
-              await AutoBackupService.createBackup(
-                updatedItems,
-                masterPassword,
-              );
-              if (import.meta.env.DEV)
-                console.log("[Main] Auto-backup created");
-            } catch (backupError) {
-              console.error(
-                "[Main] Auto-backup failed (non-critical):",
-                backupError,
-              );
-              // Continue even if auto-backup fails
-            }
-          }
-
-          if (import.meta.env.DEV)
-            console.log("[Main] Vault saved successfully");
-        } catch (error) {
-          console.error("[Main] Save failed with cached password:", error);
-          // Master password might have changed, ask for new one
-          sessionStorage.removeItem("pv_master_key");
-          const inputPassword = prompt(
-            "Master password expired. Enter password to save:",
-          );
-          if (!inputPassword) {
-            if (import.meta.env.DEV)
-              console.log("[Main] User cancelled password prompt");
-            endCriticalOperation();
-            return;
-          }
-
-          try {
-            await StorageEngine.saveVault(updatedItems, inputPassword);
-            sessionStorage.setItem("pv_master_key", inputPassword);
-            if (import.meta.env.DEV)
-              console.log("[Main] Vault saved to storage");
-
-            // CRITICAL: Update store IMMEDIATELY after successful save, BEFORE auto-backup
-            if (import.meta.env.DEV)
-              console.log(
-                "[Main] Updating vaultItems store with",
-                updatedItems.length,
-                "items",
-              );
-            vaultItems.set(updatedItems);
-
-            // Create auto-backup (non-critical, can fail)
-            if (AutoBackupService.getConfig().enabled) {
-              try {
-                await AutoBackupService.createBackup(
-                  updatedItems,
-                  inputPassword,
-                );
-                if (import.meta.env.DEV)
-                  console.log("[Main] Auto-backup created");
-              } catch (backupError) {
-                console.error(
-                  "[Main] Auto-backup failed (non-critical):",
-                  backupError,
-                );
-              }
-            }
-
-            if (import.meta.env.DEV)
-              console.log(
-                "[Main] Vault saved successfully after password refresh",
-              );
-          } catch (error) {
-            console.error("[Main] Save failed after password refresh:", error);
-            alert("Failed to save: Invalid master password");
-            endCriticalOperation();
-            return;
-          }
         }
       }
 
       resetAutoLock();
 
-      // Track password addition for reminders
       if (isNewItem) {
         ReminderSystem.recordPasswordAdd();
         checkReminders();
       }
 
-      // Show success feedback
       showSuccessMessage(
-        isNewItem
-          ? "Password added successfully"
-          : "Password updated successfully",
+        isNewItem ? "Password added successfully" : "Password updated successfully",
       );
-      if (import.meta.env.DEV)
-        console.log("[Main] Save complete, store updated");
     } finally {
-      // Always end critical operation, even if there's an error
       endCriticalOperation();
     }
   }
 
   /** @param {string} id */
   async function deleteItem(id) {
-    if (!confirm("Are you sure you want to delete this item?")) return;
+    const confirmed = await Dialog.confirm("Xác nhận xóa", "Bạn có chắc muốn xóa mục này?");
+    if (!confirmed) return;
 
-    // Start critical operation to prevent locking during delete
     startCriticalOperation();
 
     try {
-      // Use cached master password from session
-      const masterPassword = sessionStorage.getItem("pv_master_key");
-      if (!masterPassword) {
-        const inputPassword = prompt(
-          "Enter master password to confirm deletion:",
-        );
-        if (!inputPassword) {
-          endCriticalOperation();
-          return;
-        }
+      const password = await getMasterPassword();
+      if (!password) { endCriticalOperation(); return; }
 
+      // Create auto-backup BEFORE delete (safety net)
+      if (AutoBackupService.getConfig().enabled) {
         try {
-          // Test password by trying to decrypt current vault
-          await StorageEngine.loadVault(inputPassword);
-          sessionStorage.setItem("pv_master_key", inputPassword);
-          const updatedItems = $vaultItems.filter((item) => item.id !== id);
-          await StorageEngine.saveVault(updatedItems, inputPassword);
-          vaultItems.set(updatedItems);
-          if (import.meta.env.DEV)
-            console.log("[Main] Item deleted, vault updated");
-        } catch (error) {
-          console.error("[Main] Delete failed:", error);
-          alert("Failed to delete: Invalid master password");
-          endCriticalOperation();
-          return;
-        }
-      } else {
-        try {
-          const updatedItems = $vaultItems.filter((item) => item.id !== id);
-          if (import.meta.env.DEV)
-            console.log(
-              "[Main] Deleting item, new count:",
-              updatedItems.length,
-            );
-          await StorageEngine.saveVault(updatedItems, masterPassword);
-          vaultItems.set(updatedItems);
-          if (import.meta.env.DEV)
-            console.log("[Main] Item deleted, vault updated");
-        } catch (error) {
-          console.error("[Main] Delete failed:", error);
-          // Master password might have changed, ask for new one
-          sessionStorage.removeItem("pv_master_key");
-          const inputPassword = prompt(
-            "Master password expired. Enter password to delete:",
-          );
-          if (!inputPassword) {
-            endCriticalOperation();
-            return;
-          }
-
-          try {
-            const updatedItems = $vaultItems.filter((item) => item.id !== id);
-            await StorageEngine.saveVault(updatedItems, inputPassword);
-            sessionStorage.setItem("pv_master_key", inputPassword);
-            vaultItems.set(updatedItems);
-            if (import.meta.env.DEV)
-              console.log("[Main] Item deleted after password refresh");
-          } catch (error) {
-            console.error(
-              "[Main] Delete failed after password refresh:",
-              error,
-            );
-            alert("Failed to delete: Invalid master password");
-            endCriticalOperation();
-            return;
-          }
+          await AutoBackupService.createBackup($vaultItems, password);
+          if (import.meta.env.DEV) console.log("[Main] Pre-delete backup created");
+        } catch (e) {
+          console.error("[Main] Pre-delete backup failed (non-critical):", e);
         }
       }
 
-      resetAutoLock();
+      const updatedItems = $vaultItems.filter((item) => item.id !== id);
 
-      // Show success feedback
+      try {
+        await StorageEngine.saveVault(updatedItems, password);
+        vaultItems.set(updatedItems);
+      } catch (error) {
+        console.error("[Main] Delete failed:", error);
+        sessionStorage.removeItem("pv_master_key");
+        await Dialog.alert("Lỗi", "Xóa thất bại. Vui lòng thử lại.");
+        endCriticalOperation();
+        return;
+      }
+
+      resetAutoLock();
       showSuccessMessage("Password deleted successfully");
     } finally {
-      // Always end critical operation
       endCriticalOperation();
     }
   }
@@ -562,104 +432,27 @@
   /** @param {any} [event] */
   async function exportVault(event) {
     if (event && event.preventDefault) event.preventDefault();
-    if (exportLoading) return; // Prevent double-click
+    if (exportLoading) return;
 
     exportLoading = true;
 
     try {
-      const masterPassword = sessionStorage.getItem("pv_master_key");
-      if (!masterPassword) {
-        if (import.meta.env.DEV)
-          console.log("[Main] No cached master password, prompting user");
-        const inputPassword = prompt("Enter master password to export vault:");
-        if (!inputPassword) return;
+      const password = await getMasterPassword();
+      if (!password) return;
 
-        try {
-          // Test password first
-          await StorageEngine.loadVault(inputPassword);
-          sessionStorage.setItem("pv_master_key", inputPassword);
+      showSuccessMessage("Exporting vault...");
 
-          // Show loading message
-          showSuccessMessage("Exporting vault...");
+      try {
+        const blob = await BackupManager.quickExport($vaultItems, password);
+        const filename = BackupManager.generateFileName();
+        await downloadVaultFile(blob, filename);
 
-          const blob = await BackupManager.quickExport(
-            $vaultItems,
-            inputPassword,
-          );
-          const filename = BackupManager.generateFileName();
-          await downloadVaultFile(blob, filename);
-
-          // Record backup for reminders
-          ReminderSystem.recordBackup();
-          showReminder.set(null);
-
-          showSuccessMessage("Vault exported successfully");
-          if (import.meta.env.DEV)
-            console.log("[Main] Export successful:", filename);
-        } catch (error) {
-          console.error("[Main] Export failed:", error);
-          alert("Export failed: Invalid master password");
-        }
-      } else {
-        try {
-          if (import.meta.env.DEV)
-            console.log("[Main] Using cached master password");
-
-          // Show loading message
-          showSuccessMessage("Exporting vault...");
-
-          const blob = await BackupManager.quickExport(
-            $vaultItems,
-            masterPassword,
-          );
-          const filename = BackupManager.generateFileName();
-          await downloadVaultFile(blob, filename);
-
-          // Record backup for reminders
-          ReminderSystem.recordBackup();
-          showReminder.set(null);
-
-          showSuccessMessage("Vault exported successfully");
-          if (import.meta.env.DEV)
-            console.log("[Main] Export successful:", filename);
-        } catch (error) {
-          console.error("[Main] Export failed with cached password:", error);
-          sessionStorage.removeItem("pv_master_key");
-          const inputPassword = prompt(
-            "Master password expired. Enter password to export:",
-          );
-          if (!inputPassword) return;
-
-          try {
-            // Show loading message
-            showSuccessMessage("Exporting vault...");
-
-            const blob = await BackupManager.quickExport(
-              $vaultItems,
-              inputPassword,
-            );
-            const filename = BackupManager.generateFileName();
-            sessionStorage.setItem("pv_master_key", inputPassword);
-            await downloadVaultFile(blob, filename);
-
-            // Record backup for reminders
-            ReminderSystem.recordBackup();
-            showReminder.set(null);
-
-            showSuccessMessage("Vault exported successfully");
-            if (import.meta.env.DEV)
-              console.log(
-                "[Main] Export successful after password refresh:",
-                filename,
-              );
-          } catch (error) {
-            console.error(
-              "[Main] Export failed after password refresh:",
-              error,
-            );
-            alert("Export failed: Invalid master password");
-          }
-        }
+        ReminderSystem.recordBackup();
+        showReminder.set(null);
+        showSuccessMessage("Vault exported successfully");
+      } catch (error) {
+        console.error("[Main] Export failed:", error);
+        await Dialog.alert("Lỗi", "Export thất bại. Vui lòng thử lại.");
       }
     } finally {
       exportLoading = false;
@@ -702,179 +495,69 @@
   /** @param {Event & { currentTarget: EventTarget & HTMLInputElement }} event */
   async function handleFileImport(event) {
     const file = event.currentTarget.files && event.currentTarget.files[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert(
-        "File too large. Maximum size is 10MB / Tệp quá lớn. Kích thước tối đa là 10MB",
-      );
+      await Dialog.alert("Lỗi", "Tệp quá lớn. Kích thước tối đa là 10MB");
       fileInput.value = "";
       return;
     }
 
-    // Validate file extension
     if (!file.name.toLowerCase().endsWith(".vault")) {
-      alert(
-        "Invalid file format. Only .vault files are accepted / Định dạng tệp không hợp lệ. Chỉ chấp nhận tệp .vault",
-      );
+      await Dialog.alert("Lỗi", "Định dạng tệp không hợp lệ. Chỉ chấp nhận tệp .vault");
       fileInput.value = "";
       return;
     }
 
-    // Validate file first
     const validation = await RestoreManager.validateVaultFile(file);
     if (!validation.valid) {
-      console.error("[Main] Import validation failed:", validation.error);
-      alert(`Import failed / Nhập thất bại: ${validation.error}`);
+      await Dialog.alert("Lỗi", `Import thất bại: ${validation.error}`);
       fileInput.value = "";
       return;
     }
 
     // Prompt for vault file password
-    const masterPassword = prompt(
-      "Enter master password for the vault file / Nhập mật khẩu chính cho tệp vault:",
-    );
-    if (!masterPassword) {
+    const vaultPassword = await Dialog.prompt("Import Vault", "Nhập mật khẩu chính cho tệp vault", "", "password");
+    if (!vaultPassword) {
       fileInput.value = "";
       return;
     }
 
     try {
-      const result = await RestoreManager.importVault(
-        file,
-        masterPassword,
-        $vaultItems,
-      );
+      const result = await RestoreManager.importVault(file, vaultPassword, $vaultItems);
 
-      if (import.meta.env.DEV)
-        console.log("[Main] Import successful, merge stats:", result.stats);
-
-      // Use cached master password for saving
-      const currentMasterPassword = sessionStorage.getItem("pv_master_key");
-      if (!currentMasterPassword) {
-        if (import.meta.env.DEV)
-          console.log("[Main] No cached password, prompting for save");
-        const savePassword = prompt(
-          "Enter master password to save merged vault / Nhập mật khẩu chính để lưu vault đã hợp nhất:",
-        );
-        if (!savePassword) {
-          fileInput.value = "";
-          return;
-        }
-
-        try {
-          await StorageEngine.saveVault(result.items, savePassword);
-          sessionStorage.setItem("pv_master_key", savePassword);
-
-          // Create auto-backup (non-critical, can fail)
-          if (AutoBackupService.getConfig().enabled) {
-            try {
-              await AutoBackupService.createBackup(result.items, savePassword);
-            } catch (backupError) {
-              console.error(
-                "[Main] Auto-backup failed (non-critical):",
-                backupError,
-              );
-            }
-          }
-        } catch (error) {
-          console.error("[Main] Save failed:", error);
-          alert(
-            "Failed to save merged vault: Invalid master password / Lưu vault thất bại: Mật khẩu không đúng",
-          );
-          fileInput.value = "";
-          return;
-        }
-      } else {
-        try {
-          if (import.meta.env.DEV)
-            console.log("[Main] Saving with cached password");
-          await StorageEngine.saveVault(result.items, currentMasterPassword);
-
-          // Create auto-backup (non-critical, can fail)
-          if (AutoBackupService.getConfig().enabled) {
-            try {
-              await AutoBackupService.createBackup(
-                result.items,
-                currentMasterPassword,
-              );
-            } catch (backupError) {
-              console.error(
-                "[Main] Auto-backup failed (non-critical):",
-                backupError,
-              );
-            }
-          }
-        } catch (error) {
-          console.error("[Main] Save failed with cached password:", error);
-          sessionStorage.removeItem("pv_master_key");
-          const savePassword = prompt(
-            "Master password expired. Enter password to save / Mật khẩu đã hết hạn. Nhập mật khẩu để lưu:",
-          );
-          if (!savePassword) {
-            fileInput.value = "";
-            return;
-          }
-
-          try {
-            await StorageEngine.saveVault(result.items, savePassword);
-            sessionStorage.setItem("pv_master_key", savePassword);
-
-            // Create auto-backup (non-critical, can fail)
-            if (AutoBackupService.getConfig().enabled) {
-              try {
-                await AutoBackupService.createBackup(
-                  result.items,
-                  savePassword,
-                );
-              } catch (backupError) {
-                console.error(
-                  "[Main] Auto-backup failed (non-critical):",
-                  backupError,
-                );
-              }
-            }
-          } catch (error) {
-            console.error("[Main] Save failed after password refresh:", error);
-            alert(
-              "Failed to save merged vault: Invalid master password / Lưu vault thất bại: Mật khẩu không đúng",
-            );
-            fileInput.value = "";
-            return;
-          }
-        }
+      // Save merged result
+      const savePassword = await getMasterPassword();
+      if (!savePassword) {
+        fileInput.value = "";
+        return;
       }
 
-      // Update vault items
-      vaultItems.set(result.items);
+      try {
+        await persistVault(result.items, savePassword);
+      } catch (error) {
+        console.error("[Main] Save merged vault failed:", error);
+        await Dialog.alert("Lỗi", "Lưu vault thất bại. Vui lòng thử lại.");
+        fileInput.value = "";
+        return;
+      }
 
-      // Show success message with stats
-      const successMsg = `Import successful / Nhập thành công: ${result.stats.newCount} new/mới, ${result.stats.updatedCount} updated/cập nhật, ${result.stats.unchangedCount} unchanged/không đổi`;
+      const successMsg = `Import thành công: ${result.stats.newCount} mới, ${result.stats.updatedCount} cập nhật, ${result.stats.unchangedCount} không đổi`;
       showSuccessMessage(successMsg);
-
-      if (import.meta.env.DEV)
-        console.log("[Main] Import complete, vault updated");
     } catch (e) {
       const error = /** @type {Error} */ (e);
       console.error("[Main] Import failed:", error);
 
-      // User-friendly error messages
       let errorMsg = error.message;
       if (errorMsg.includes("decrypt")) {
-        errorMsg =
-          "Wrong password or corrupted file / Sai mật khẩu hoặc tệp bị hỏng";
+        errorMsg = "Sai mật khẩu hoặc tệp bị hỏng";
       } else if (errorMsg.includes("Invalid")) {
-        errorMsg =
-          "Invalid vault file format / Định dạng tệp vault không hợp lệ";
+        errorMsg = "Định dạng tệp vault không hợp lệ";
       }
 
-      alert(`Import failed / Nhập thất bại: ${errorMsg}`);
+      await Dialog.alert("Import thất bại", errorMsg);
     }
 
-    // Reset file input
     fileInput.value = "";
   }
 

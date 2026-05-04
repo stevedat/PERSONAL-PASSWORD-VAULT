@@ -50,6 +50,8 @@ const BACKGROUND_LOCK_DELAY = 10 * 1000; // 10 seconds after going to background
 let lockTimer: ReturnType<typeof setTimeout>;
 let backgroundTimer: ReturnType<typeof setTimeout>;
 let lastActivity = Date.now();
+let lastBackgroundTime = 0;
+let isStandaloneMode = false;
 
 // --- Core Functions ---
 
@@ -108,7 +110,7 @@ export function initializeAppStateMonitoring() {
   if (typeof document === "undefined") return;
 
   // Detect if running as PWA (standalone mode)
-  const isStandalone =
+  isStandaloneMode =
     window.matchMedia("(display-mode: standalone)").matches ||
     (window.navigator as any).standalone === true;
 
@@ -122,20 +124,6 @@ export function initializeAppStateMonitoring() {
   // Focus/blur events for additional coverage with debounce
   window.addEventListener("blur", debounceWindowBlur);
   window.addEventListener("focus", debounceWindowFocus);
-
-  // PWA-specific: Lock immediately when app is hidden/closed
-  if (isStandalone) {
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        // Lock immediately when PWA is hidden/closed
-        setTimeout(() => {
-          if (document.hidden) {
-            lock("pwa-hidden");
-          }
-        }, 1000); // 1 second delay to avoid false positives
-      }
-    });
-  }
 
   // iOS specific app state events
   if ("standalone" in window.navigator && (window.navigator as any).standalone) {
@@ -203,14 +191,17 @@ function handleAppBackground() {
   clearTimeout(backgroundTimer);
 
   appState.set("background");
+  lastBackgroundTime = Date.now();
+
+  const delay = isStandaloneMode ? 1000 : BACKGROUND_LOCK_DELAY;
 
   // Start background lock timer
   backgroundTimer = setTimeout(() => {
     const stillInBackground = getCurrentAppState() === "background";
     if (stillInBackground) {
-      lock("background");
+      lock(isStandaloneMode ? "pwa-hidden" : "background");
     }
-  }, BACKGROUND_LOCK_DELAY);
+  }, delay);
 }
 
 function handleAppForeground() {
@@ -219,10 +210,11 @@ function handleAppForeground() {
 
   clearTimeout(backgroundTimer);
 
-  const timeInBackground = Date.now() - lastActivity;
+  const timeInBackground = Date.now() - (lastBackgroundTime || Date.now());
+  const delay = isStandaloneMode ? 1000 : BACKGROUND_LOCK_DELAY;
 
   if (
-    timeInBackground > BACKGROUND_LOCK_DELAY &&
+    timeInBackground > delay &&
     currentState === "background"
   ) {
     // App was in background too long, lock it
@@ -240,23 +232,26 @@ export function trackActivity() {
 }
 
 // Initialize activity listeners
+let throttledTrackActivity: any = null;
+const ACTIVITY_EVENTS = [
+  "mousedown",
+  "mousemove",
+  "keypress",
+  "scroll",
+  "touchstart",
+  "touchmove",
+  "click",
+  "keydown",
+];
+
 export function initializeActivityTracking() {
   if (typeof document === "undefined") return;
 
-  const events = [
-    "mousedown",
-    "mousemove",
-    "keypress",
-    "scroll",
-    "touchstart",
-    "touchmove",
-    "click",
-    "keydown",
-  ];
+  if (!throttledTrackActivity) {
+    throttledTrackActivity = throttle(trackActivity, 1000) as any;
+  }
 
-  const throttledTrackActivity = throttle(trackActivity, 1000);
-
-  events.forEach((event) => {
+  ACTIVITY_EVENTS.forEach((event) => {
     document.addEventListener(event, throttledTrackActivity, { passive: true });
   });
 }
@@ -287,6 +282,12 @@ export function cleanup() {
       "webkitvisibilitychange",
       debounceVisibilityChange,
     );
+
+    if (throttledTrackActivity) {
+      ACTIVITY_EVENTS.forEach((event) => {
+        document.removeEventListener(event, throttledTrackActivity);
+      });
+    }
   }
 
   if (typeof window !== "undefined") {
