@@ -45,8 +45,16 @@ export class SyncEngine {
     }
 
     // Fast path to prevent 401 console errors if we know we're not logged in
-    if (typeof window !== 'undefined' && !localStorage.getItem('pv_cloud_sync_enabled')) {
-      return false;
+    if (typeof window !== 'undefined') {
+      const fallback = localStorage.getItem('cookieFallback');
+      if (!fallback || !fallback.includes(`a_session_${APPWRITE_PROJECT_ID}`)) {
+        localStorage.removeItem('pv_cloud_sync_enabled');
+        return false;
+      }
+      
+      if (!localStorage.getItem('pv_cloud_sync_enabled')) {
+        return false;
+      }
     }
 
     try {

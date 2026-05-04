@@ -22,6 +22,11 @@
 
   async function checkSession() {
     try {
+      const fallback = localStorage.getItem('cookieFallback');
+      if (!fallback || !fallback.includes(`a_session_${APPWRITE_PROJECT_ID}`)) {
+        throw new Error('No session');
+      }
+      
       currentUser = await account.get();
       localStorage.setItem('pv_cloud_sync_enabled', 'true');
     } catch (e) {
