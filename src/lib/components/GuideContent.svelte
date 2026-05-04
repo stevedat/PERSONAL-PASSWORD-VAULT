@@ -6,6 +6,8 @@
     Shield,
     Smartphone,
     HardDrive,
+    Cloud,
+    ScanFace
   } from "lucide-svelte";
 
   export let lang = "en";
@@ -25,352 +27,164 @@
   </div>
 
   <div class="guide-content">
-    <!-- Backup Guide -->
+    <!-- 1. Cloud Sync Guide -->
+    <section class="guide-section">
+      <div class="section-header">
+        <Cloud size={32} />
+        <h2>{isVi ? "1. Đồng Bộ Đám Mây (Cloud Sync)" : "1. Cloud Sync"}</h2>
+      </div>
+      <div class="section-content">
+        <h3>{isVi ? "Tính năng đồng bộ:" : "Sync Features:"}</h3>
+        <ul>
+          {#if isVi}
+            <li>✅ Tự động đồng bộ mật khẩu trên mọi thiết bị của bạn</li>
+            <li>✅ Mã hóa đầu cuối (E2EE) trước khi tải lên</li>
+            <li>✅ Máy chủ chỉ lưu dữ liệu đã mã hóa, hoàn toàn Zero-Knowledge</li>
+          {:else}
+            <li>✅ Auto sync passwords across all your devices</li>
+            <li>✅ End-to-End Encrypted (E2EE) before upload</li>
+            <li>✅ Server only stores encrypted data, completely Zero-Knowledge</li>
+          {/if}
+        </ul>
+
+        <h3>{isVi ? "Cách sử dụng:" : "How to use:"}</h3>
+        <ol>
+          {#if isVi}
+            <li>Nhấn biểu tượng <strong>Đám mây (Cloud)</strong> trên thanh công cụ</li>
+            <li>Đăng ký hoặc đăng nhập tài khoản bảo mật của bạn</li>
+            <li>Dữ liệu sẽ tự động đồng bộ mỗi khi có thay đổi!</li>
+            <li>Nhấn lại biểu tượng Đám Mây nếu muốn ép đồng bộ ngay lập tức.</li>
+          {:else}
+            <li>Click the <strong>Cloud icon</strong> on the toolbar</li>
+            <li>Register or login to your secure account</li>
+            <li>Data will automatically sync whenever there are changes!</li>
+            <li>Click the Cloud icon again to force immediate sync.</li>
+          {/if}
+        </ol>
+
+        <div class="tip-box info">
+          <Shield size={20} />
+          <div>
+            <strong>{isVi ? "Lưu ý bảo mật:" : "Security Note:"}</strong>
+            {isVi
+              ? "Cloud Sync luôn dùng Master Password của bạn để mã hóa. Nếu đổi Master Password, hãy đảm bảo các thiết bị khác cũng biết mật khẩu mới."
+              : "Cloud Sync always uses your Master Password to encrypt. If you change your Master Password, ensure other devices know the new password."}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Biometric Guide -->
+    <section class="guide-section">
+      <div class="section-header">
+        <ScanFace size={32} />
+        <h2>{isVi ? "2. Khóa Sinh Trắc Học" : "2. Biometric Unlock"}</h2>
+      </div>
+      <div class="section-content">
+        <h3>{isVi ? "Mở khóa siêu tốc:" : "Lightning Fast Unlock:"}</h3>
+        <ul>
+          {#if isVi}
+            <li>✅ Hỗ trợ Face ID, Touch ID, Windows Hello</li>
+            <li>✅ Không cần gõ lại Master Password mỗi lần vào app</li>
+            <li>✅ App tự động khóa khi bạn rời đi (Auto-lock)</li>
+          {:else}
+            <li>✅ Supports Face ID, Touch ID, Windows Hello</li>
+            <li>✅ No need to re-type Master Password every time</li>
+            <li>✅ Automatically locks when you leave the app (Auto-lock)</li>
+          {/if}
+        </ul>
+        <h3>{isVi ? "Cách bật:" : "How to enable:"}</h3>
+        <ol>
+          {#if isVi}
+            <li>Nhấn biểu tượng <strong>Vân tay/Khuôn mặt</strong> ở góc phải trên cùng</li>
+            <li>Nhập Master Password lần cuối để xác thực</li>
+            <li>Chạm vân tay/quét khuôn mặt để cấp quyền</li>
+          {:else}
+            <li>Click the <strong>Fingerprint/Face</strong> icon in top right corner</li>
+            <li>Enter Master Password one last time to authenticate</li>
+            <li>Scan fingerprint/face to grant permission</li>
+          {/if}
+        </ol>
+      </div>
+    </section>
+
+    <!-- 3. Backup Guide -->
     <section class="guide-section">
       <div class="section-header">
         <Download size={32} />
-        <h2>{isVi ? "1. Cách Sao Lưu (Backup)" : "1. How to Backup"}</h2>
+        <h2>{isVi ? "3. Sao Lưu Thủ Công (Backup)" : "3. Manual Backup"}</h2>
       </div>
       <div class="section-content">
-        <h3>{isVi ? "Tại sao cần backup?" : "Why backup?"}</h3>
-        <p>{isVi ? "Backup giúp bạn:" : "Backup helps you:"}</p>
+        <p>{isVi ? "Bên cạnh Cloud Sync, bạn nên backup file thủ công định kỳ:" : "Besides Cloud Sync, you should manually backup periodically:"}</p>
         <ul>
           {#if isVi}
-            <li>✅ Bảo vệ dữ liệu khi mất thiết bị</li>
-            <li>✅ Chuyển mật khẩu sang máy mới</li>
-            <li>✅ Khôi phục khi xóa nhầm</li>
-            <li>✅ Lưu trữ offline an toàn</li>
+            <li>✅ Lưu trữ offline 100% (USB, Ổ cứng ngoài)</li>
+            <li>✅ Khôi phục lại bản cũ nếu lỡ tay xóa nhầm</li>
           {:else}
-            <li>✅ Protect data when device is lost</li>
-            <li>✅ Transfer passwords to new device</li>
-            <li>✅ Restore when accidentally deleted</li>
-            <li>✅ Safe offline storage</li>
+            <li>✅ 100% offline storage (USB, External Drive)</li>
+            <li>✅ Restore an older version if accidentally deleted</li>
           {/if}
         </ul>
 
-        <h3>{isVi ? "Cách thực hiện:" : "How to do it:"}</h3>
         <ol>
           {#if isVi}
-            <li>
-              Nhấn nút <strong>"Export Vault"</strong> ở góc trên bên phải
-            </li>
-            <li>Nhập Master Password để xác nhận</li>
-            <li>
-              File backup sẽ được tải xuống với tên: <code
-                >pocketvault-backup-YYYY-MM-DD.vault</code
-              >
-            </li>
-            <li>File được mã hóa AES-256-GCM - an toàn tuyệt đối!</li>
+            <li>Nhấn biểu tượng <strong>Export Vault</strong> (mũi tên tải xuống)</li>
+            <li>File sẽ được mã hóa với tên: <code>pocketvault-backup.vault</code></li>
           {:else}
-            <li>
-              Click <strong>"Export Vault"</strong> button in top right corner
-            </li>
-            <li>Enter Master Password to confirm</li>
-            <li>
-              Backup file will be downloaded as: <code
-                >pocketvault-backup-YYYY-MM-DD.vault</code
-              >
-            </li>
-            <li>File is encrypted with AES-256-GCM - absolutely secure!</li>
+            <li>Click <strong>Export Vault</strong> icon (download arrow)</li>
+            <li>File will be encrypted as: <code>pocketvault-backup.vault</code></li>
           {/if}
         </ol>
-
-        <div class="tip-box success">
-          <Shield size={20} />
-          <div>
-            <strong>{isVi ? "Mẹo:" : "Tip:"}</strong>
-            {isVi
-              ? "App tự động tạo backup sau mỗi lần thêm/sửa mật khẩu. Bạn có thể tìm thấy trong phần Auto-Backup (nếu đã bật)."
-              : "App automatically creates backup after each add/edit. You can find them in Auto-Backup section (if enabled)."}
-          </div>
-        </div>
       </div>
     </section>
 
-    <!-- Restore Guide -->
+    <!-- 4. Restore Guide -->
     <section class="guide-section">
       <div class="section-header">
         <Upload size={32} />
-        <h2>{isVi ? "2. Cách Khôi Phục (Restore)" : "2. How to Restore"}</h2>
+        <h2>{isVi ? "4. Khôi Phục (Restore)" : "4. Restore"}</h2>
       </div>
       <div class="section-content">
-        <h3>{isVi ? "Khi nào cần restore?" : "When to restore?"}</h3>
-        <ul>
-          {#if isVi}
-            <li>📱 Chuyển sang máy mới</li>
-            <li>🔄 Cài đặt lại app</li>
-            <li>💾 Khôi phục từ backup cũ</li>
-            <li>🔀 Gộp mật khẩu từ nhiều thiết bị</li>
-          {:else}
-            <li>📱 Moving to new device</li>
-            <li>🔄 Reinstalling app</li>
-            <li>💾 Restoring from old backup</li>
-            <li>🔀 Merging passwords from multiple devices</li>
-          {/if}
-        </ul>
-
-        <h3>{isVi ? "Cách thực hiện:" : "How to do it:"}</h3>
         <ol>
           {#if isVi}
-            <li>
-              Nhấn nút <strong>"Import Vault"</strong> ở góc trên bên phải
-            </li>
-            <li>Chọn file backup (.vault)</li>
-            <li>Nhập Master Password của file backup</li>
-            <li>
-              Chọn cách gộp dữ liệu:
-              <ul>
-                <li><strong>Merge:</strong> Gộp với mật khẩu hiện tại</li>
-                <li><strong>Replace:</strong> Thay thế hoàn toàn</li>
-              </ul>
-            </li>
+            <li>Nhấn biểu tượng <strong>Import Vault</strong> (mũi tên tải lên)</li>
+            <li>Chọn file .vault và nhập Master Password của file đó</li>
+            <li>Hệ thống <strong>Smart Merge</strong> sẽ tự động gộp các mật khẩu mới nhất mà không xóa mật khẩu hiện tại!</li>
           {:else}
-            <li>
-              Click <strong>"Import Vault"</strong> button in top right corner
-            </li>
-            <li>Select backup file (.vault)</li>
-            <li>Enter Master Password of the backup file</li>
-            <li>
-              Choose merge method:
-              <ul>
-                <li><strong>Merge:</strong> Combine with current passwords</li>
-                <li><strong>Replace:</strong> Replace completely</li>
-              </ul>
-            </li>
+            <li>Click <strong>Import Vault</strong> icon (upload arrow)</li>
+            <li>Select .vault file and enter its Master Password</li>
+            <li><strong>Smart Merge</strong> system will intelligently combine the newest passwords without deleting existing ones!</li>
           {/if}
         </ol>
-
-        <div class="tip-box warning">
-          <Shield size={20} />
-          <div>
-            <strong>{isVi ? "Lưu ý:" : "Note:"}</strong>
-            {isVi
-              ? 'Nếu chọn "Replace", tất cả mật khẩu hiện tại sẽ bị xóa. Hãy backup trước khi thực hiện!'
-              : 'If you choose "Replace", all current passwords will be deleted. Please backup first!'}
-          </div>
-        </div>
       </div>
     </section>
 
-    <!-- Storage Guide -->
-    <section class="guide-section">
-      <div class="section-header">
-        <HardDrive size={32} />
-        <h2>{isVi ? "3. Nơi Lưu Backup An Toàn" : "3. Safe Backup Storage"}</h2>
-      </div>
-      <div class="section-content">
-        <h3>{isVi ? "Khuyến nghị lưu trữ:" : "Storage recommendations:"}</h3>
-
-        <div class="storage-option">
-          <h4>
-            {isVi
-              ? "🔒 Tốt nhất: USB/Ổ cứng ngoài"
-              : "🔒 Best: USB/External Drive"}
-          </h4>
-          <ul>
-            {#if isVi}
-              <li>✅ Offline hoàn toàn - không bị hack</li>
-              <li>✅ Kiểm soát 100%</li>
-              <li>✅ Không giới hạn dung lượng</li>
-              <li>⚠️ Cần bảo quản cẩn thận</li>
-            {:else}
-              <li>✅ Completely offline - cannot be hacked</li>
-              <li>✅ 100% control</li>
-              <li>✅ Unlimited storage</li>
-              <li>⚠️ Requires careful storage</li>
-            {/if}
-          </ul>
-        </div>
-
-        <div class="storage-option">
-          <h4>
-            {isVi
-              ? "☁️ Tốt: Cloud Storage (mã hóa)"
-              : "☁️ Good: Cloud Storage (encrypted)"}
-          </h4>
-          <ul>
-            {#if isVi}
-              <li>✅ Truy cập mọi lúc mọi nơi</li>
-              <li>✅ Tự động đồng bộ</li>
-              <li>✅ File đã được mã hóa AES-256</li>
-              <li>⚠️ Cần internet</li>
-            {:else}
-              <li>✅ Access anytime, anywhere</li>
-              <li>✅ Auto sync</li>
-              <li>✅ File already encrypted with AES-256</li>
-              <li>⚠️ Requires internet</li>
-            {/if}
-          </ul>
-          <p>
-            <em
-              >{isVi
-                ? "Gợi ý: Google Drive, iCloud, Dropbox, OneDrive"
-                : "Suggestions: Google Drive, iCloud, Dropbox, OneDrive"}</em
-            >
-          </p>
-        </div>
-
-        <div class="storage-option">
-          <h4>
-            {isVi
-              ? "📧 Khả dụng: Email cho chính mình"
-              : "📧 Usable: Email to yourself"}
-          </h4>
-          <ul>
-            {#if isVi}
-              <li>✅ Dễ dàng và nhanh chóng</li>
-              <li>✅ Luôn có sẵn</li>
-              <li>⚠️ Giới hạn kích thước file</li>
-              <li>⚠️ Cần quản lý email cẩn thận</li>
-            {:else}
-              <li>✅ Easy and quick</li>
-              <li>✅ Always available</li>
-              <li>⚠️ File size limit</li>
-              <li>⚠️ Requires careful email management</li>
-            {/if}
-          </ul>
-        </div>
-
-        <div class="tip-box info">
-          <Shield size={20} />
-          <div>
-            <strong>{isVi ? "Chiến lược 3-2-1:" : "3-2-1 Strategy:"}</strong>
-            <ul>
-              {#if isVi}
-                <li>3 bản backup</li>
-                <li>2 loại phương tiện khác nhau (USB + Cloud)</li>
-                <li>1 bản lưu ở nơi khác (nhà bạn bè, két sắt...)</li>
-              {:else}
-                <li>3 backup copies</li>
-                <li>2 different media types (USB + Cloud)</li>
-                <li>1 copy stored elsewhere (friend's house, safe...)</li>
-              {/if}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Security Guide -->
+    <!-- 5. Security Guide -->
     <section class="guide-section">
       <div class="section-header">
         <Shield size={32} />
-        <h2>{isVi ? "4. Bảo Mật Backup" : "4. Backup Security"}</h2>
+        <h2>{isVi ? "5. Thông Tin Bảo Mật" : "5. Security Info"}</h2>
       </div>
       <div class="section-content">
-        <h3>
-          {isVi
-            ? "File backup của bạn được bảo vệ bởi:"
-            : "Your backup file is protected by:"}
-        </h3>
         <ul>
           <li>
             🔐 <strong>AES-256-GCM:</strong>
-            {isVi
-              ? "Mã hóa quân sự, không thể bẻ khóa"
-              : "Military-grade encryption, unbreakable"}
+            {isVi ? "Thuật toán mã hóa chuẩn quân sự" : "Military-grade encryption standard"}
           </li>
           <li>
-            🔑 <strong>PBKDF2:</strong>
-            {isVi
-              ? "600,000 vòng lặp - chống brute force"
-              : "600,000 iterations - prevents brute force"}
+            🔑 <strong>PBKDF2 (600,000 vòng lặp):</strong>
+            {isVi ? "Chống tấn công dò mật khẩu (Brute Force)" : "Prevents password guessing (Brute Force)"}
           </li>
           <li>
-            ✅ <strong>Checksum:</strong>
-            {isVi ? "Phát hiện file bị sửa đổi" : "Detects file tampering"}
-          </li>
-          <li>
-            🔒 <strong>Zero-cloud:</strong>
-            {isVi ? "Không lưu trên server nào" : "Not stored on any server"}
+            🛡️ <strong>Zero-Knowledge:</strong>
+            {isVi ? "Server không thể đọc, không thể khôi phục dữ liệu của bạn" : "Server cannot read or recover your data"}
           </li>
         </ul>
-
-        <h3>{isVi ? "Master Password mạnh:" : "Strong Master Password:"}</h3>
-        <ul>
-          {#if isVi}
-            <li>✅ Tối thiểu 12 ký tự</li>
-            <li>✅ Kết hợp chữ hoa, chữ thường, số, ký tự đặc biệt</li>
-            <li>✅ Không dùng từ điển, tên, ngày sinh</li>
-            <li>✅ Duy nhất - không dùng lại ở đâu khác</li>
-          {:else}
-            <li>✅ Minimum 12 characters</li>
-            <li>✅ Mix uppercase, lowercase, numbers, special characters</li>
-            <li>✅ Don't use dictionary words, names, birthdays</li>
-            <li>✅ Unique - don't reuse elsewhere</li>
-          {/if}
-        </ul>
-
         <div class="tip-box success">
           <Shield size={20} />
           <div>
-            <strong
-              >{isVi
-                ? "Ví dụ Master Password tốt:"
-                : "Good Master Password example:"}</strong
-            >
-            <code>My$ecur3P@ssw0rd!2024</code>
-            <br />
-            <em
-              >{isVi
-                ? "Dễ nhớ nhưng rất khó đoán!"
-                : "Easy to remember but very hard to guess!"}</em
-            >
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Mobile Transfer Guide -->
-    <section class="guide-section">
-      <div class="section-header">
-        <Smartphone size={32} />
-        <h2>{isVi ? "5. Chuyển Sang Máy Mới" : "5. Transfer to New Device"}</h2>
-      </div>
-      <div class="section-content">
-        <h3>{isVi ? "Quy trình chuyển máy:" : "Transfer process:"}</h3>
-        <ol>
-          <li>
-            <strong>{isVi ? "Trên máy cũ:" : "On old device:"}</strong>
-            <ul>
-              {#if isVi}
-                <li>Export vault ra file backup</li>
-                <li>Lưu file vào cloud hoặc gửi email cho chính mình</li>
-                <li>Ghi nhớ Master Password</li>
-              {:else}
-                <li>Export vault to backup file</li>
-                <li>Save file to cloud or email to yourself</li>
-                <li>Remember Master Password</li>
-              {/if}
-            </ul>
-          </li>
-          <li>
-            <strong>{isVi ? "Trên máy mới:" : "On new device:"}</strong>
-            <ul>
-              {#if isVi}
-                <li>Cài đặt PocketVault</li>
-                <li>Tải file backup về</li>
-                <li>Import vault</li>
-                <li>Nhập Master Password</li>
-                <li>Hoàn tất! ✅</li>
-              {:else}
-                <li>Install PocketVault</li>
-                <li>Download backup file</li>
-                <li>Import vault</li>
-                <li>Enter Master Password</li>
-                <li>Done! ✅</li>
-              {/if}
-            </ul>
-          </li>
-        </ol>
-
-        <div class="tip-box info">
-          <Smartphone size={20} />
-          <div>
-            <strong>{isVi ? "Lưu ý:" : "Note:"}</strong>
-            {isVi
-              ? "Nếu dùng native app (iOS/Android), bạn có thể dùng tính năng Share để gửi file backup qua AirDrop, Bluetooth, hoặc các app khác."
-              : "If using native app (iOS/Android), you can use Share feature to send backup file via AirDrop, Bluetooth, or other apps."}
+            <strong>{isVi ? "Khuyên dùng:" : "Recommended:"}</strong>
+            {isVi ? "Hãy chọn Master Password dễ nhớ nhưng dài ít nhất 12 ký tự (VD: ToiYeuVietNam@2024!)" : "Choose an easy-to-remember but long Master Password, at least 12 chars (e.g. ILoveCats@2024!)"}
           </div>
         </div>
       </div>
@@ -380,74 +194,16 @@
     <section class="guide-section">
       <div class="section-header">
         <BookOpen size={32} />
-        <h2>
-          {isVi ? "6. Câu Hỏi Thường Gặp" : "6. Frequently Asked Questions"}
-        </h2>
+        <h2>{isVi ? "6. Câu Hỏi Thường Gặp" : "6. FAQ"}</h2>
       </div>
       <div class="section-content">
         <div class="faq-item">
-          <h4>
-            {isVi
-              ? "❓ Tôi quên Master Password thì sao?"
-              : "❓ What if I forget Master Password?"}
-          </h4>
-          <p>
-            {isVi
-              ? "Rất tiếc, không có cách nào khôi phục. Đây là thiết kế bảo mật - không ai có thể truy cập vault của bạn, kể cả chúng tôi. Hãy ghi nhớ Master Password cẩn thận!"
-              : "Unfortunately, there's no way to recover. This is a security design - no one can access your vault, not even us. Please remember your Master Password carefully!"}
-          </p>
+          <h4>{isVi ? "❓ Tôi quên Master Password thì sao?" : "❓ What if I forget Master Password?"}</h4>
+          <p>{isVi ? "Rất tiếc, không có cách nào khôi phục. Đây là thiết kế bảo mật để không ai (kể cả admin) có thể hack được vault của bạn." : "Unfortunately, there's no way to recover. This is a security design so nobody (even admins) can hack your vault."}</p>
         </div>
-
         <div class="faq-item">
-          <h4>
-            {isVi
-              ? "❓ File backup có an toàn không?"
-              : "❓ Is backup file safe?"}
-          </h4>
-          <p>
-            {isVi
-              ? "Có! File được mã hóa AES-256-GCM với Master Password của bạn. Ngay cả khi ai đó lấy được file, họ không thể đọc được nội dung nếu không có Master Password."
-              : "Yes! File is encrypted with AES-256-GCM using your Master Password. Even if someone gets the file, they cannot read the content without Master Password."}
-          </p>
-        </div>
-
-        <div class="faq-item">
-          <h4>
-            {isVi
-              ? "❓ Tôi nên backup bao lâu một lần?"
-              : "❓ How often should I backup?"}
-          </h4>
-          <p>
-            {isVi
-              ? "App tự động tạo backup sau mỗi thay đổi. Nhưng bạn nên export thủ công ít nhất 1 tháng/lần và lưu ở nơi an toàn."
-              : "App automatically creates backup after each change. But you should manually export at least once a month and store it safely."}
-          </p>
-        </div>
-
-        <div class="faq-item">
-          <h4>
-            {isVi
-              ? "❓ Tôi có thể dùng cùng vault trên nhiều thiết bị?"
-              : "❓ Can I use same vault on multiple devices?"}
-          </h4>
-          <p>
-            {isVi
-              ? "Có! Export từ thiết bị này và import vào thiết bị khác. Tuy nhiên, các thay đổi không tự động đồng bộ - bạn cần export/import thủ công khi có cập nhật."
-              : "Yes! Export from one device and import to another. However, changes don't auto-sync - you need to manually export/import when updated."}
-          </p>
-        </div>
-
-        <div class="faq-item">
-          <h4>
-            {isVi
-              ? "❓ File backup có hết hạn không?"
-              : "❓ Does backup file expire?"}
-          </h4>
-          <p>
-            {isVi
-              ? "Không! File backup có thể dùng mãi mãi, miễn là bạn nhớ Master Password."
-              : "No! Backup file can be used forever, as long as you remember the Master Password."}
-          </p>
+          <h4>{isVi ? "❓ Đổi sang thiết bị mới như thế nào?" : "❓ How to migrate to a new device?"}</h4>
+          <p>{isVi ? "Rất đơn giản! Cách 1 (Dễ nhất): Cài app, đăng nhập Cloud Sync, dữ liệu tự ùa về. Cách 2: Export file backup từ máy cũ, gửi sang máy mới rồi Import." : "Very easy! Method 1 (Easiest): Install app, login to Cloud Sync, data downloads automatically. Method 2: Export backup from old device, send it to new device and Import."}</p>
         </div>
       </div>
     </section>
