@@ -1,7 +1,7 @@
 <script>
   import { createEventDispatcher } from 'svelte';
   import { fly, fade } from 'svelte/transition';
-  import { account } from '$lib/appwrite';
+  import { account, APPWRITE_PROJECT_ID } from '$lib/appwrite';
   import { Cloud, X, LogIn, UserPlus, Mail, Lock, Loader2, LogOut, CheckCircle2 } from 'lucide-svelte';
   import { ID } from 'appwrite';
 
@@ -37,6 +37,14 @@
   }
 
   async function handleLogin() {
+    error = '';
+    success = '';
+    
+    if (APPWRITE_PROJECT_ID === 'pocketvault-project-id') {
+      error = 'Chưa cấu hình biến môi trường (Environment Variables) trên Vercel!';
+      return;
+    }
+
     if (!email || !password) {
       error = 'Vui lòng nhập email và mật khẩu';
       return;
@@ -58,6 +66,14 @@
   }
 
   async function handleRegister() {
+    error = '';
+    success = '';
+    
+    if (APPWRITE_PROJECT_ID === 'pocketvault-project-id') {
+      error = 'Chưa cấu hình biến môi trường (Environment Variables) trên Vercel!';
+      return;
+    }
+
     if (!email || !password) {
       error = 'Vui lòng nhập email và mật khẩu';
       return;
