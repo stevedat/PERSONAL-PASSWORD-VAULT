@@ -312,7 +312,7 @@
     margin-bottom: 0.5rem;
   }
 
-  .dark .guide-header h1 {
+  :global(.dark) .guide-header h1 {
     color: #ffffff;
   }
 
@@ -358,7 +358,7 @@
     margin: 0;
   }
 
-  .dark .section-header h2 {
+  :global(.dark) .section-header h2 {
     color: #ffffff;
   }
 
@@ -369,7 +369,7 @@
     margin: 1.5rem 0 1rem 0;
   }
 
-  .dark .section-content h3 {
+  :global(.dark) .section-content h3 {
     color: #ffffff;
   }
 
@@ -380,7 +380,7 @@
     margin: 1rem 0 0.5rem 0;
   }
 
-  .dark .section-content h4 {
+  :global(.dark) .section-content h4 {
     color: #ffffff;
   }
 
@@ -390,7 +390,7 @@
     margin: 0.5rem 0;
   }
 
-  .dark .section-content p {
+  :global(.dark) .section-content p {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -402,8 +402,8 @@
     padding-left: 1.5rem;
   }
 
-  .dark .section-content ul,
-  .dark .section-content ol {
+  :global(.dark) .section-content ul,
+  :global(.dark) .section-content ol {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -412,7 +412,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .section-content li {
+  :global(.dark) .section-content li {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -426,7 +426,7 @@
     font-weight: 500;
   }
 
-  .dark .section-content code {
+  :global(.dark) .section-content code {
     background: rgba(74, 158, 255, 0.2);
     color: #8ec9ff;
   }
@@ -449,7 +449,7 @@
     color: #16a34a;
   }
 
-  .dark .tip-box.success strong {
+  :global(.dark) .tip-box.success strong {
     color: #4ade80;
   }
 
@@ -457,7 +457,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .tip-box.success div {
+  :global(.dark) .tip-box.success div {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -470,7 +470,7 @@
     color: #ea580c;
   }
 
-  .dark .tip-box.warning strong {
+  :global(.dark) .tip-box.warning strong {
     color: #fbbf24;
   }
 
@@ -478,7 +478,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .tip-box.warning div {
+  :global(.dark) .tip-box.warning div {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -491,7 +491,7 @@
     color: #2563eb;
   }
 
-  .dark .tip-box.info strong {
+  :global(.dark) .tip-box.info strong {
     color: #6eb6ff;
   }
 
@@ -499,7 +499,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .tip-box.info div {
+  :global(.dark) .tip-box.info div {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -507,7 +507,7 @@
     color: rgba(0, 0, 0, 0.9);
   }
 
-  .dark .tip-box strong {
+  :global(.dark) .tip-box strong {
     color: #ffffff;
   }
 
@@ -515,7 +515,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .tip-box ul {
+  :global(.dark) .tip-box ul {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -523,7 +523,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .tip-box li {
+  :global(.dark) .tip-box li {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -540,7 +540,7 @@
     color: rgba(0, 0, 0, 0.9);
   }
 
-  .dark .storage-option h4 {
+  :global(.dark) .storage-option h4 {
     color: #ffffff;
   }
 
@@ -548,7 +548,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .storage-option p {
+  :global(.dark) .storage-option p {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -556,7 +556,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .storage-option ul {
+  :global(.dark) .storage-option ul {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -564,7 +564,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .storage-option li {
+  :global(.dark) .storage-option li {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -572,7 +572,7 @@
     color: rgba(0, 0, 0, 0.7);
   }
 
-  .dark .storage-option em {
+  :global(.dark) .storage-option em {
     color: rgba(255, 255, 255, 0.85);
   }
 
@@ -589,7 +589,7 @@
     margin-top: 0;
   }
 
-  .dark .faq-item h4 {
+  :global(.dark) .faq-item h4 {
     color: #6eb6ff;
   }
 
@@ -597,7 +597,7 @@
     color: rgba(0, 0, 0, 0.8);
   }
 
-  .dark .faq-item p {
+  :global(.dark) .faq-item p {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -618,7 +618,7 @@
     margin: 0;
   }
 
-  .dark .guide-footer p {
+  :global(.dark) .guide-footer p {
     color: rgba(255, 255, 255, 0.95);
   }
 
@@ -626,7 +626,7 @@
     color: rgba(0, 0, 0, 0.9);
   }
 
-  .dark .guide-footer strong {
+  :global(.dark) .guide-footer strong {
     color: #ffffff;
   }
 
@@ -644,7 +644,7 @@
     margin: 0 0 0.5rem 0;
   }
 
-  .dark .creator-info h3 {
+  :global(.dark) .creator-info h3 {
     color: rgba(255, 255, 255, 0.9);
   }
 

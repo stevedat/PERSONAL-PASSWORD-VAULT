@@ -76,19 +76,21 @@
       const items = await StorageEngine.loadVault(masterPassword);
       sessionStorage.setItem("pv_master_key", masterPassword);
       vaultItems.set(items);
-      isUnlocked.set(true);
-      startAutoLock();
       ReminderSystem.resetSession();
       const reminderType = ReminderSystem.shouldShowReminder();
       if (reminderType) {
         showReminder.set(reminderType);
         ReminderSystem.markShownThisSession();
       }
+      failedAttempts = 0;
+
       if (biometricSupported && !BiometricAuth.isEnabled()) {
         showBiometricSetup = true;
+      } else {
+        isUnlocked.set(true);
+        startAutoLock();
+        masterPassword = "";
       }
-      failedAttempts = 0;
-      masterPassword = "";
     } catch (err) {
       failedAttempts++;
       error = failedAttempts >= 3 && passwordHint
@@ -137,7 +139,9 @@
       sessionStorage.setItem("pv_temp_password", masterPassword);
       await BiometricAuth.setSecureMasterKey(masterPassword);
       showBiometricSetup = false;
-      await unlock();
+      isUnlocked.set(true);
+      startAutoLock();
+      masterPassword = "";
     } catch (err) {
       error = `Failed to set up ${biometricType}`;
     }
@@ -145,6 +149,9 @@
 
   function skipBiometricSetup() {
     showBiometricSetup = false;
+    isUnlocked.set(true);
+    startAutoLock();
+    masterPassword = "";
   }
 
   /** @param {string} password */
@@ -177,12 +184,10 @@
       await StorageEngine.saveRecoveryData([], generatedRecoveryKey, createPasswordHint || undefined);
 
       vaultItems.set([]);
-      isUnlocked.set(true);
-      startAutoLock();
 
       // Show recovery key modal FIRST (before biometric)
+      // Do NOT set isUnlocked to true yet, otherwise modal will be unmounted
       showRecoveryKeyModal = true;
-      masterPassword = "";
     } catch (err) {
       error = "Failed to create vault";
     } finally {
@@ -192,8 +197,12 @@
 
   function dismissRecoveryKeyModal() {
     showRecoveryKeyModal = false;
-    if (biometricSupported) {
+    if (biometricSupported && !BiometricAuth.isEnabled()) {
       showBiometricSetup = true;
+    } else {
+      isUnlocked.set(true);
+      startAutoLock();
+      masterPassword = "";
     }
   }
 
@@ -452,7 +461,7 @@
 
 <!-- Main Unlock Screen -->
 {:else}
-  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; position: relative;">
     <div class="glass-modal">
       <div style="text-align: center; margin-bottom: 2rem;">
         <div style="font-size: 3.75rem; margin-bottom: 1rem; display: flex; justify-content: center;" class="animate-bounce-subtle flex justify-center w-full">
@@ -553,6 +562,12 @@
           </div>
         {/if}
       </div>
+    </div>
+
+    <div style="position: absolute; bottom: 1.5rem; left: 0; right: 0; text-align: center; padding: 0 1rem;" class="text-glass-secondary">
+      <p style="font-size: 0.875rem; margin: 0;">
+        Developed by Dat Tran - Linkedin: <br class="sm:hidden" /> <a href="https://www.linkedin.com/in/stevedat" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: none; font-weight: 500;">https://www.linkedin.com/in/stevedat</a>
+      </p>
     </div>
   </div>
 {/if}
