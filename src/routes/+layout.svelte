@@ -7,6 +7,17 @@
   import { App } from '@capacitor/app';
   import DialogManager from '$lib/components/DialogManager.svelte';
 
+  // Suppress all console logs in production
+  if (!import.meta.env.DEV && typeof window !== 'undefined') {
+    const noop = () => {};
+    console.log = noop;
+    console.error = noop;
+    console.warn = noop;
+    console.info = noop;
+    console.debug = noop;
+    console.trace = noop;
+  }
+
   onMount(async () => {
     // Load theme preference
     const savedTheme = localStorage.getItem('theme');

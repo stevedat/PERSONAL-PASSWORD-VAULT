@@ -35,6 +35,10 @@ A minimal, offline-first encrypted password vault with an Apple Glass design sys
 - **iOS (PWA):** Open in Safari -> Tap Share -> Select **"Add to Home Screen"**.
 - **Android (PWA):** Open in Chrome -> Tap the **"Install"** prompt at the bottom of the screen.
 
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ---
 
 **PocketVault** - Your passwords, your device, your control. 🔐

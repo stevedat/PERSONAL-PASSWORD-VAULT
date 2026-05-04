@@ -23,8 +23,10 @@
   async function checkSession() {
     try {
       currentUser = await account.get();
+      localStorage.setItem('pv_cloud_sync_enabled', 'true');
     } catch (e) {
       currentUser = null;
+      localStorage.removeItem('pv_cloud_sync_enabled');
     }
   }
 
@@ -44,6 +46,7 @@
     try {
       await account.createEmailPasswordSession(email, password);
       currentUser = await account.get();
+      localStorage.setItem('pv_cloud_sync_enabled', 'true');
       success = 'Đăng nhập thành công!';
       dispatch('authenticated', currentUser);
       setTimeout(() => { show = false; }, 1200);
@@ -69,6 +72,7 @@
       await account.create(ID.unique(), email, password, name || undefined);
       await account.createEmailPasswordSession(email, password);
       currentUser = await account.get();
+      localStorage.setItem('pv_cloud_sync_enabled', 'true');
       success = 'Đăng ký và đăng nhập thành công!';
       dispatch('authenticated', currentUser);
       setTimeout(() => { show = false; }, 1200);
@@ -84,6 +88,7 @@
     try {
       await account.deleteSession('current');
       currentUser = null;
+      localStorage.removeItem('pv_cloud_sync_enabled');
       success = 'Đã đăng xuất';
       dispatch('loggedout');
     } catch (e) {

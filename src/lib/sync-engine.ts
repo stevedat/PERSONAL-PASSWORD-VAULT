@@ -44,10 +44,21 @@ export class SyncEngine {
       return false;
     }
 
+    // Fast path to prevent 401 console errors if we know we're not logged in
+    if (typeof window !== 'undefined' && !localStorage.getItem('pv_cloud_sync_enabled')) {
+      return false;
+    }
+
     try {
       await account.get();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pv_cloud_sync_enabled', 'true');
+      }
       return true;
     } catch (e) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('pv_cloud_sync_enabled');
+      }
       return false;
     }
   }
@@ -123,8 +134,12 @@ export class SyncEngine {
         ) as unknown as CloudVaultDocument;
       } catch (error) {
         if (error instanceof AppwriteException && error.code === 404) {
-          // No cloud vault exists yet
-          return await StorageEngine.loadVault(masterPassword);
+          // No cloud vault exists yet. Push local vault to cloud to initialize it.
+          const localItems = await StorageEngine.loadVault(masterPassword);
+          if (localItems.length > 0) {
+            await this.pushVault(localItems, masterPassword);
+          }
+          return localItems;
         }
         throw error;
       }
@@ -157,15 +172,10 @@ export class SyncEngine {
       const preview = RestoreManager.previewMerge(cloudItems, localItems);
       const mergedItems = RestoreManager.applyMerge(preview);
 
-      // Save Merged Vault Locally
+      // Save Merged Vault Locally (This automatically triggers a background pushVault)
       await StorageEngine.saveVault(mergedItems, masterPassword);
 
-      // If there were changes merged from local into cloud, we should push the merged back
-      if (preview.stats.newCount > 0 || preview.stats.updatedCount > 0) {
-         await this.pushVault(mergedItems, masterPassword);
-      } else {
-         this.updateLastSync(doc.sync_timestamp);
-      }
+      this.updateLastSync(Date.now());
 
       return mergedItems;
     } catch (error) {
